@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { I, PaytmLogo, AIMark, MerchantLogo } from './icons.jsx'
 import { inr } from './data.js'
-import { MERCHANTS, MERCHANT_LIST, DEFAULT_MERCHANT } from './merchants.js'
+import { MERCHANTS, DEFAULT_MERCHANT } from './merchants.js'
 import { SCENARIOS, runScenario, routeText, initLedger, applyEffects, liveOk } from './engine.js'
 import Buddy from './Buddy.jsx'
 import Center from './Center.jsx'
@@ -511,9 +511,6 @@ export default function App() {
         <PaytmLogo size={20} />
         <div className="cc-title"><b>AI Teammate for Paytm merchants</b><span className="muted xs">Merchant AI Buddy ⇄ Paytm AI agents · solves problems end to end</span></div>
         <div className="cc-r">
-          <select value={mkey} onChange={(e) => pickMerchant(e.target.value)} aria-label="Merchant">
-            {MERCHANT_LIST.map((x) => <option key={x.slug} value={x.slug}>{x.name}</option>)}
-          </select>
           <div className="mode">
             <button className={mode === 'local' ? 'on' : ''} onClick={() => switchMode('local')}>Local demo</button>
             <button className={mode === 'live' ? 'on' : ''} disabled={!svc.merchant} onClick={() => switchMode('live')} title={svc.merchant ? 'Use the real services (merchant 8003' + (svc.paytm ? ' + Paytm 8002)' : ', Paytm mocked)') : 'Start the merchant agent on :8003 to enable'}>

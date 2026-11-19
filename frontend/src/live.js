@@ -2,8 +2,9 @@
 // into the same "run" shape the decision-trace UI already renders.
 import { inr } from './data.js'
 import { merchantQuery, uploadDoc, proactiveShield, confirmDispute, confirmEdi } from './api.js'
-import fakeUrl from '../../dataset/test_files/fake_upi.png?url'
-import podUrl from '../../dataset/test_files/pod_9981.png?url'
+// Demo documents (frontend/public/demo): the real Sharma PoD sample, and a fake UPI screenshot whose UTR is not in the ledger.
+const fakeUrl = '/demo/fake_upi.png'
+const podUrl = '/demo/pod_9981.png'
 
 async function demoFile(url, name) {
   const blob = await (await fetch(url)).blob()

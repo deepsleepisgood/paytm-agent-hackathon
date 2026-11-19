@@ -6,10 +6,10 @@ const hex = (n) => Math.random().toString(16).slice(2, 2 + n)
 const rid = () => 'req_' + hex(8)
 const tkt = () => 'TKT-PAYTM-' + (1000 + Math.floor(Math.random() * 9000))
 const ded = (m, code) => m.d.settlement.deductions.find((x) => x.key === code)?.amount || 0
-const REFUND_ASK = { PAYTM_MERCH_1101: 1200, PAYTM_MERCH_1102: 5800, PAYTM_MERCH_1103: 6500 }
+const REFUND_ASK = { PAYTM_MERCH_8821: 6500 }
 const FAKE_UTR = '632184929999'
-const DUP_AMT = { PAYTM_MERCH_8821: 3200, PAYTM_MERCH_1101: 60, PAYTM_MERCH_1102: 640, PAYTM_MERCH_1103: 1180 }
-const HOLD_AMT = { PAYTM_MERCH_1101: 3200, PAYTM_MERCH_1102: 18500, PAYTM_MERCH_1103: 18500 }
+const DUP_AMT = { PAYTM_MERCH_8821: 3200 }
+const HOLD_AMT = { PAYTM_MERCH_8821: 18500 }
 
 const opt = (id, label, score, why) => ({ id, label, score, why })
 
