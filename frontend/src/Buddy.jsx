@@ -5,6 +5,8 @@ import { t } from './i18n.js'
 import { SCENARIOS, liveOk, sayText } from './engine.js'
 import { inr } from './data.js'
 import Khata from './Khata.jsx'
+import SalesAgent from './SalesAgent.jsx'
+import { SALES_READY } from './config.js'
 
 // Every scenario, grouped for the "All help" sheet.
 const GROUPS = [
@@ -144,6 +146,15 @@ export default function Buddy({ m, L, chat, busy, mode, run, reveal, onPreset, o
         <Back title="All help" />
         <div className="pg-body">
           <Insights m={m} always />
+          {SALES_READY && <div className="pg-sec">
+            <div className="ios-cap">TALK TO SOMEONE</div>
+            <div className="rows">
+              <button className="row-btn" onClick={() => setView('sales')}>
+                <span className="r-t"><b>Talk to a sales expert</b><em>Voice call with Paytm's AI sales agent</em></span>
+                <span className="r-go">›</span>
+              </button>
+            </div>
+          </div>}
           {GROUPS.map((g) => (
             <div key={g.id} className="pg-sec">
               <div className="ios-cap">{g.label.toUpperCase()}</div>
@@ -167,6 +178,15 @@ export default function Buddy({ m, L, chat, busy, mode, run, reveal, onPreset, o
     )
   }
 
+  if (view === 'sales') {
+    return (
+      <div className="screen buddy pg">
+        <Back title="Sales expert" />
+        <div className="pg-body"><SalesAgent m={m} /></div>
+      </div>
+    )
+  }
+
   if (view === 'khata') {
     return (
       <div className="screen buddy pg">
@@ -180,7 +200,7 @@ export default function Buddy({ m, L, chat, busy, mode, run, reveal, onPreset, o
     <div className="screen buddy voice-screen">
       <Voice m={m} chat={chat} busy={busy} run={run} reveal={reveal} speak={speak} setSpeak={setSpeak} mode={mode} prompts={prompts} nudge={nudgeP} lang={lang} setLang={setLang}
         onText={onText} onAudio={onAudio} onPreset={onPreset} onConfirm={onConfirm}
-        onMenu={() => setView('menu')} onKhata={() => setView('khata')} onAttach={(k) => (k === 'pod' ? podRef.current.click() : k === 'shot' ? shotRef.current.click() : setAttach(true))} />
+        onMenu={() => setView('menu')} onKhata={() => setView('khata')} onSales={SALES_READY ? () => setView('sales') : undefined} onAttach={(k) => (k === 'pod' ? podRef.current.click() : k === 'shot' ? shotRef.current.click() : setAttach(true))} />
       {attach && (
         <div className="attach-sheet" onClick={() => setAttach(false)}>
           <div className="as-card" onClick={(e) => e.stopPropagation()}>

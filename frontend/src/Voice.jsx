@@ -38,7 +38,7 @@ function bestVoice(lang) {
 }
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices() }
 
-export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mode, prompts, nudge, lang, setLang, onText, onAudio, onPreset, onConfirm, onMenu, onKhata, onAttach }) {
+export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mode, prompts, nudge, lang, setLang, onText, onAudio, onPreset, onConfirm, onMenu, onKhata, onSales, onAttach }) {
   const [phase, setPhase] = useState('idle') // idle | listening | speaking (thinking comes from `busy`)
   const [live, setLive] = useState('')
   const [spoken, setSpoken] = useState(0)
@@ -311,6 +311,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
         <div className="vp-links">
           <button onClick={onMenu}>{T('menu')}</button>
           <button onClick={onKhata}>{T('khata')}</button>
+          {onSales && <button onClick={onSales}>Sales</button>}
           
         </div>
       </div>
