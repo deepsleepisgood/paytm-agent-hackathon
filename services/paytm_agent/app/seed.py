@@ -108,10 +108,13 @@ class UpiTxn:
     utr: str
     amount_inr: int
     payer_app: str
-    lookup_status: str  # SUCCESS_SETTLED | PENDING
+    lookup_status: str  # SUCCESS_SETTLED | PENDING | FAILED
     order_id: str | None = None
     received_at: str | None = None
     refunded: bool = False
+    # NPCI's own reason, for a FAILED payment: "Invalid MPIN", "Transaction declined by
+    # customer". Useful to the merchant, because it says whose end the problem was at.
+    resp_desc: str | None = None
 
     def as_dict(self) -> dict:
         return {
@@ -122,6 +125,7 @@ class UpiTxn:
             "order_id": self.order_id,
             "received_at": self.received_at,
             "refunded": self.refunded,
+            "resp_desc": self.resp_desc,
         }
 
 
@@ -134,9 +138,17 @@ class Mandate:
 
     mandate_id: str = "UMRN-DEMO-0000008821"
     amount_inr: int = 500
-    status: str = "BOUNCED"  # ACTIVE | BOUNCED
-    bounce_date: str = "2026-11-17"
-    bounce_reason: str = "INSUFFICIENT_FUNDS"
+    # The mandate itself is ACTIVE, as the canonical ledger has it. A returned
+    # presentment does not deactivate a mandate, and saying BOUNCED here would have the
+    # ledger contradict the reply's own claim that this is not a default.
+    status: str = "ACTIVE"
+    presentment_status: str = "RETURNED"  # PAID | RETURNED
+    last_return_date: str = "2026-11-17"
+    last_return_code: str = "04"
+    last_return_reason: str = "Balance insufficient"
+    # Overdue, but zero days past due: the instalment is late, the loan is not.
+    overdue_amount_inr: int = 500
+    days_past_due: int = 0
     # Nil, not a penalty. KFS clause 4.1 lets a bounced EDI be paid the same day by UPI
     # link without charge, and the dataset records bounce charges as waived for
     # first-attempt friction. A fee we invented would have been the harshest number in
@@ -153,13 +165,22 @@ class Mandate:
     dip_days: tuple[str, ...] = ("2026-11-14", "2026-11-15", "2026-11-16")
     hardship_pauses_used_in_window: int = 0
 
+    @property
+    def needs_remedy(self) -> bool:
+        """A presentment was returned and the instalment is still unpaid."""
+        return self.presentment_status == "RETURNED" and self.overdue_amount_inr > 0
+
     def as_dict(self) -> dict:
         return {
             "mandate_id": self.mandate_id,
             "amount_inr": self.amount_inr,
             "status": self.status,
-            "bounce_date": self.bounce_date,
-            "bounce_reason": self.bounce_reason,
+            "presentment_status": self.presentment_status,
+            "last_return_date": self.last_return_date,
+            "last_return_code": self.last_return_code,
+            "last_return_reason": self.last_return_reason,
+            "overdue_amount_inr": self.overdue_amount_inr,
+            "days_past_due": self.days_past_due,
             "bounce_charge_inr": self.bounce_charge_inr,
             "bounce_charge_note": self.bounce_charge_note,
             "on_time_rate_percent": self.on_time_rate_percent,
@@ -432,6 +453,38 @@ class Ledger:
         }
 
 
+SEEDED_UTRS: dict[str, UpiTxn] = {
+    "632184920111": UpiTxn("632184920111", 1_250, "GPay", "SUCCESS_SETTLED",
+                           order_id="BILL-261118-0011",
+                           received_at="2026-11-18T11:03:14+00:00"),
+    "632184920999": UpiTxn("632184920999", 2_400, "PhonePe", "PENDING",
+                           order_id="BILL-261118-0018",
+                           received_at="2026-11-18T18:15:40+00:00"),
+    # One order, two settled payments 48 seconds apart: what a customer tapping twice
+    # on a slow connection looks like.
+    "632299206882": UpiTxn("632299206882", 1_180, "PhonePe", "SUCCESS_SETTLED",
+                           order_id="4489",
+                           received_at="2026-11-18T19:42:10+00:00"),
+    "632230725895": UpiTxn("632230725895", 1_180, "PhonePe", "SUCCESS_SETTLED",
+                           order_id="4489",
+                           received_at="2026-11-18T19:42:58+00:00"),
+}
+
+
+def _utrs() -> dict[str, UpiTxn]:
+    """The full canonical log where it exists, otherwise the references above.
+
+    Fresh objects each time: the ledger is mutated during a demo (a duplicate gets
+    marked refunded), and a reset has to genuinely undo that.
+    """
+    from . import dataset
+
+    loaded = dataset.load_utrs()
+    if loaded:
+        return loaded
+    return {utr: replace(txn) for utr, txn in SEEDED_UTRS.items()}
+
+
 def fresh(chargeback_hours_left: float = CHARGEBACK_DEFAULT_HOURS,
           break_settlement: bool = False) -> Ledger:
     """Build a clean ledger.
@@ -466,22 +519,7 @@ def fresh(chargeback_hours_left: float = CHARGEBACK_DEFAULT_HOURS,
             # earlier pair of our own invention.
             "4489": Order("4489", amount_inr=1_180, settled=True, refund_status="NONE"),
         },
-        utrs={
-            "632184920111": UpiTxn("632184920111", 1_250, "GPay", "SUCCESS_SETTLED",
-                                   order_id="BILL-261118-0011",
-                                   received_at="2026-11-18T11:03:14+00:00"),
-            "632184920999": UpiTxn("632184920999", 2_400, "PhonePe", "PENDING",
-                                   order_id="BILL-261118-0018",
-                                   received_at="2026-11-18T18:15:40+00:00"),
-            # One order, two settled payments 48 seconds apart: what a customer tapping
-            # twice on a slow connection looks like.
-            "632299206882": UpiTxn("632299206882", 1_180, "PhonePe", "SUCCESS_SETTLED",
-                                   order_id="4489",
-                                   received_at="2026-11-18T19:42:10+00:00"),
-            "632230725895": UpiTxn("632230725895", 1_180, "PhonePe", "SUCCESS_SETTLED",
-                                   order_id="4489",
-                                   received_at="2026-11-18T19:42:58+00:00"),
-        },
+        utrs=_utrs(),
         loan=Loan(),
         chargeback=Chargeback(
             deadline_iso=clock.plus_hours(chargeback_hours_left).isoformat(),

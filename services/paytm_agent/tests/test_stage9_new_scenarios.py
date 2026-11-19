@@ -51,7 +51,13 @@ def test_a_bounced_mandate_is_not_a_default(client):
     data = out["data"]
     assert data["is_default"] is False
     assert data["amount_inr"] == 500
-    assert data["bounce_reason"] == "INSUFFICIENT_FUNDS"
+    # The canonical ledger's representation: the mandate stays ACTIVE and it is the
+    # presentment that was returned, which is what makes "not a default" true rather
+    # than just reassuring.
+    assert data["status"] == "ACTIVE"
+    assert data["last_return_reason"] == "Balance insufficient"
+    assert data["last_return_date"] == "2026-11-17"
+    assert data["days_past_due"] == 0
     # The figures sarvam_service's Hindi reply already quotes.
     assert data["repayment_history"] == {"on_time_rate_percent": 96.0, "months": 6}
 

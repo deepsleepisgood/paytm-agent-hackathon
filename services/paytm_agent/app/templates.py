@@ -130,6 +130,25 @@ def _utr_verify(data: dict[str, Any], status: str) -> str:
             )
         return text
 
+    if lookup == "REVERSED":
+        return (
+            f"Reference {utr} for {rupees(data['amount_inr'])} did arrive, but it has "
+            "since been reversed and the money has gone back to your customer, so it is "
+            "not in your account now. Please do not treat this one as paid."
+        )
+
+    if lookup == "FAILED":
+        # Names the cause without blaming the customer: an MPIN slip or a declined
+        # confirmation is nobody's bad faith, and the merchant has to serve this person.
+        why = data.get("failure_reason")
+        return (
+            f"That payment did not go through. Reference {utr} for "
+            f"{rupees(data['amount_inr'])} was declined"
+            + (f" — {why.lower()} — " if why else " ")
+            + "so nothing was taken from your customer's account. Please ask them to "
+            "try again, and hold the goods until it shows as received."
+        )
+
     if lookup == "PENDING":
         return (
             f"Reference {utr} for {rupees(data['amount_inr'])} from {data['payer_app']} "
@@ -183,16 +202,20 @@ def _mandate_troubleshoot(data: dict[str, Any], status: str) -> str:
     A bounce notice reads like default, and that fear is the actual problem to solve
     before any remedy is useful.
     """
-    if data["status"] != "BOUNCED":
-        return f"Your instalment mandate {data['mandate_id']} is active. Nothing has bounced."
+    if not data.get("overdue_amount_inr"):
+        return (
+            f"Your instalment mandate {data['mandate_id']} is active and there is "
+            "nothing outstanding on it."
+        )
 
     amount = rupees(data["amount_inr"])
     history = data["repayment_history"]
     opener = (
         f"Your {amount} instalment could not be collected from your bank on "
-        f"{pretty_date(data['bounce_date'])}. This is not a default, and it is not a "
-        f"mark against you: you have paid {history['on_time_rate_percent']}% of your "
-        f"instalments on time over the last {history['months']} months."
+        f"{pretty_date(data['last_return_date'])}, because the balance was short. "
+        "This is not a default, and it is not a mark against you: you have paid "
+        f"{history['on_time_rate_percent']}% of your instalments on time over the last "
+        f"{history['months']} months, and your mandate is still active."
     )
 
     if status == "ESCALATED":

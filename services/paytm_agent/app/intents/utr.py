@@ -34,6 +34,11 @@ from ..mesh import Case
 ADVICE = {
     "SUCCESS_SETTLED": "RELEASE_GOODS",
     "PENDING": "WAIT",
+    # A payment that failed is not a payment we could not find. We know exactly what
+    # happened and that nothing was debited, so the merchant can be told to ask the
+    # customer to try again rather than left suspicious of them.
+    "FAILED": "DO_NOT_RELEASE_YET",
+    "REVERSED": "DO_NOT_RELEASE_YET",
     "NOT_FOUND": "DO_NOT_RELEASE_YET",
 }
 
@@ -86,6 +91,8 @@ def gather(case: Case) -> str:
         "advice": ADVICE[txn.lookup_status],
         "internal_flag": None,
         "source": source,
+        # NPCI's own reason, where there is one: it says whose end the problem was at.
+        "failure_reason": txn.resp_desc if txn.lookup_status in ("FAILED", "REVERSED") else None,
     }
     return (
         f"Looked up {utr}: {txn.lookup_status}, {txn.amount_inr} via {txn.payer_app}"
@@ -96,6 +103,20 @@ def assess(case: Case) -> str:
     """RiskPolicyAgent: answer it, unless this conversation looks like an attempt."""
     data = case.data
     session = case.session
+
+    if data["lookup_status"] == "REVERSED":
+        return (
+            "Found, but reversed: the money arrived and has since gone back to the "
+            "customer, so the merchant is not holding it"
+        )
+
+    if data["lookup_status"] == "FAILED":
+        # Found, and definitively not paid. No fraud signal: a declined payment is an
+        # ordinary event, and counting it as one would make honest customers look bad.
+        return (
+            f"Found and FAILED ({data['failure_reason'] or 'declined'}): nothing was "
+            "debited, so the merchant should ask for another attempt"
+        )
 
     if data["lookup_status"] != "NOT_FOUND":
         if data["amount_matches_claim"] is False:
