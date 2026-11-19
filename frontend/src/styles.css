@@ -1306,3 +1306,12 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .tr-link .tr-wire{width:2px;height:14px}
 .pt-av.gl{color:#1b4f9c;border-color:#cfe0f6}
 .tr-root{min-width:150px}
+
+/* power states: only the working agent is lit; everything else is switched off */
+.tr-k.standby,.tr-k.idle,.tr-root.idle{opacity:.38;filter:grayscale(1) brightness(1.05);border:1.5px dashed #d5dce8;background:#f3f5f9;box-shadow:none;transform:none}
+.tr-k.standby{opacity:.28}
+.tr-k.done,.tr-root.done{opacity:.9;filter:none}
+.tr-root.wait{opacity:.7;filter:saturate(.6)}
+.tr-k.work,.tr-root.work{opacity:1;filter:none;animation:trGlow 1.6s ease-in-out infinite}
+@keyframes trGlow{0%,100%{box-shadow:0 0 0 3px rgba(45,123,224,.14),0 6px 18px rgba(45,123,224,.18)}50%{box-shadow:0 0 0 7px rgba(45,123,224,.08),0 10px 28px rgba(45,123,224,.34)}}
+@media (prefers-reduced-motion:reduce){.tr-k.work,.tr-root.work{animation:none}}

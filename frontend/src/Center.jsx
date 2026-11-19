@@ -272,7 +272,7 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
         <i className="tr-up" />
         <Avatar n={n} size={40} />
         <b>{n.short === 'Intel' ? 'Intelligence' : n.short === 'Fix' ? 'Resolution' : n.short}</b>
-        <em>{st === 'standby' ? 'Standing by' : sub}</em>
+        <em>{st === 'standby' ? 'Off · not needed' : st === 'idle' ? 'Off · waiting' : st === 'done' ? 'Finished' : sub}</em>
         <span className="tr-tick"><I.Check size={9} /></span>
       </div>
     )
@@ -296,7 +296,7 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
           <div className={`tr-root ${mSt} t-blue`}>
             <Avatar n={TEAM.find((a) => a.id === 'buddy')} size={46} />
             <b>Merchant Buddy</b><em>Parent agent</em>
-            <span className="tr-st">{lbl[mSt]}</span>
+            <span className="tr-st">{mSt === 'idle' ? 'Off' : lbl[mSt]}</span>
           </div>
           <div className="tr-stem" />
           <div className="tr-kids c3">
@@ -313,7 +313,7 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
           <div className={`tr-root pt ${pSt} t-sky`}>
             <Avatar n={FLOW.find((n) => n.id === 'paytm')} size={46} />
             <b>Paytm AI Agent</b><em>Parent agent</em>
-            <span className="tr-st">{pSt === 'work' ? 'Choosing specialist' : lbl[pSt]}</span>
+            <span className="tr-st">{pSt === 'work' ? 'Choosing specialist' : pSt === 'idle' ? 'Off' : lbl[pSt]}</span>
           </div>
           <div className="tr-stem" />
           <div className="tr-kids c4">
