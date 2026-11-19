@@ -180,13 +180,19 @@ export default function Buddy({ m, L, chat, busy, mode, run, reveal, onPreset, o
     <div className="screen buddy voice-screen">
       <Voice m={m} chat={chat} busy={busy} run={run} reveal={reveal} speak={speak} setSpeak={setSpeak} mode={mode} prompts={prompts} nudge={nudgeP}
         onText={onText} onAudio={onAudio} onPreset={onPreset} onConfirm={onConfirm}
-        onMenu={() => setView('menu')} onKhata={() => setView('khata')} onAttach={() => setAttach(!attach)} />
+        onMenu={() => setView('menu')} onKhata={() => setView('khata')} onAttach={(k) => (k === 'pod' ? podRef.current.click() : k === 'shot' ? shotRef.current.click() : setAttach(true))} />
       {attach && (
         <div className="attach-sheet" onClick={() => setAttach(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <button disabled={busy} onClick={() => { setAttach(false); podRef.current.click() }}>डिलीवरी का सबूत (फ़ोटो)</button>
-            <button disabled={busy} onClick={() => { setAttach(false); shotRef.current.click() }}>UPI स्क्रीनशॉट जाँचें</button>
-            <button className="cancel" onClick={() => setAttach(false)}>रद्द करें</button>
+          <div className="as-card" onClick={(e) => e.stopPropagation()}>
+            <div className="as-h">क्या भेजना है?</div>
+            <button className="as-opt" disabled={busy} onClick={() => { setAttach(false); podRef.current.click() }}>
+              <b>डिलीवरी का सबूत</b><span>ग्राहक को सामान मिल गया — रसीद या फ़ोटो</span>
+            </button>
+            <button className="as-opt" disabled={busy} onClick={() => { setAttach(false); shotRef.current.click() }}>
+              <b>UPI पेमेंट का स्क्रीनशॉट</b><span>ग्राहक ने पेमेंट दिखाया — असली है या नकली जाँचें</span>
+            </button>
+            <div className="as-note">कैमरा से फ़ोटो लें या गैलरी से चुनें</div>
+            <button className="as-cancel" onClick={() => setAttach(false)}>रद्द करें</button>
           </div>
         </div>
       )}

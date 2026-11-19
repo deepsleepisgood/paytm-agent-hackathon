@@ -1,9 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { summarize } from './facts.js'
 
 const AGENTS = ['intelligence', 'risk', 'resolution', 'ledger']
 const AGENT_NAMES = ['Intelligence', 'Risk', 'Resolution', 'Ledger']
 const BAR_K = [0.35, 0.62, 0.88, 1, 0.88, 0.62, 0.35]
 const CONFIRM_RE = /(haan|han|yes|ok|okay|theek|thik|bhej|kar do|हाँ|हां|ठीक)/i
+
+const CameraIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.2-2h6.2l1.2 2h2.2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="13" r="3.4" /></svg>
+)
+
+const MicIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+)
 
 const SpeakerIcon = ({ on }) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -29,7 +38,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
   const last = chat[chat.length - 1]
   const lastMe = [...chat].reverse().find((c) => c.who === 'me')
   const reply = last && last.who === 'ai' && chat.length > 1 ? last : null
-  const words = reply ? reply.text.split(/\s+/) : []
+  const info = summarize(run, reply)
   const state = busy ? 'thinking' : phase
   const agentsDone = run ? run.steps.filter((s, i) => AGENTS.includes(s.key) && i < reveal).length : 0
 
@@ -170,7 +179,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
   const pending = reply && reply.confirm && !reply.done
   latest.current = { pending, reply, chat, mode, onText, onAudio, onConfirm }
 
-  const cls = `voice ${state} ${speak ? '' : 'muted'}`
+  const cls = `voice ${state} ${speak ? '' : 'muted'} ${reply ? 'has-reply' : ''}`
   return (
     <div className={cls}>
       <div className="aurora" /><div className="aurora a2" />
@@ -189,7 +198,8 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
             <div className="vbars">{BAR_K.map((k, i) => <i key={i} style={{ '--k': k, '--d': `${(i % 4) * 0.12}s` }} />)}</div>
           </div>
         </div>
-        <div className="state-lbl">{state === 'listening' ? 'सुन रहा हूँ…' : state === 'thinking' ? 'सोच रहा हूँ…' : state === 'speaking' ? 'बता रहा हूँ' : 'माइक दबाकर बोलिए'}</div>
+        <div className="state-lbl">{state === 'listening' ? 'सुन रहा हूँ…' : state === 'thinking' ? 'सोच रहा हूँ…' : state === 'speaking' ? 'बता रहा हूँ' : reply ? 'और कुछ पूछना है?' : 'माइक दबाकर बोलिए'}</div>
+        {state === 'idle' && <button className="upbtn" onClick={() => onAttach()}><CameraIcon /> फ़ोटो भेजें</button>}
         {state === 'thinking' && (
           <div className="agent-dots">{AGENT_NAMES.map((n, i) => <span key={n} className={i < agentsDone ? 'on' : ''}><i />{n}</span>)}</div>
         )}
@@ -198,21 +208,29 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
       <div className="v-cap">
         {state === 'listening' && <div className="cap live">{live || <span className="ph">बोलिए…</span>}</div>}
         {state === 'thinking' && lastMe && <div className="cap me">“{lastMe.text}”</div>}
-        {(state === 'speaking' || state === 'idle') && lastMe && reply && <div className="cap me small">“{lastMe.text}”</div>}
-        {(state === 'speaking' || state === 'idle') && reply && (
-          <div className={`cap reply ${reply.tone || ''}`}>
-            {words.map((w, i) => <span key={i} className={i < spoken ? 'on' : ''}>{w} </span>)}
+        {(state === 'speaking' || state === 'idle') && reply && info && (
+          <div className="answer">
+            {lastMe && <div className="a-q">“{lastMe.text}”</div>}
+            <span className={`a-chip ${info.kind}`}>{info.chip}</span>
+            <h3 className="a-head">{info.headline}</h3>
+            {info.facts.length > 0 && (
+              <div className="facts">{info.facts.map((f) => <div key={f.k}><span>{f.k}</span><b>{f.v}</b></div>)}</div>
+            )}
+            {info.detail && <p className="a-detail">{info.detail}</p>}
           </div>
         )}
         {state === 'idle' && !reply && !note && (
           <div className="cap intro">
             {nudge ? (
-              <button className="nudge" onClick={() => sayPrompt(nudge)}>
+              <div className="nudge">
                 <em>आज का ज़रूरी काम</em>
                 <b>{nudge.title}</b>
                 <span>{nudge.text}</span>
-                <u>दबाइए →</u>
-              </button>
+                <div className="n-act">
+                  <button className="n-main" onClick={() => onAttach('pod')}><CameraIcon /> सबूत की फ़ोटो भेजें</button>
+                  <button className="n-alt" onClick={() => sayPrompt(nudge)}>डेमो देखें</button>
+                </div>
+              </div>
             ) : (<>हिंदी या English में पूछिए</>)}
           </div>
         )}
@@ -224,6 +242,11 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
           </div>
         )}
       </div>
+
+      {state === 'listening' && <div className="v-act"><button className="stop-btn" onClick={finish}>बोल चुका, भेजिए</button></div>}
+      {(state === 'idle' || state === 'speaking') && reply && !pending && (
+        <div className="v-act"><button className="ask-more" onClick={startListening}><MicIcon /> बोलकर और पूछिए</button></div>
+      )}
 
       <div className={`v-prompts ${state === 'idle' ? '' : 'dim'}`}>
         <div className="vp-h">या नीचे से चुनिए</div>
@@ -237,7 +260,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
         <div className="vp-links">
           <button onClick={onMenu}>सारी मदद</button>
           <button onClick={onKhata}>खाता</button>
-          <button onClick={onAttach}>फ़ोटो भेजें</button>
+          
         </div>
       </div>
     </div>
