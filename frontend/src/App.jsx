@@ -5,6 +5,7 @@ import { MERCHANTS, DEFAULT_MERCHANT } from './merchants.js'
 import { SCENARIOS, runScenario, routeText, initLedger, applyEffects, liveOk, sayText, CONFIRM_LABEL } from './engine.js'
 import Buddy from './Buddy.jsx'
 import { loadLang, saveLang, t as tr } from './i18n.js'
+import { buildAlerts } from './alerts.js'
 import Center from './Center.jsx'
 import Right from './Right.jsx'
 import { checkServices, getLedger, resetLive, getStrategyMemory, queryAudio } from './api.js'
@@ -43,12 +44,37 @@ function Badge({ status }) {
 }
 
 /* ---------------- Home ---------------- */
-function Home({ d, go }) {
+function Attention({ m, L, lang, onAlert }) {
+  const [all, setAll] = useState(false)
+  const items = buildAlerts(m, L, lang)
+  const open = items.filter((x) => !x.done)
+  const done = items.filter((x) => x.done)
+  const shown = all ? open : open.slice(0, 2)
+  return (
+    <section className="attn">
+      <div className="attn-h">
+        <div><b>{open.length ? tr(lang, 'attn') : tr(lang, 'clear')}</b><span>{open.length ? tr(lang, 'attnSub') : tr(lang, 'clearSub')}</span></div>
+        {open.length > 0 && <i className="attn-n">{open.length}</i>}
+      </div>
+      {shown.map((x) => (
+        <div key={x.id} className={`attn-card ${x.level}`}>
+          <div className="ac-top"><span className="ac-dot" /><b>{x.title}</b><em>{x.chip}</em></div>
+          <p>{x.text}</p>
+          <button className="ac-cta" onClick={() => onAlert(x.run)}>{x.cta} <span>›</span></button>
+        </div>
+      ))}
+      {open.length > 2 && <button className="attn-more" onClick={() => setAll(!all)}>{all ? tr(lang, 'showLess') : `${tr(lang, 'showAll')} (${open.length})`}</button>}
+      {done.length > 0 && <div className="attn-done">{done.map((x) => <span key={x.id}>✓ {x.title}</span>)}</div>}
+    </section>
+  )
+}
+
+function Home({ d, go, m, L, lang, onAlert }) {
   const [hide, setHide] = useState(false)
   const paid = d.transactions.filter((t) => t.status !== 'REFUNDED')
   const refunds = d.transactions.filter((t) => t.status === 'REFUNDED')
   const sum = (l) => l.reduce((s, t) => s + t.amount, 0)
-  const m = (v) => (hide ? '₹ ••••' : inr(v))
+  const mny = (v) => (hide ? '₹ ••••' : inr(v))
   const actions = [
     { l: 'Show QR', i: I.QR, to: 'qr' },
     { l: 'Settlements', i: I.Settle, to: 'settlements' },
@@ -73,6 +99,8 @@ function Home({ d, go }) {
         <div><div className="m-name">{d.merchant}</div><div className="muted sm">Business Owner · {d.mid}</div></div>
       </div>
 
+      <Attention m={m} L={L} lang={lang} onAlert={onAlert} />
+
       <div className="promos">
         <div className="promo-card navy" onClick={() => go('settlements')}>
           <b>Get your money in one click!</b>
@@ -93,17 +121,17 @@ function Home({ d, go }) {
       <div className="stats">
         <div className="stat s-blue" onClick={() => go('history')}>
           <span className="muted sm">Payments</span>
-          <div className="sv">{m(sum(paid))} ›</div>
+          <div className="sv">{mny(sum(paid))} ›</div>
           <span className="muted xs">{paid.length} Payments</span>
         </div>
         <div className="stat s-mint" onClick={() => go('settlements')}>
           <span className="muted sm">Settlement</span>
-          <div className="sv">{m(d.settlement.net)} ›</div>
+          <div className="sv">{mny(d.settlement.net)} ›</div>
           <span className="muted xs">Last settled {d.settlement.date}</span>
         </div>
         <div className="stat s-sand" onClick={() => go('refunds')}>
           <span className="muted sm">Refunds</span>
-          <div className="sv">{m(sum(refunds))} ›</div>
+          <div className="sv">{mny(sum(refunds))} ›</div>
           <span className="muted xs">{refunds.length} Payment</span>
         </div>
       </div>
@@ -517,7 +545,7 @@ export default function App() {
     qr: <QR d={d} back={back} />,
   }
   const tabs = {
-    home: <Home d={d} go={go} />,
+    home: <Home d={d} go={go} m={m} L={ledger} lang={lang} onAlert={(id) => onPreset(id)} />,
     settlements: <Settlement d={d} />,
     loans: <Loans d={d} />,
     account: <Account d={d} />,

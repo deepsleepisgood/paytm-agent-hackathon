@@ -9,6 +9,9 @@ import khataCsv from '../../data/seed/khata.csv?raw'
 import custCsv from '../../data/seed/customers.csv?raw'
 import invCsv from '../../data/seed/inventory.csv?raw'
 import ediCsv from '../../data/seed/edi_schedule.csv?raw'
+import refundsCsv from '../../data/seed/refunds.csv?raw'
+import payablesCsv from '../../data/seed/supplier_payables.csv?raw'
+import deviceCsv from '../../data/seed/device_logs.csv?raw'
 
 // Minimal CSV parser with quoted fields.
 export function parseCsv(text) {
@@ -85,6 +88,23 @@ export function buildSharma() {
     .map(([id, balance]) => ({ id, name: names[id] || id, balance }))
   const edi = parseCsv(ediCsv).slice(-7).map((e) => ({ date: e.edi_date, status: e.status }))
 
+  // Things that need the merchant's attention today, straight from the seed data.
+  const bounce = [...parseCsv(ediCsv)].reverse().find((e) => e.status === 'BOUNCED' && e.recovery === 'PENDING')
+  const refundReq = parseCsv(refundsCsv).find((r) => r.status === 'REQUESTED')
+  const payTomorrow = parseCsv(payablesCsv).find((p) => p.payable_id === 'PAY-TOMORROW')
+  const dev = parseCsv(deviceCsv)
+  const lastDev = dev[dev.length - 1]
+  const missed = dev.filter((d) => d.event === 'HEARTBEAT_MISSED' && d.ts >= '2026-11-15').length
+  const facts = {
+    edi: bounce && { date: bounce.edi_date, amount: Number(bounce.amount), reason: bounce.bounce_reason },
+    cash: refundReq && payTomorrow && {
+      refund: { order: '#' + refundReq.order_id, amount: Number(refundReq.amount) },
+      payable: { supplier: payTomorrow.supplier.split(' ').slice(0, 2).join(' '), amount: Number(payTomorrow.amount), due: payTomorrow.due_date },
+      projected: 4700 - Number(refundReq.amount), // README: ₹4,700 collected by 11:30 on 19 Nov minus the refund request
+    },
+    soundbox: lastDev && { battery: Number(lastDev.battery_health_pct), missed },
+  }
+
   const profileOut = {
     mid: profile.mid, name: profile.name, owner: profile.owner, category: profile.category, segment: 'SMALL_PLUS',
     city: profile.address.city, locality: profile.address.line1,
@@ -103,6 +123,7 @@ export function buildSharma() {
       { order_id: '#9981', txn_id: '#9981', amount: cb.amount, type: 'CHARGEBACK', status: 'HELD', pod_required: true, pod_due_hours: 48, delivered: true },
     ] },
     khata,
+    facts,
     policies: strategy.learned_policies,
     d: {
       mid: profile.mid,

@@ -16,6 +16,7 @@ export const STR = {
     asNote: 'कैमरा से फ़ोटो लें या गैलरी से चुनें', cancel: 'रद्द करें', mute: 'आवाज़ बंद करें', unmute: 'आवाज़ चालू करें',
     p_settle: 'पैसा कहाँ कटा?', p_utr: 'UTR जाँचें', p_cb: 'डिलीवरी प्रूफ भेजें', p_hold: 'सेटलमेंट होल्ड', p_edi: 'लोन EDI फेल', p_dup: 'दो बार पैसा कटा', p_growth: 'धंधा कैसे बढ़ाएँ',
     nTitleCb: (o, a) => `${o} का ₹${a} रुका हुआ है`, nTextCb: 'डिलीवरी का सबूत भेजिए, पैसा 48 घंटे में छूट जाएगा।', nTitleSt: 'आज का हिसाब देखें', nTextSt: 'सेटलमेंट में कितना कटा, एक बटन में जानिए।',
+    attn: 'ध्यान दीजिए', attnSub: 'खोलते ही ये पढ़ लीजिए — क्या हुआ और अब क्या करना है', clear: 'सब ठीक है', clearSub: 'अभी कोई ज़रूरी काम बाकी नहीं है', handled: 'हो गया', showAll: 'सभी देखें', showLess: 'कम दिखाएँ',
     cHold: 'हो गया', cWait: 'आपकी मंज़ूरी चाहिए', cTeam: 'टीम को भेजा', cFake: 'नकली लगता है', cPend: 'पेंडिंग',
   },
   en: {
@@ -29,6 +30,7 @@ export const STR = {
     asNote: 'Take a photo with the camera or choose from gallery', cancel: 'Cancel', mute: 'Mute voice replies', unmute: 'Unmute voice replies',
     p_settle: 'Why was money cut?', p_utr: 'Check a UTR', p_cb: 'Send delivery proof', p_hold: 'Settlement hold', p_edi: 'Loan EDI failed', p_dup: 'Charged twice', p_growth: 'Grow my business',
     nTitleCb: (o, a) => `₹${a} is on hold for ${o}`, nTextCb: 'Send the delivery proof and the money is released within 48 hours.', nTitleSt: 'See today’s settlement', nTextSt: 'Find out what was deducted, in one tap.',
+    attn: 'Needs your attention', attnSub: 'Read these first — what happened and what to do now', clear: 'All clear', clearSub: 'Nothing urgent needs you right now', handled: 'Handled', showAll: 'View all', showLess: 'Show less',
     cHold: 'Done', cWait: 'Needs your OK', cTeam: 'Sent to team', cFake: 'Looks fake', cPend: 'Pending',
   },
 }
