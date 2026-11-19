@@ -395,7 +395,7 @@ body{-webkit-font-smoothing:antialiased;letter-spacing:-.011em}
 .col-h b{font-weight:600;letter-spacing:-.015em}
 
 /* ===== refinements: logo blend, smaller title, insights row ===== */
-img[alt="Paytm for Business"]{mix-blend-mode:multiply}
+img[alt="Paytm for Business"]{mix-blend-mode:normal}
 .ios-nav{padding:52px 18px 0}
 .large-title{padding:0 18px 8px}
 .large-title h1{font-size:24px;font-weight:700;letter-spacing:-.02em}
@@ -944,3 +944,46 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .phone.scrolled .topbar{background:rgba(242,242,247,.74);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:0 .5px 0 rgba(60,60,67,.22)}
 .hdr{background:rgba(249,249,249,.76);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
 .content{scroll-padding-top:60px}
+
+/* ================= Needs attention — Apple-style: one featured card + grouped list ================= */
+.az{margin:8px 16px 0;display:flex;flex-direction:column;gap:12px}
+.az-h{display:flex;align-items:baseline;justify-content:space-between;padding:0 4px}
+.az-h h2{font-size:24px;font-weight:700;letter-spacing:-.025em;color:#0a2a63;line-height:1.1}
+.az-h span{font-size:14px;color:#8a97ab;font-weight:500}
+/* featured */
+.az-top{background:#fff;border-radius:24px;padding:20px 20px 16px;box-shadow:0 1px 2px rgba(10,42,99,.05),0 14px 34px rgba(10,42,99,.08)}
+.az-top.urgent{background:linear-gradient(180deg,#fff8ee 0%,#fff 46%)}
+.az-eyebrow{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#2a6bb8}
+.az-top.urgent .az-eyebrow{color:#b8690b}
+.az-top h3{font-size:22px;line-height:1.2;font-weight:700;letter-spacing:-.022em;color:#0a2a63;margin:8px 0 6px}
+.az-top p,.az-body p{font-size:15px;line-height:1.45;color:#5a6a85;margin:0}
+.az-fig{display:flex;margin-top:16px;padding-top:14px;border-top:.5px solid rgba(60,60,67,.18)}
+.az-fig>div{flex:1;min-width:0;padding:0 12px}.az-fig>div:first-child{padding-left:0}.az-fig>div+div{border-left:.5px solid rgba(60,60,67,.18)}
+.az-fig span{display:block;font-size:12px;color:#8a97ab;font-weight:500}
+.az-fig b{display:block;margin-top:3px;font-size:19px;font-weight:700;color:#0a2a63;letter-spacing:-.015em;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.az-act{display:flex;align-items:center;gap:6px;margin-top:16px}
+.az-act.big{flex-direction:column;gap:2px}
+.az-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#0a2a63;color:#fff;font-size:16px;font-weight:600;padding:0 22px;height:48px;border-radius:14px}
+.az-act.big .az-btn{width:100%}
+.az-btn:active{transform:scale(.98)}
+.az-link{font-size:15px;font-weight:600;color:#2a6bb8;padding:10px 12px}
+/* grouped list */
+.az-list{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 2px rgba(10,42,99,.04),0 8px 22px rgba(10,42,99,.05)}
+.az-row+.az-row{border-top:.5px solid rgba(60,60,67,.16);margin-left:62px}
+.az-row-h{width:100%;display:flex;align-items:center;gap:14px;padding:13px 16px;text-align:left}
+.az-row+.az-row .az-row-h{margin-left:-62px;padding-left:16px;width:calc(100% + 62px)}
+.az-ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;font-weight:700;color:#fff;flex:none}
+.az-ic.urgent{background:#e5604f}.az-ic.soon{background:#f0a24a}.az-ic.info{background:#4a8fe0}
+.az-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.az-t b{font-size:16px;font-weight:600;color:#0a2a63;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.az-t em{font-style:normal;font-size:13.5px;color:#8a97ab;margin-top:1px}
+.az-chev{font-size:22px;color:#c4cbd6;transition:transform .3s var(--ease)}
+.az-row.open .az-chev{transform:rotate(90deg)}
+.az-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .4s var(--ease-out)}
+.az-body>div{overflow:hidden;padding:0 16px 0 62px}
+.az-row.open .az-body{grid-template-rows:1fr}
+.az-row.open .az-body>div{padding-bottom:14px}
+.az-body .az-fig{margin-top:12px}.az-body .az-act{margin-top:10px}
+.az-body .az-btn{height:42px;font-size:15px;border-radius:12px;padding:0 18px}
+.az-done{display:flex;flex-wrap:wrap;gap:6px;padding:0 4px}
+.az-done span{font-size:12.5px;font-weight:600;color:#0e7a50;background:#e3f5ec;padding:5px 11px;border-radius:99px}

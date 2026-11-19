@@ -44,41 +44,75 @@ function Badge({ status }) {
 }
 
 /* ---------------- Home ---------------- */
+const GLYPH = { cb: '!', cash: '₹', edi: '↻', sb: 'i' }
+const CamIcon = () => (
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.2-2h6.2l1.2 2h2.2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="13" r="3.4" /></svg>
+)
+
+// Apple-style: one featured card for the most urgent item, the rest as a tidy grouped list that expands in place.
 function Attention({ m, L, lang, onAlert, onUpload }) {
-  const [all, setAll] = useState(false)
+  const [openId, setOpenId] = useState(null)
   const [later, setLater] = useState([])
   const file = useRef(null)
+  const hi = lang === 'hi'
   const items = buildAlerts(m, L, lang)
   const open = items.filter((x) => !x.done && !later.includes(x.id))
   const done = items.filter((x) => x.done)
-  const shown = all ? open : open.slice(0, 2)
-  const hi = lang === 'hi'
+  const [top, ...rest] = open
+
+  const Figures = ({ x }) => (
+    <div className="az-fig">{x.stats.map((s) => <div key={s.k}><span>{s.k}</span><b>{s.v}</b></div>)}</div>
+  )
+  const Actions = ({ x, big }) => (
+    <div className={`az-act ${big ? 'big' : ''}`}>
+      <button className="az-btn" onClick={() => (x.photo ? file.current.click() : onAlert(x.run))}>{x.photo && <CamIcon />}{x.cta}</button>
+      {x.photo
+        ? <button className="az-link" onClick={() => onAlert(x.run)}>{hi ? 'डेमो देखें' : 'See demo'}</button>
+        : <button className="az-link" onClick={() => setLater([...later, x.id])}>{hi ? 'बाद में' : 'Remind me later'}</button>}
+    </div>
+  )
+
   return (
-    <section className="attn">
-      <div className="attn-h">
-        <div><b>{open.length ? tr(lang, 'attn') : tr(lang, 'clear')}</b><span>{open.length ? tr(lang, 'attnSub') : tr(lang, 'clearSub')}</span></div>
-        {open.length > 0 && <i className="attn-n">{open.length}</i>}
+    <section className="az">
+      <div className="az-h">
+        <h2>{open.length ? tr(lang, 'attn') : tr(lang, 'clear')}</h2>
+        <span>{open.length ? (hi ? `${open.length} चीज़ें` : `${open.length} item${open.length > 1 ? 's' : ''}`) : tr(lang, 'clearSub')}</span>
       </div>
-      {shown.map((x) => (
-        <div key={x.id} className={`attn-card ${x.level}`}>
-          <span className="ac-chip">{x.chip}</span>
-          <b className="ac-title">{x.title}</b>
-          <p className="ac-text">{x.text}</p>
-          <div className="ac-stats">{x.stats.map((s) => <div key={s.k}><span>{s.k}</span><b>{s.v}</b></div>)}</div>
-          <div className="ac-act">
-            <button className="ac-cta" onClick={() => (x.photo ? file.current.click() : onAlert(x.run))}>
-              {x.photo && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.2-2h6.2l1.2 2h2.2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="13" r="3.4" /></svg>}
-              {x.cta}
-            </button>
-            {x.photo
-              ? <button className="ac-alt" onClick={() => onAlert(x.run)}>{hi ? 'डेमो देखें' : 'See demo'}</button>
-              : <button className="ac-alt" onClick={() => setLater([...later, x.id])}>{hi ? 'बाद में' : 'Later'}</button>}
-          </div>
+
+      {top && (
+        <article className={`az-top ${top.level}`}>
+          <div className="az-eyebrow">{top.chip}</div>
+          <h3>{top.title}</h3>
+          <p>{top.text}</p>
+          <Figures x={top} />
+          <Actions x={top} big />
+        </article>
+      )}
+
+      {rest.length > 0 && (
+        <div className="az-list">
+          {rest.map((x) => {
+            const isOpen = openId === x.id
+            return (
+              <div key={x.id} className={`az-row ${isOpen ? 'open' : ''}`}>
+                <button className="az-row-h" onClick={() => setOpenId(isOpen ? null : x.id)} aria-expanded={isOpen}>
+                  <span className={`az-ic ${x.level}`}>{GLYPH[x.id] || '!'}</span>
+                  <span className="az-t"><b>{x.title}</b><em>{x.chip}</em></span>
+                  <span className="az-chev">›</span>
+                </button>
+                <div className="az-body"><div>
+                  <p>{x.text}</p>
+                  <Figures x={x} />
+                  <Actions x={x} />
+                </div></div>
+              </div>
+            )
+          })}
         </div>
-      ))}
+      )}
+
       <input ref={file} type="file" hidden accept="image/*,.pdf" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('pod', f); e.target.value = '' }} />
-      {open.length > 2 && <button className="attn-more" onClick={() => setAll(!all)}>{all ? tr(lang, 'showLess') : `${tr(lang, 'showAll')} (${open.length})`}</button>}
-      {done.length > 0 && <div className="attn-done">{done.map((x) => <span key={x.id}>✓ {x.title}</span>)}</div>}
+      {done.length > 0 && <div className="az-done">{done.map((x) => <span key={x.id}>✓ {x.title}</span>)}</div>}
     </section>
   )
 }
