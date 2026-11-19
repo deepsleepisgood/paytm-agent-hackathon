@@ -418,7 +418,7 @@ const LIVE_MERCHANT = 'sharma_electronics' // real backends only know PAYTM_MERC
 export default function App() {
   const [mkey, setMkey] = useState(DEFAULT_MERCHANT)
   const m = MERCHANTS[mkey]
-  const [tab, setTab] = useState('buddy')
+  const [tab, setTab] = useState('home')
   const [sub, setSub] = useState(null)
   const [svc, setSvc] = useState({ merchant: false, paytm: false })
   const [mode, setMode] = useState('local') // 'local' | 'live'
@@ -456,7 +456,7 @@ export default function App() {
   const reset = (key = mkey, resetServices = false) => {
     clear()
     const nm = MERCHANTS[key]
-    setLedger(initLedger(nm)); setChat(welcome(nm)); setRun(null); setReveal(0); setBusy(false); setTab('buddy'); setSub(null)
+    setLedger(initLedger(nm)); setChat(welcome(nm)); setRun(null); setReveal(0); setBusy(false); setTab('home'); setSub(null)
     if (resetServices && modeRef.current === 'live') resetLive()
   }
   const pickMerchant = (key) => {
