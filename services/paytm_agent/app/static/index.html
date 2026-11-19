@@ -4,11 +4,250 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Paytm Support Console</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --ink:#0b1b33; --muted:#5b6b85; --line:#e3e8ef;
+    --navy:#012b72; --cyan:#00baf2; --ok:#0a7d4b; --warn:#9a3412; --urgent:#b4232a;
+    --okbg:#e8f6ee; --warnbg:#fdf0e7; --urgentbg:#fdecec;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0b1220; --card:#121c2e; --ink:#e8eef8; --muted:#9bacc6; --line:#24314a;
+      --navy:#cfe3ff; --okbg:#10301f; --warnbg:#32210f; --urgentbg:#361417;
+      --ok:#5ad19a; --warn:#f0a868; --urgent:#ff8086;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0b1220; --card:#121c2e; --ink:#e8eef8; --muted:#9bacc6; --line:#24314a;
+    --navy:#cfe3ff; --okbg:#10301f; --warnbg:#32210f; --urgentbg:#361417;
+    --ok:#5ad19a; --warn:#f0a868; --urgent:#ff8086;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  header{background:var(--navy);color:#fff;padding:14px 16px;display:flex;
+    align-items:baseline;gap:12px;flex-wrap:wrap}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) header{background:#0a1526;color:var(--ink)}}
+  header h1{margin:0;font-size:17px;font-weight:650}
+  header .sub{font-size:13px;opacity:.85}
+  header .live{margin-left:auto;font-size:12px;opacity:.85}
+  main{max-width:1100px;margin:0 auto;padding:16px}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+    margin:22px 0 8px}
+  .strip{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .tile .v{font-size:24px;font-weight:650;font-variant-numeric:tabular-nums}
+  .tile .k{font-size:12px;color:var(--muted);margin-top:2px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+    text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);font-weight:600}
+  td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:color-mix(in srgb,var(--cyan) 7%,transparent)}
+  .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:650;
+    white-space:nowrap}
+  .ok{background:var(--okbg);color:var(--ok)}
+  .warn{background:var(--warnbg);color:var(--warn)}
+  .urg{background:var(--urgentbg);color:var(--urgent)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+  .muted{color:var(--muted)}
+  .empty{padding:22px 14px;text-align:center;color:var(--muted);font-size:14px}
+  button{font:inherit;border:0;border-radius:7px;padding:5px 11px;cursor:pointer;
+    background:var(--cyan);color:#012b72;font-weight:650}
+  button:disabled{opacity:.45;cursor:default}
+  dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);
+    max-width:620px;width:92vw;padding:0}
+  dialog::backdrop{background:rgba(3,10,22,.55)}
+  .dh{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center}
+  .dh h3{margin:0;font-size:15px}
+  .db{padding:14px 16px}
+  .kv{display:grid;grid-template-columns:150px 1fr;gap:6px 12px;font-size:14px}
+  .kv dt{color:var(--muted)}
+  .kv dd{margin:0}
+  .trace{margin:14px 0 0;padding:0;list-style:none}
+  .trace li{display:grid;grid-template-columns:22px 1fr;gap:10px;padding:8px 0;
+    border-top:1px solid var(--line)}
+  .trace .n{width:22px;height:22px;border-radius:50%;background:var(--cyan);color:#012b72;
+    display:grid;place-items:center;font-size:12px;font-weight:700}
+  .trace .idle .n{background:var(--line);color:var(--muted)}
+  .trace .ag{font-weight:650;font-size:13px}
+  .trace .no{font-size:13px;color:var(--muted)}
+  .dfoot{padding:12px 16px;border-top:1px solid var(--line);text-align:right}
+  @media (max-width:640px){ .kv{grid-template-columns:1fr} .hide-s{display:none} }
+</style>
 </head>
 <body>
-<main id="console">
-  <h1>Paytm support console</h1>
-  <p>The agent is running. The queue, call feed and numbers strip arrive in stage 8.</p>
+<header>
+  <h1>Paytm Support Console</h1>
+  <span class="sub">Merchant queries handled by the AI teammate</span>
+  <span class="live" id="live">connecting…</span>
+</header>
+
+<main>
+  <h2>Today</h2>
+  <section class="strip" id="strip"></section>
+
+  <h2>Needs a person <span id="qn" class="muted"></span></h2>
+  <section class="card">
+    <table>
+      <thead><tr><th>Merchant</th><th>Why</th><th class="hide-s">Next step</th><th>Status</th><th></th></tr></thead>
+      <tbody id="queue"></tbody>
+    </table>
+    <div class="empty" id="queue-empty">Nothing waiting. Every case so far was closed by the agent.</div>
+  </section>
+
+  <h2>All calls</h2>
+  <section class="card">
+    <table>
+      <thead><tr><th>Time</th><th>Merchant</th><th>Asked about</th><th class="hide-s">What the agent found</th><th>Outcome</th></tr></thead>
+      <tbody id="feed"></tbody>
+    </table>
+    <div class="empty" id="feed-empty">No calls yet. Send one to <span class="mono">POST /a2a/dispatch</span>.</div>
+  </section>
 </main>
+
+<dialog id="detail">
+  <div class="dh"><h3 id="d-title">Call</h3><span id="d-pill"></span></div>
+  <div class="db"><dl class="kv" id="d-kv"></dl><ul class="trace" id="d-trace"></ul></div>
+  <div class="dfoot"><button id="d-close">Close</button></div>
+</dialog>
+
+<script>
+// Served same-origin by the agent itself, so the API is just a relative path.
+const api = p => fetch(p, {headers:{accept:'application/json'}}).then(r => r.ok ? r.json() : null);
+
+// A dash, never NaN or undefined: an absent average is an absence, and on a support
+// screen "0 ms" reads as "humans resolve instantly", which looks like a broken product.
+const num  = v => (v === null || v === undefined || Number.isNaN(v)) ? '—' : v;
+// "0 ms" is honest but reads as a broken timer, so sub-millisecond shows as "<1 ms".
+const secs = v => (v === null || v === undefined) ? '—'
+  : v < 1 ? '<1 ms' : v < 1000 ? Math.round(v)+' ms' : (v/1000).toFixed(1)+' s';
+const mins = v => (v === null || v === undefined) ? '—' : (v < 60000 ? (v/1000).toFixed(0)+' s' : (v/60000).toFixed(1)+' min');
+const pct  = v => (v === null || v === undefined) ? '—' : Math.round(v*100)+'%';
+const esc  = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clock = iso => { try { return new Date(iso).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); } catch { return '—'; } };
+const words = s => esc(s).replace(/_/g,' ').toLowerCase();
+
+const OUTCOME = {
+  RESOLVED_BY_AI:   ['ok',  'closed by AI'],
+  ESCALATED:        ['urg', 'with a person'],
+  AWAITING_MERCHANT:['warn','waiting on merchant'],
+};
+
+function strip(m){
+  if(!m) return;
+  const tiles = [
+    [num(m.calls_total),            'calls today'],
+    [num(m.resolved_by_ai),         'closed by AI'],
+    [pct(m.auto_resolution_rate),   'closed without a person'],
+    [num(m.escalated),              'passed to a person'],
+    [secs(m.avg_resolution_ms_ai),  'AI time to answer'],
+    [mins(m.avg_resolution_ms_human),'human time to close'],
+    [num(m.fraud_flags),            'payment checks flagged'],
+    [num(m.proactive_alerts),       'alerts Paytm raised first'],
+  ];
+  document.getElementById('strip').innerHTML = tiles
+    .map(([v,k]) => `<div class="tile"><div class="v">${esc(v)}</div><div class="k">${esc(k)}</div></div>`).join('');
+}
+
+function queue(tickets){
+  const open = (tickets||[]).filter(t => t.status !== 'RESOLVED');
+  document.getElementById('qn').textContent = open.length ? `(${open.length})` : '';
+  document.getElementById('queue-empty').style.display = open.length ? 'none' : '';
+  document.getElementById('queue').innerHTML = open.map(t => {
+    const urgent = t.urgency === 'URGENT';
+    const claimed = t.status === 'CLAIMED';
+    return `<tr data-ticket="${esc(t.ticket_id)}">
+      <td>${esc(t.merchant_name)}<div class="muted mono">${esc(t.ticket_id)}</div></td>
+      <td>${urgent ? '<span class="pill urg">urgent</span> ' : ''}${esc(t.reason_text || words(t.reason_code))}</td>
+      <td class="hide-s muted">${esc(t.suggested_next_step || '—')}</td>
+      <td>${claimed ? `<span class="pill warn">${esc(t.claimed_by)}</span>` : '<span class="pill urg">open</span>'}</td>
+      <td>${claimed ? '' : `<button data-claim="${esc(t.ticket_id)}">Claim</button>`}</td>
+    </tr>`;
+  }).join('');
+}
+
+function feed(rows){
+  document.getElementById('feed-empty').style.display = (rows||[]).length ? 'none' : '';
+  document.getElementById('feed').innerHTML = (rows||[]).map(s => {
+    const [cls, label] = OUTCOME[s.outcome] || ['warn', words(s.outcome)];
+    return `<tr data-summary="${esc(s.summary_id)}">
+      <td class="mono">${clock(s.created_at)}</td>
+      <td>${esc(s.merchant_name)}</td>
+      <td>${words(s.intent)}</td>
+      <td class="hide-s muted">${esc(s.found || '—')}</td>
+      <td><span class="pill ${cls}">${esc(label)}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function row(dt, dd){ return `<dt>${esc(dt)}</dt><dd>${dd}</dd>`; }
+
+async function openSummary(id){
+  const s = await api('/summaries/' + id);
+  if(!s) return;
+  const [cls, label] = OUTCOME[s.outcome] || ['warn', words(s.outcome)];
+  document.getElementById('d-title').textContent = words(s.intent);
+  document.getElementById('d-pill').innerHTML = `<span class="pill ${cls}">${esc(label)}</span>`;
+  document.getElementById('d-kv').innerHTML = [
+    row('Merchant', `${esc(s.merchant_name)} <span class="muted mono">${esc(s.mid)}</span>`),
+    row('Time', `${clock(s.created_at)} · answered in ${secs(s.duration_ms)}`),
+    s.merchant_said ? row('Merchant said', esc(s.merchant_said))
+                    : row('Merchant said', '<span class="muted">not shared (data minimisation)</span>'),
+    row('What the agent found', esc(s.found || '—')),
+    row('Action taken', esc(s.action_taken || '—')),
+    s.ticket_id ? row('Ticket', `<span class="mono">${esc(s.ticket_id)}</span>`) : '',
+    row('Language', esc(s.language_code || '—')),
+  ].join('');
+  // The mesh is the thing worth showing: which sub-agents worked this case.
+  document.getElementById('d-trace').innerHTML = (s.agent_trace||[]).map(e => `
+    <li class="${e.acted ? '' : 'idle'}">
+      <span class="n">${esc(e.step)}</span>
+      <span><span class="ag">${esc(e.agent)}</span>${e.acted ? '' : ' <span class="muted">· idle</span>'}
+      <div class="no">${esc(e.note)}</div></span>
+    </li>`).join('');
+  document.getElementById('detail').showModal();
+}
+
+async function claim(id, btn){
+  btn.disabled = true;
+  const who = (localStorage.getItem('employee') || 'Asha');
+  const r = await fetch(`/tickets/${encodeURIComponent(id)}/claim`, {
+    method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({employee: who}),
+  });
+  if(!r.ok){ btn.disabled = false; btn.textContent = 'Taken'; }
+  tick();
+}
+
+document.addEventListener('click', e => {
+  const c = e.target.closest('[data-claim]');
+  if(c){ e.stopPropagation(); claim(c.dataset.claim, c); return; }
+  const fr = e.target.closest('[data-summary]');
+  if(fr){ openSummary(fr.dataset.summary); return; }
+  const qr = e.target.closest('[data-ticket]');
+  if(qr){ openTicket(qr.dataset.ticket); }
+});
+document.getElementById('d-close').onclick = () => document.getElementById('detail').close();
+
+async function openTicket(id){
+  const t = (await api('/tickets'))?.tickets?.find(x => x.ticket_id === id);
+  if(!t) return;
+  if(t.summary_id) return openSummary(t.summary_id);
+}
+
+let failures = 0;
+async function tick(){
+  const [m, t, f] = await Promise.all([api('/metrics'), api('/tickets'), api('/summaries?limit=50')]);
+  const live = document.getElementById('live');
+  if(!m){ failures++; live.textContent = `agent unreachable (${failures})`; return; }
+  failures = 0;
+  live.textContent = 'live · refreshing every 3s';
+  strip(m); queue(t?.tickets); feed(f?.summaries);
+}
+tick();
+setInterval(tick, 3000);
+</script>
 </body>
 </html>
