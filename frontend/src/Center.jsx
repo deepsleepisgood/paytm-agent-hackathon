@@ -63,7 +63,9 @@ const SUPPORT = {
   REFUND_MANAGE: ['risk'], CHARGEBACK_RESOLVE: ['risk'], MANDATE_TROUBLESHOOT: ['risk'], LOAN_CLOSURE_NOC: ['risk'],
   CASHFLOW_EDI_SWITCH: ['intelligence'], SETTLEMENT_HOLD_BANK: ['intelligence'], DUPLICATE_RECONCILE: ['resolution'],
 }
-const KIDS = ['consent', 'intelligence', 'risk', 'resolution', 'ledger']
+const KIDS = ['intelligence', 'risk', 'resolution', 'ledger']
+const PAYTM = { id: 'paytm', pt: true, key: 'dispatch', name: 'Paytm AI Agent (parent)', short: 'Paytm', side: 'Paytm side', role: 'Receives the signed request and picks the right specialist', tone: 'sky', link: 'Picks a specialist',
+  now: 'Reading the request and choosing the specialist', tasks: ['Receiving the signed request from the merchant’s agent', 'Verifying the consent token', 'Deciding which specialist handles it', 'Collecting the answers and replying'], tools: ['A2A endpoint', 'Specialist router'] }
 
 // Builds the run plan: which agents are used for this request, in what order, and what state each is in.
 function plan(run, reveal) {
@@ -72,14 +74,16 @@ function plan(run, reveal) {
   const lead = Object.keys(LEAD).find((k) => LEAD[k].includes(intent)) || 'resolution'
   const support = SUPPORT[intent] || []
   const idx = (k) => steps.findIndex((s) => s.key === k)
-  const used = (id) => id === 'consent' || id === 'ledger' || id === lead || support.includes(id)
+  const used = (id) => id === 'ledger' || id === lead || support.includes(id)
   const role = (id) => (id === lead ? 'lead' : support.includes(id) ? 'support' : id === 'consent' ? 'gate' : 'ops')
   const buddy = TEAM.find((a) => a.id === 'buddy')
   const kid = (id) => ({ ...TEAM.find((a) => a.id === id), key: id, role2: role(id) })
   const seq = [
-    { ...buddy, key: 'eval', uid: 'buddy-1', name: 'Merchant Buddy (parent)', short: 'Buddy', link: 'Routes to ' + TEAM.find((a) => a.id === lead).short, role: 'Understands the request and picks who handles it', now: 'Understanding the request and choosing who should handle it', tasks: ['Understanding what the merchant said', 'Recalling this merchant’s history', 'Deciding which specialist should handle this', 'Asking for permission before sharing anything'], start: 0 },
+    { ...buddy, key: 'eval', uid: 'buddy-1', name: 'Merchant Buddy (parent)', short: 'Buddy', link: 'Asks Paytm', role: 'Merchant-side agent: understands the request and asks Paytm', now: 'Understanding the request and deciding to ask Paytm', tasks: ['Understanding what the merchant said', 'Recalling this merchant’s history', 'Scoring the options and picking one', 'Asking for permission before sharing anything'], start: 0 },
+    { ...TEAM.find((a) => a.id === 'consent'), key: 'consent', role2: 'gate' },
+    { ...PAYTM },
     ...KIDS.filter(used).map(kid),
-    { ...buddy, id: 'buddy', art: 'buddy', key: 'reply', uid: 'buddy-2', name: 'Merchant Buddy (parent)', short: 'Buddy', side: 'Merchant side', link: '', role: 'Takes the answer and updates the app', now: 'Turning the answer into a reply and updating the app', tasks: ['Receiving the answers from the agents', 'Updating the ledger and the app', 'Speaking the reply to the merchant'], tools: ['Voice reply', 'App state'] },
+    { ...buddy, id: 'buddy', art: 'buddy', key: 'reply', uid: 'buddy-2', name: 'Merchant Buddy (parent)', short: 'Buddy', side: 'Merchant side', link: '', role: 'Merchant-side agent: takes the answer and updates the app', now: 'Turning the answer into a reply and updating the app', tasks: ['Receiving the answer from Paytm', 'Updating the ledger and the app', 'Speaking the reply to the merchant'], tools: ['Voice reply', 'App state'] },
   ]
   // each used agent works from its own step until the next used agent's step (skipped agents' time is absorbed)
   seq.forEach((n, k) => {
@@ -87,13 +91,12 @@ function plan(run, reveal) {
     const nextOwn = k < seq.length - 1 ? idx(seq[k + 1].key) : own
     n.start = k === 0 ? 0 : Math.max(own, 0)
     n.end = k === 0 ? Math.max(own, 0) : k === seq.length - 1 ? own : Math.max(nextOwn - 1, own)
-    if (n.id === 'consent') n.end = Math.max(idx('dispatch') >= 0 ? idx('dispatch') : own, own)
   })
   const stOf = (n) => (idx(n.key) < 0 ? 'idle' : reveal > n.end ? 'done' : reveal >= n.start ? 'work' : 'idle')
   const states = seq.map(stOf)
   const byId = {}
   seq.forEach((n, k) => { byId[n.id === 'buddy' && n.uid === 'buddy-2' ? 'buddy2' : n.id] = states[k] })
-  return { seq, states, byId, lead, support, usedCount: new Set(seq.map((n) => n.id)).size, role }
+  return { seq, states, byId, lead, support, usedCount: new Set(seq.map((n) => n.id).filter((x) => x !== 'consent')).size, role }
 }
 
 // Cyberpunk cartoon AI faces: one character per agent (skin, neon hair/gear, expression).
@@ -209,6 +212,7 @@ function Robot({ id, size }) {
 }
 
 function Avatar({ n, size = 44 }) {
+  if (n.pt) return <div className="ag-av" style={{ '--s': size + 'px' }}><span className="pt-av" style={{ width: size * .94, height: size * .94, fontSize: size * .3 }}><b>pay</b><i>tm</i></span></div>
   return (
     <div className="ag-av" style={{ '--s': size + 'px' }}>
       <Robot id={n.art || n.id} size={Math.round(size * 0.94)} />
@@ -231,9 +235,10 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
     if (!s) return ''
     if (n.key === 'reply') return 'Reply spoken · app and ledger updated'
     if (n.key === 'eval') {
-      if (s.options) { const o = s.options.find((x) => x.id === s.selected); return `Chose ${lead.name} · option ${s.selected}: ${o ? o.label : ''}` }
-      return `Chose ${lead.name}`
+      if (s.options) { const o = s.options.find((x) => x.id === s.selected); return `Option ${s.selected}: ${o ? o.label : ''} · asked Paytm` }
+      return 'Sent a signed request to the Paytm AI Agent'
     }
+    if (n.id === 'paytm') return `Picked ${lead.name}${P.support.length ? ' + ' + P.support.map((x) => TEAM.find((a) => a.id === x).name).join(', ') + ' to help' : ''}`
     if (n.id === 'consent') return `Token ${s.consent.token.slice(0, 18)}… · ${s.consent.purpose.replace(/_/g, ' ')}`
     return s.say
   }
@@ -248,7 +253,7 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
   return (
     <div className="af">
       <div className="af-h">
-        <div><b>Agent tree</b><span>The parent decides who is needed. Only they work; the rest stand by</span></div>
+        <div><b>Agent tree</b><span>Merchant agent asks, Paytm agent picks a specialist. Only needed ones work</span></div>
         <div className="af-chips">
           <i>{P.usedCount} of 6 agents used</i>
           <i className={escalated ? 'esc' : 'auto'}>{escalated ? '1 human handoff' : '0 humans in the loop'}</i>
@@ -256,14 +261,26 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
         </div>
       </div>
 
-      {/* tree: parent on top, child agents below; used ones light up, the rest stand by */}
+      {/* tree: merchant-side agent and Paytm-side agent on top, Paytm's specialists below */}
       <div className="tr">
-        <div className={`tr-root ${rootSt} t-blue`}>
-          <Avatar n={TEAM.find((a) => a.id === 'buddy')} size={50} />
-          <b>Merchant Buddy</b><em>Parent agent</em>
-          <span className="tr-st">{rootSt === 'work' ? 'Working' : rootSt === 'wait' ? 'Waiting for the team' : rootSt === 'done' ? 'Done' : ''}</span>
+        <div className="tr-top">
+          <div className={`tr-root ${rootSt} t-blue`}>
+            <span className="tr-side">Merchant side</span>
+            <Avatar n={TEAM.find((a) => a.id === 'buddy')} size={46} />
+            <b>Merchant Buddy</b>
+            <span className="tr-st">{rootSt === 'work' ? 'Working' : rootSt === 'wait' ? 'Waiting for Paytm' : rootSt === 'done' ? 'Done' : 'Ready'}</span>
+          </div>
+          <div className={`tr-link ${P.byId.consent || 'idle'} ${P.byId.paytm === 'work' || P.byId.paytm === 'done' ? 'sent' : ''}`}>
+            <i className="tr-wire" /><span>Signed request · consent</span><i className="tr-wire" />
+          </div>
+          <div className={`tr-root pt ${P.byId.paytm || 'idle'} t-sky`}>
+            <span className="tr-side">Paytm side</span>
+            <Avatar n={FLOW.find((n) => n.id === 'paytm')} size={46} />
+            <b>Paytm AI Agent</b>
+            <span className="tr-st">{P.byId.paytm === 'work' ? 'Choosing specialist' : P.byId.paytm === 'done' ? 'Done' : 'Ready'}</span>
+          </div>
         </div>
-        <div className="tr-stem" />
+        <div className="tr-stem pt" />
         <div className="tr-kids">
           {KIDS.map((id) => {
             const n = TEAM.find((a) => a.id === id)
@@ -274,7 +291,7 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
                 <i className="tr-up" />
                 <Avatar n={n} size={40} />
                 <b>{n.short === 'Intel' ? 'Intelligence' : n.short === 'Fix' ? 'Resolution' : n.short}</b>
-                <em>{st === 'standby' ? 'Standing by' : r === 'lead' ? 'Lead specialist' : r === 'support' ? 'Called in to help' : r === 'gate' ? 'Always first' : 'Writes the books'}</em>
+                <em>{st === 'standby' ? 'Standing by' : r === 'lead' ? 'Chosen specialist' : r === 'support' ? 'Called in to help' : 'Writes the books'}</em>
                 <span className="tr-tick"><I.Check size={9} /></span>
               </div>
             )
