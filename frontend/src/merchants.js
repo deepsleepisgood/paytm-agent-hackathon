@@ -1,5 +1,6 @@
 // Loads the SME dataset from /dataset/merchants and adapts it to the shape the UI screens use.
 import index from '../../dataset/merchants/index.json'
+import { buildSharma } from './seedSharma.js'
 
 const files = import.meta.glob('../../dataset/merchants/*/*.json', { eager: true })
 
@@ -60,6 +61,6 @@ function load(slug) {
   }
 }
 
-export const MERCHANTS = Object.fromEntries(index.merchants.map((m) => [m.slug, load(m.slug)]))
+export const MERCHANTS = Object.fromEntries(index.merchants.map((m) => [m.slug, m.mid === 'PAYTM_MERCH_8821' ? buildSharma() : load(m.slug)]))
 export const MERCHANT_LIST = index.merchants.map((m) => ({ slug: m.slug, name: m.name, type: m.type }))
 export const DEFAULT_MERCHANT = index.merchants.find((m) => m.mid === index.default_mid)?.slug || index.merchants[0].slug

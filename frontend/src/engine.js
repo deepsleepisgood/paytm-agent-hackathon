@@ -8,11 +8,13 @@ const tkt = () => 'TKT-PAYTM-' + (1000 + Math.floor(Math.random() * 9000))
 const ded = (m, code) => m.d.settlement.deductions.find((x) => x.key === code)?.amount || 0
 const REFUND_ASK = { PAYTM_MERCH_1101: 1200, PAYTM_MERCH_1102: 5800, PAYTM_MERCH_1103: 6500 }
 const FAKE_UTR = '632184929999'
+const DUP_AMT = { PAYTM_MERCH_8821: 3200, PAYTM_MERCH_1101: 60, PAYTM_MERCH_1102: 640, PAYTM_MERCH_1103: 1180 }
 const HOLD_AMT = { PAYTM_MERCH_1101: 3200, PAYTM_MERCH_1102: 18500, PAYTM_MERCH_1103: 18500 }
 
 const opt = (id, label, score, why) => ({ id, label, score, why })
 
-export const CONTRACT_INTENTS = ['SETTLEMENT_RECONCILE', 'UTR_VERIFY', 'CHARGEBACK_RESOLVE', 'REFUND_MANAGE', 'FEE_GST_LOAN', 'ESCALATE_HUMAN']
+// Mirrors services/merchant_agent/schemas.py Intent (14 names, incl. the original 6 and the 4 service requests).
+export const CONTRACT_INTENTS = ['SETTLEMENT_RECONCILE', 'UTR_VERIFY', 'CHARGEBACK_RESOLVE', 'REFUND_MANAGE', 'FEE_GST_LOAN', 'ESCALATE_HUMAN', 'MANDATE_TROUBLESHOOT', 'DUPLICATE_RECONCILE', 'GROWTH_ADVISORY', 'CASHFLOW_EDI_SWITCH', 'SOUNDBOX_RETURN', 'LOAN_CLOSURE_NOC', 'BANK_KYC_UPDATE', 'SETTLEMENT_HOLD_BANK']
 export const liveOk = (sc) => CONTRACT_INTENTS.includes(sc.intent)
 
 export const SCENARIOS = [
@@ -56,6 +58,28 @@ export const SCENARIOS = [
           ledger: { say: 'Check recorded on UTR table', effects: [{ t: 'UTR_CHECK', utr: t.utr, result: 'PENDING' }] },
         },
         reply: `UTR ${t.utr}: ${inr(t.amount)} (${t.app}) abhi PENDING hai. NPCI T+1 tak settle ya auto-reverse ho jayega. Tab tak saamaan mat dena.`,
+        win: true,
+      }
+    },
+  },
+  {
+    id: 'dup', chip: 'Duplicate payment', intent: 'DUPLICATE_RECONCILE',
+    utterance: (m) => `PhonePe se ${inr(DUP_AMT[m.mid] || 1180)} do baar kat gaya`,
+    build(m) {
+      const amt = DUP_AMT[m.mid] || 1180, order = '#4455'
+      return {
+        purpose: 'duplicate_payment', scope: 'upi_ledger:read',
+        payload: { topic: 'DUPLICATE_PAYMENT', amount: amt },
+        options: [opt('A', 'Ask the customer to claim from their bank', 20, 'Customer is left waiting'), opt('B', 'Match both UTRs to one order and refund the second payment', 94, 'Fast, merchant keeps the customer'), opt('C', 'Escalate to a human', 30, 'Not needed')],
+        selected: 'B',
+        response: { status: 'RESOLVED', duplicates_found: 1, order_id: order, order_amount_inr: amt, refund: { status: 'PROCESSED', amount: amt } },
+        agents: {
+          intelligence: { say: `Order ${order} has two successful payments of ${inr(amt)}` },
+          risk: { say: 'Both UTRs settled · same order · duplicate confirmed' },
+          resolution: { say: 'Refund the second payment' },
+          ledger: { say: `Refund ${inr(amt)} processed · order reconciled to one payment`, effects: [{ t: 'REFUND_AUTO', order, amount: amt }, { t: 'DEFLECT' }] },
+        },
+        reply: `Order ${order} ke ${inr(amt)} do baar kate. Duplicate payment ka refund shuru kar diya, T+1 mein pahunch jayega.`,
         win: true,
       }
     },
@@ -130,29 +154,30 @@ export const SCENARIOS = [
     },
   },
   {
-    id: 'edi', chip: 'Loan EDI fail', intent: 'FEE_GST_LOAN',
-    utterance: () => 'Mera loan EDI mandate fail ho gaya',
+    id: 'edi', chip: 'Loan EDI fail', intent: 'MANDATE_TROUBLESHOOT',
+    utterance: (m) => `Mera ${inr(m.d.loan.edi)} ka loan EDI mandate fail ho gaya`,
     build(m) {
       const e = m.d.loan.edi
       return {
         purpose: 'loan_edi_support', scope: 'lending_ledger:write',
         payload: { topic: 'EDI_MANDATE_FAIL', edi_per_day: e },
-        options: [opt('A', 'Wait for automatic retry tomorrow', 38, 'Risk of penalty / credit flag'), opt('B', 'Pause EDI, fix e-mandate, resume with no penalty', 93, 'Protects merchant credit'), opt('C', 'Escalate to lending ops', 35, 'Slower than needed')],
+        insight: { summary: 'Friction, not default: sales dipped for a few days, but 96% of EDIs were paid on time in 6 months', evidence: [`eNACH bounce: INSUFFICIENT_FUNDS (${inr(e)})`, '96% EDIs on time over 6 months', 'Sales recovered the next day'] },
+        options: [opt('A', 'Send a reminder and retry the eNACH debit', 28, 'Slow, low past success'), opt('B', '1-tap UPI link for the missed EDI + 48h grace, penalty waived', 77, 'Best past success, best experience'), opt('C', 'Escalate to a specialist', 35, 'Not needed for a first bounce')],
         selected: 'B',
-        response: { status: 'MANDATE_FIXED', edi_per_day: e },
+        response: { status: 'ACTION_REQUIRED', action_required: { type: 'CHOOSE_REMEDY', options: ['PAY_NOW_UPI_LINK', 'KFS_HARDSHIP_PAUSE'], amount_inr: e } },
         agents: {
-          intelligence: { say: `EDI ${inr(e)}/day debit bounced · e-mandate registration invalid` },
-          risk: { say: 'Penalty risk detected → pausing EDI', tone: 'warn', effects: [{ t: 'LOAN', status: 'PAUSED' }] },
-          resolution: { say: 'Re-mandate link sent on Paytm for Business, bounce charge waived' },
-          ledger: { say: `Mandate verified · EDI ${inr(e)} resumes at next settlement`, effects: [{ t: 'LOAN', status: 'MANDATE_FIXED' }] },
+          intelligence: { say: `Read mandate: ${inr(e)} bounced (INSUFFICIENT_FUNDS); 96% on time over 6 months` },
+          risk: { say: 'Bounced once with 96% on time: not a default, and a 2-day pause is available under KFS 4.2', tone: 'warn' },
+          resolution: { say: 'Explained it is not a default, and offered a UPI link or a 2-day pause' },
+          ledger: { say: 'Mandate flagged · UPI link sent', effects: [{ t: 'LOAN', status: 'LINK_SENT', note: `${inr(e)} bounced · 1-tap UPI link sent · penalty waived` }] },
         },
-        reply: `Aapka ${inr(e)}/din ka EDI mandate fail hua tha. Maine pause karke theek kar diya (MANDATE_FIXED). Koi penalty nahi, kal se EDI dobara chalega.`,
+        reply: `Aapka ${inr(e)} ka EDI fail hua, ye default nahi hai. 1-tap UPI link bhej diya hai, penalty nahi lagegi.`,
         win: true,
       }
     },
   },
   {
-    id: 'growth', chip: 'Business badhao', intent: 'FEE_GST_LOAN',
+    id: 'growth', chip: 'Business badhao', intent: 'GROWTH_ADVISORY',
     utterance: () => 'Mere pichle 6 mahine ke data se business badhane ka suggestion do',
     build(m) {
       const i = m.insights, ms = i.monthly_sales, pct = Math.round(((ms[ms.length - 1] - ms[0]) / ms[0]) * 100)
@@ -160,6 +185,7 @@ export const SCENARIOS = [
       return {
         purpose: 'business_insights', scope: 'sales_history:read',
         payload: { topic: 'GROWTH_SUGGESTION', period: i.period },
+        insight: { summary: i.peak_note, evidence: [`6-month sales ${pct >= 0 ? '+' : ''}${pct}%`, i.cashflow_health.note, ...i.growth_suggestions.slice(0, 2).map((g) => g.title)] },
         options: [opt('A', 'Generic 10% discount on everything', 35, 'Cuts margin, ignores your pattern'), opt('B', 'Data-driven: target peak/dip + working-capital offer', 93, 'Uses your own 6-month data'), opt('C', 'Push a loan upsell', 41, 'Not what the merchant asked')],
         selected: 'B',
         response: { status: 'RESOLVED', trend_pct: pct, suggestions: i.growth_suggestions.map((g) => g.id) },
@@ -197,88 +223,89 @@ export const SCENARIOS = [
     },
   },
   {
-    id: 'hold', chip: 'Settlement hold', intent: 'SETTLEMENT_HOLD_UNBLOCK',
+    id: 'hold', chip: 'Settlement hold', intent: 'SETTLEMENT_HOLD_BANK',
     utterance: (m) => `Mera ${inr(HOLD_AMT[m.mid] || 18500)} settlement bank/KYC hold pe kyun hai?`,
     build(m) {
-      const amt = HOLD_AMT[m.mid] || 18500
+      const cb = m.d.chargeback, net = m.d.settlement.net, acct = m.profile.bank_account
       return {
-        purpose: 'settlement_hold_review', scope: 'settlement_ledger:write',
-        payload: { topic: 'SETTLEMENT_HOLD', amount: amt },
-        options: [opt('A', 'Tell merchant to wait for bank', 25, 'No action, cash stays blocked'), opt('B', 'Diagnose hold, auto-verify KYC on file, request release', 92, 'Unblocks cash the same day'), opt('C', 'Escalate to compliance', 34, 'Slow for a name-mismatch hold')],
+        purpose: 'settlement_hold_review', scope: 'settlement_ledger:read',
+        payload: { topic: 'SETTLEMENT_HOLD' },
+        options: [opt('A', 'Tell the merchant to wait for the bank', 22, 'Gives no answer'), opt('B', 'Check bank + KYC status and explain any open holds', 90, 'Answers with facts from the ledger'), opt('C', 'Escalate to compliance', 30, 'Slow, nothing is actually blocked')],
         selected: 'B',
-        response: { status: 'HOLD_RELEASED', amount: amt, release: 'next settlement' },
+        response: { status: 'NO_BANK_HOLD', bank_status: 'ACTIVE', kyc_status: 'VERIFIED', open_holds: cb ? [{ order_id: cb.order, amount: cb.amount, type: 'CHARGEBACK_HOLD' }] : [] },
         agents: {
-          intelligence: { say: `Hold found: ${inr(amt)} · reason: bank account name mismatch (KYC re-verification pending)` },
-          risk: { say: 'KYC documents on file valid · no AML / fraud flag · release permitted' },
-          resolution: { say: 'Penny-drop re-verification passed → release approved' },
-          ledger: { say: `Hold ${inr(amt)} HELD → RELEASED (next settlement)`, effects: [{ t: 'HOLD_RELEASE' }, { t: 'DEFLECT' }] },
+          intelligence: { say: `Bank ${acct} ACTIVE · KYC VERIFIED · last credit ${inr(net)}` },
+          risk: { say: 'No bank or KYC hold on this account' },
+          resolution: { say: cb ? `Only open hold: ${cb.order} chargeback, ${inr(cb.amount)}` : 'No open holds' },
+          ledger: { say: 'No ledger change required' },
         },
-        reply: `Aapka ${inr(amt)} bank-name mismatch ki wajah se KYC hold par tha. Documents verify ho gaye, hold hata diya — agle settlement mein aa jayega.`,
+        reply: `Aapka bank account ACTIVE hai, koi bank hold nahi; ${inr(net)} credit ho chuka hai.${cb ? ` Sirf ${cb.order} ka ${inr(cb.amount)} chargeback hold hai.` : ''}`,
         win: true,
       }
     },
   },
   {
-    id: 'sbrent', chip: 'Soundbox rent', intent: 'SOUNDBOX_BILLING_REFUND',
+    id: 'sbrent', chip: 'Soundbox rent', intent: 'SOUNDBOX_RETURN',
     utterance: () => 'Soundbox wapas kar diya phir bhi ₹149 rent kat raha hai',
     build() {
+      const ticket = 'PICKUP-' + (1000 + Math.floor(Math.random() * 9000))
       return {
-        purpose: 'billing_dispute', scope: 'billing:write',
-        payload: { topic: 'SOUNDBOX_RENT_AFTER_RETURN', amount: 149 },
-        options: [opt('A', 'Ask merchant for return receipt', 30, 'Return is already scanned in logistics'), opt('B', 'Match return scan, stop rental, refund ₹149', 94, 'Fixes billing and refunds in one go'), opt('C', 'Escalate to human L2', 28, 'Not needed, return is verified')],
+        purpose: 'device_return', scope: 'device_billing:write',
+        payload: { topic: 'SOUNDBOX_RETURN', monthly_rental: 149 },
+        options: [opt('A', 'Ask the merchant for a return receipt', 30, 'Slow, adds a step'), opt('B', 'Schedule pickup, stop rental from next cycle, pro-rata final bill', 93, 'Fixes billing without paperwork'), opt('C', 'Escalate to a human', 26, 'Not needed')],
         selected: 'B',
-        response: { status: 'RENT_STOPPED', refund: 149 },
+        response: { status: 'RETURN_INITIATED', pickup_ticket: ticket, pickup_within_hours: 48, rental_stops: 'from next billing cycle', final_charge: 'pro-rata' },
         agents: {
-          intelligence: { say: 'Return scan found for the device · rent still billing after return' },
-          risk: { say: 'Billing error confirmed · refund ≤ ₹5,000 policy → autonomous' },
-          resolution: { say: 'Stop rental, refund ₹149 to settlement' },
-          ledger: { say: 'Rental stopped · ₹149 refunded', effects: [{ t: 'SOUNDBOX_FIX' }, { t: 'DEFLECT' }] },
+          intelligence: { say: 'Soundbox on ₹149/month rental, return requested' },
+          risk: { say: 'Return eligible · final bill will be pro-rata' },
+          resolution: { say: `Pickup scheduled within 48h (${ticket})` },
+          ledger: { say: 'Rental stops from the next billing cycle', effects: [{ t: 'SOUNDBOX_FIX', note: ticket }] },
         },
-        reply: 'Aapka Soundbox return scan mein mil gaya. Rent band kar diya aur ₹149 wapas kar diya.',
+        reply: `Soundbox ki pickup 48 ghante mein hogi, ticket ${ticket}. ₹149 ka rental agle cycle se band ho jayega, aakhri bill pro-rata katega.`,
         win: true,
       }
     },
   },
   {
-    id: 'noc', chip: 'Loan NOC', intent: 'LOAN_SETTLEMENT_NOC',
+    id: 'noc', chip: 'Loan NOC', intent: 'LOAN_CLOSURE_NOC',
     utterance: () => 'Negotiated loan settlement bhar diya, NOC do',
     build(m) {
-      const paid = Math.round((m.d.loan.balance * 0.7) / 100) * 100, noc = 'NOC-' + (100000 + Math.floor(Math.random() * 899999))
+      const bal = m.d.loan.balance, lender = m.d.loan.lender || 'Clix Capital'
       return {
-        purpose: 'loan_closure', scope: 'lending_ledger:write',
-        payload: { topic: 'SETTLEMENT_NOC', paid_amount: paid },
-        options: [opt('A', 'Ask merchant for payment proof', 28, 'Slow, payment is already in our ledger'), opt('B', 'Verify payment in lending ledger and auto-issue NOC', 95, 'Closes the loan instantly'), opt('C', 'Escalate to lending ops', 30, 'Unneeded delay')],
+        purpose: 'loan_closure', scope: 'lending_ledger:read',
+        payload: { topic: 'LOAN_CLOSURE_NOC' },
+        options: [opt('A', 'Ask the merchant for payment proof', 25, 'Slow, our ledger already knows'), opt('B', 'Check the lending ledger and issue a foreclosure quote with NOC timeline', 94, 'Clear next step for the merchant'), opt('C', 'Escalate to lending ops', 30, 'Unneeded delay')],
         selected: 'B',
-        response: { status: 'LOAN_CLOSED_SETTLED', noc, paid_amount: paid },
+        response: { status: 'FORECLOSURE_QUOTE_READY', lender, outstanding: bal, foreclosure_charge: 0, payable: bal, noc_eta_days: 7 },
         agents: {
-          intelligence: { say: `Payment ${inr(paid)} matches negotiated settlement offer` },
-          risk: { say: 'Payment cleared · no pending charges · EDI stopped' },
-          resolution: { say: `Loan closed as SETTLED, NOC ${noc} generated` },
-          ledger: { say: 'Lending ledger balance → ₹0', effects: [{ t: 'LOAN', status: 'NOC_ISSUED', balance: 0 }] },
+          intelligence: { say: `${lender}: outstanding ${inr(bal)}, foreclosure charge ₹0` },
+          risk: { say: 'No pending penalties · EDI history 96% on time' },
+          resolution: { say: 'Foreclosure quote ready · NOC within 7 days of payment' },
+          ledger: { say: 'Quote saved to the lending ledger', effects: [{ t: 'LOAN', status: 'QUOTE', note: `Pay ${inr(bal)} to close · NOC in 7 days` }] },
         },
-        reply: `Aapka ${inr(paid)} ka negotiated settlement mil gaya. Loan close ho gaya, NOC ${noc} Paytm app par bhej diya.`,
+        reply: `${lender} loan ka baaki ${inr(bal)} hai, foreclosure charge ₹0. Bhugtan ke 7 din mein NOC mil jayega.`,
         win: true,
       }
     },
   },
   {
-    id: 'bank', chip: 'Bank update', intent: 'KYC_BANK_UPDATE',
+    id: 'bank', chip: 'Bank update', intent: 'BANK_KYC_UPDATE',
     utterance: () => 'Mera settlement bank account update karo',
     build(m) {
-      const from = m.profile.bank_account, to = 'Axis ••6204'
+      const from = m.profile.bank_account
       return {
         purpose: 'kyc_bank_update', scope: 'kyc_profile:write',
-        payload: { topic: 'BANK_ACCOUNT_UPDATE', from, to },
-        options: [opt('A', 'Update immediately, no verification', 10, 'High fraud / diversion risk'), opt('B', 'Penny-drop verify + owner-name match, then update', 96, 'Safe and instant'), opt('C', 'Human KYC branch visit', 36, 'Safe but slow')],
+        payload: { topic: 'BANK_ACCOUNT_UPDATE', from },
+        options: [opt('A', 'Change the account immediately', 8, 'High fraud / diversion risk'), opt('B', 'Send a secure link, verify with ₹1 penny-drop first', 96, 'Safe and fully digital'), opt('C', 'Ask for a branch visit', 34, 'Safe but slow')],
         selected: 'B',
-        response: { status: 'BANK_UPDATED', to, effective: 'next settlement' },
+        response: { status: 'KYC_UPDATE_LINK_SENT', current_account: from, verification: 'PENNY_DROP', eta_hours: '24-48' },
         agents: {
-          intelligence: { say: `Request: move settlements from ${from} to ${to}` },
-          risk: { say: '₹1 penny-drop success · account holder name matches owner' },
-          resolution: { say: 'Change approved, effective from next settlement' },
-          ledger: { say: `Settlement account → ${to}`, effects: [{ t: 'BANK_UPDATE', to }] },
+          intelligence: { say: `Request: move settlements away from ${from}` },
+          risk: { say: 'Needs a ₹1 penny-drop and owner-name match first' },
+          resolution: { say: 'Secure link sent · settlements stay on the old account until verified' },
+          ledger: { say: 'Account change pending verification', effects: [{ t: 'BANK_UPDATE' }] },
         },
-        reply: `Naya bank account ${to} verify ho gaya (penny-drop). Agle settlement se paise isi mein aayenge.`,
+        reply: 'Naya bank account jodne ka secure link bhej diya hai. Penny-drop verify hote hi 24-48 ghante mein settlement naye account mein aayega, tab tak purane mein aayega.',
         win: true,
       }
     },
@@ -330,7 +357,7 @@ export const SCENARIOS = [
     },
   },
   {
-    id: 'shield_edi', chip: 'Cashflow gap', intent: 'FEE_GST_LOAN', proactive: 'CASHFLOW_EDI_SWITCH',
+    id: 'shield_edi', chip: 'Cashflow gap', intent: 'CASHFLOW_EDI_SWITCH', proactive: 'CASHFLOW_EDI_SWITCH',
     utterance: () => 'Paytm alert: high refund request, payout may fall short',
     build(m) {
       const net = m.d.settlement.net, edi = m.d.loan.edi
@@ -358,7 +385,7 @@ export const SCENARIOS = [
     },
   },
   {
-    id: 'confirm_edi', hidden: true, intent: 'FEE_GST_LOAN',
+    id: 'confirm_edi', hidden: true, intent: 'CASHFLOW_EDI_SWITCH',
     utterance: () => 'Haan, EDI 2 din pause karo',
     build(m, ctx) {
       const saved = ctx.saved ?? m.d.loan.edi * 2
@@ -389,6 +416,7 @@ export function runScenario(sc, m, ctx = {}) {
   const steps = [
     { key: 'input', title: 'Input understood', say: `intent=${sc.intent} · lang=hi-IN`, ms: 120 },
     { key: 'consent', title: 'DPDP consent', consent, ms: 90 },
+    ...(b.insight ? [{ key: 'insight', title: 'What the AI knew', insight: b.insight, ms: 60 }] : []),
     { key: 'eval', title: 'Intervention evaluation', options: b.options, selected: b.selected, ms: 340 },
     { key: 'dispatch', title: 'A2A dispatch', request, response: b.response, ms: 210 },
     { key: 'intelligence', title: 'Intelligence', ...A.intelligence, ms: 260 },
@@ -406,6 +434,7 @@ export function runScenario(sc, m, ctx = {}) {
 export function routeText(text) {
   const t = text.toLowerCase()
   const has = (...k) => k.some((x) => t.includes(x))
+  if (has('do baar', 'double', 'duplicate', 'twice')) return 'dup'
   if (has('noc', 'negotiated', 'loan settlement')) return 'noc'
   if (has('rent', '149')) return 'sbrent'
   if (has('kyc', 'hold pe', 'settlement hold')) return 'hold'
@@ -426,9 +455,9 @@ export function initLedger(m) {
     chargeback: m.d.chargeback ? { ...m.d.chargeback, status: 'HELD' } : null,
     loan: { status: 'ACTIVE', edi: m.d.loan.edi, balance: m.d.loan.balance },
     utrs: m.d.transactions.filter((t) => t.status !== 'REFUNDED').map((t) => ({ ...t, check: null })),
-    hold: { amount: HOLD_AMT[m.mid] || 18500, status: 'HELD' },
+    hold: { amount: 0, status: 'NONE' },
     bank: { acct: m.profile.bank_account, status: 'ACTIVE' },
-    soundbox: { status: 'BILLED_AFTER_RETURN', rent: 149 },
+    soundbox: { status: 'ACTIVE', rent: 149 },
     refunds: [], tickets: [], itc: 0, verified: 0, learned: 0, learnedLog: [], deflected: 0, fraud: 0,
   }
 }
@@ -439,9 +468,8 @@ export function applyEffects(L, effects = []) {
     if (e.t === 'ITC') s.itc += e.amount
     if (e.t === 'CB_RELEASE' && s.chargeback) s.chargeback = { ...s.chargeback, status: 'RELEASED' }
     if (e.t === 'LOAN') s.loan = { ...s.loan, status: e.status, note: e.note, ...(e.balance !== undefined ? { balance: e.balance } : {}) }
-    if (e.t === 'HOLD_RELEASE') s.hold = { ...s.hold, status: 'RELEASED' }
-    if (e.t === 'SOUNDBOX_FIX') s.soundbox = { ...s.soundbox, status: 'REFUNDED' }
-    if (e.t === 'BANK_UPDATE') s.bank = { acct: e.to, status: 'UPDATED' }
+    if (e.t === 'SOUNDBOX_FIX') s.soundbox = { ...s.soundbox, status: 'PICKUP', note: e.note }
+    if (e.t === 'BANK_UPDATE') s.bank = { ...s.bank, status: 'LINK_SENT' }
     if (e.t === 'UTR_CHECK') s.utrs = s.utrs.map((u) => (u.utr === e.utr ? { ...u, check: e.result } : u))
     if (e.t === 'UTR_ADD') s.utrs = [{ ...e.row, check: 'FAKE' }, ...s.utrs]
     if (e.t === 'FRAUD') s.fraud += 1

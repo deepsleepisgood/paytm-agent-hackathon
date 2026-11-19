@@ -6,8 +6,8 @@ import { SCENARIOS, runScenario, routeText, initLedger, applyEffects, liveOk } f
 import Buddy from './Buddy.jsx'
 import Center from './Center.jsx'
 import Right from './Right.jsx'
-import { checkServices, getLedger, resetLive } from './api.js'
-import { callLive, responseToRun, overlayLedger } from './live.js'
+import { checkServices, getLedger, resetLive, getStrategyMemory } from './api.js'
+import { callLive, responseToRun, overlayLedger, overlayStrategy } from './live.js'
 
 const TABS = [
   { id: 'home', label: 'Home', icon: I.Home },
@@ -18,12 +18,19 @@ const TABS = [
 ]
 const TOPS = TABS.map((t) => t.id)
 
+const clock = () => new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).replace(/\s?(AM|PM)/i, '')
+
+// iOS-style status bar: live time, signal bars, Wi-Fi and battery (all drawn as SVG, no "5G" text).
 function StatusBar() {
+  const [t, setT] = useState(clock())
+  useEffect(() => { const i = setInterval(() => setT(clock()), 15000); return () => clearInterval(i) }, [])
   return (
-    <div className="statusbar">
-      <span>9:41</span>
+    <div className="statusbar" aria-hidden="true">
+      <span className="sb-time">{t}</span>
       <span className="sb-right">
-        <span className="bars"><i /><i /><i /><i /></span><span>5G</span><i className="bat" />
+        <svg width="19" height="12" viewBox="0 0 19 12" fill="currentColor"><rect x="0" y="8" width="3.2" height="4" rx="1" /><rect x="5" y="5.5" width="3.2" height="6.5" rx="1" /><rect x="10" y="3" width="3.2" height="9" rx="1" /><rect x="15" y="0" width="3.2" height="12" rx="1" /></svg>
+        <svg width="17" height="13" viewBox="0 0 17 13" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><path d="M1.3 4.4a10.4 10.4 0 0 1 14.4 0" /><path d="M3.8 7a6.9 6.9 0 0 1 9.4 0" /><path d="M6.3 9.4a3.4 3.4 0 0 1 4.4 0" /><circle cx="8.5" cy="11.4" r=".9" fill="currentColor" stroke="none" /></svg>
+        <svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x=".5" y=".5" width="22.5" height="12" rx="3.8" stroke="currentColor" strokeOpacity=".4" /><rect x="2" y="2" width="17" height="9" rx="2.4" fill="currentColor" /><path d="M24.6 4.4v4.2c.9-.3 1.6-1.2 1.6-2.1s-.7-1.8-1.6-2.1z" fill="currentColor" fillOpacity=".45" /></svg>
       </span>
     </div>
   )
@@ -229,7 +236,7 @@ function Loans({ d }) {
     <div className="screen">
       <Header title="Business Loan" />
       <div className="card loan">
-        <div className="muted">Outstanding balance</div>
+        <div className="muted">{l.lender ? `${l.lender} · outstanding balance` : 'Outstanding balance'}</div>
         <div className="big">{inr(l.balance)}</div>
         <div className="bar"><i style={{ width: pct + '%' }} /></div>
         <div className="muted sm">{pct}% repaid of {inr(l.principal)}</div>
@@ -237,8 +244,18 @@ function Loans({ d }) {
       <div className="card">
         <div className="row between line"><span>Daily EDI</span><b>{inr(l.edi)}/day</b></div>
         <div className="row between line"><span>Next deduction</span><b>{l.next}</b></div>
-        <div className="row between line"><span>Deducted from</span><b>Daily settlement</b></div>
+        <div className="row between line"><span>Deducted from</span><b>Bank account (eNACH)</b></div>
       </div>
+      {l.history && (
+        <div className="card">
+          <b>Last 7 EDIs</b>
+          <div className="edi-h">
+            {l.history.map((h) => (
+              <span key={h.date} className={`st ${h.status === 'SUCCESS' ? 'ok' : h.status.startsWith('BOUNCE') || h.status === 'FAILED' ? 'warn' : 'info'}`} title={h.status}>{h.date.slice(5)}</span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -331,6 +348,7 @@ export default function App() {
   const timers = useRef([])
   const scroller = useRef(null)
   const modeRef = useRef(mode)
+  const autoLive = useRef(false)
   modeRef.current = mode
 
   useEffect(() => { scroller.current?.scrollTo(0, 0) }, [tab, sub])
@@ -365,6 +383,11 @@ export default function App() {
     } else { setMode('local'); modeRef.current = 'local'; reset(mkey) }
   }
 
+  // First time the backend is reachable, start in Live mode on the contract merchant so the demo uses the real agents.
+  useEffect(() => {
+    if (svc.merchant && !autoLive.current && mkey === LIVE_MERCHANT) { autoLive.current = true; switchMode('live') }
+  }, [svc.merchant])
+
   // Plays a run (local or live) step by step: reveals trace cards, applies ledger effects, posts the reply.
   const play = (r, gap) => {
     setTab('buddy'); setSub(null)
@@ -376,7 +399,10 @@ export default function App() {
         if (s.key === 'reply') {
           setChat((c) => [...c, { who: 'ai', text: s.reply, tone: s.tone, confirm: s.confirm }])
           setBusy(false)
-          if (r.live) getLedger(m.mid).then((led) => led && setLedger((L) => overlayLedger(L, led)))
+          if (r.live) {
+            getLedger(m.mid).then((led) => led && setLedger((L) => overlayLedger(L, led)))
+            getStrategyMemory().then((sm) => sm && setLedger((L) => overlayStrategy(L, sm)))
+          }
           if (r.audio) { try { new Audio('data:audio/wav;base64,' + r.audio).play() } catch { /* ignore */ } }
           else if (speak && 'speechSynthesis' in window) {
             const u = new SpeechSynthesisUtterance(s.reply); u.lang = 'hi-IN'; window.speechSynthesis.speak(u)

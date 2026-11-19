@@ -18,10 +18,7 @@ export function buildKhata(m, L) {
   const net = s.net
   main.push({ p: 'Settlement received in bank', v: 'Receipt', dr: net })
   if (L.chargeback?.status === 'RELEASED') adj.push({ p: `Chargeback ${L.chargeback.order} released (T+1)`, v: 'Receipt', cr: 0, dr: L.chargeback.amount })
-  if (L.soundbox.status === 'REFUNDED') adj.push({ p: 'Soundbox rent refund (billing error)', v: 'Debit note', dr: L.soundbox.rent })
   for (const r of L.refunds) adj.push({ p: `Credit note · refund ${r.order}`, v: 'Credit note', cr: r.amount })
-  if (L.hold.status === 'RELEASED') adj.push({ p: 'Settlement hold released', v: 'Receipt', dr: L.hold.amount })
-  if (L.loan.status === 'NOC_ISSUED') adj.push({ p: 'Loan settled · NOC issued', v: 'Payment', cr: Math.round(m.d.loan.balance * 0.7 / 100) * 100 })
   const sales = (s.mix || []).reduce((a, x) => a + x.amount, 0) || s.gross
   const deds = s.deductions.reduce((a, x) => a + x.amount, 0)
   const gst = s.deductions.find((x) => x.key === 'GST_ON_MDR')?.amount || 0

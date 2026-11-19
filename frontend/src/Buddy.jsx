@@ -12,6 +12,7 @@ const GROUPS = [
     { id: 'sbrent', t: 'Soundbox rent kat raha', s: 'Charged after returning device' } ] },
   { id: 'pay', label: 'Payments', items: [
     { id: 'utr', t: 'UTR pending', s: 'Is this payment real?' },
+    { id: 'dup', t: 'Duplicate payment', s: 'Charged twice for one order' },
     { id: 'fake', t: 'Fake screenshot', s: 'Catch a tampered UPI proof' },
     { id: 'refund', t: 'Refund karna hai', s: 'Auto up to ₹5,000, else human' } ] },
   { id: 'loan', label: 'Loan', items: [

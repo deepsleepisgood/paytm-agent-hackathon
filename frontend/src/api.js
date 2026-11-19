@@ -48,3 +48,7 @@ export const confirmEdi = (mid, offer_id, pause_days = 2) => post(`${MERCHANT_UR
 export async function resetLive() {
   await Promise.allSettled([post(`${PAYTM_URL}/ledger/reset`, {}, 4000), post(`${MERCHANT_URL}/reset?cascade=true`, {}, 6000)])
 }
+
+export const getStrategyMemory = () => req(`${MERCHANT_URL}/merchant/strategy-memory`, {}, 3000).catch(() => null)
+export const getKhataExport = () => req(`${MERCHANT_URL}/merchant/khata-export`, {}, 5000).catch(() => null)
+export const khataCsvUrl = () => `${MERCHANT_URL}/merchant/khata-export?format=csv`

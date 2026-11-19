@@ -7,8 +7,8 @@ function Waterfall({ m, L }) {
   let run = s.gross
   rows.push({ label: 'Gross sales', amount: s.gross, start: 0, end: s.gross, kind: 'total' })
   for (const x of s.deductions) {
-    const released = (x.key === 'CHARGEBACK_HOLD' && L.chargeback?.status === 'RELEASED') || (x.key === 'SOUNDBOX_RENTAL' && L.soundbox.status === 'REFUNDED')
-    rows.push({ label: x.label, amount: x.amount, start: run - x.amount, end: run, kind: released ? 'released' : x.key === 'CHARGEBACK_HOLD' ? 'hold' : 'ded', note: released ? (x.key === 'SOUNDBOX_RENTAL' ? 'Refunded' : 'Released T+1') : undefined })
+    const released = x.key === 'CHARGEBACK_HOLD' && L.chargeback?.status === 'RELEASED'
+    rows.push({ label: x.label, amount: x.amount, start: run - x.amount, end: run, kind: released ? 'released' : x.key === 'CHARGEBACK_HOLD' ? 'hold' : 'ded', note: released ? 'Released T+1' : undefined })
     if (!released) run -= x.amount
   }
   rows.push({ label: 'Bank credit', amount: run, start: 0, end: run, kind: 'net' })
@@ -29,7 +29,7 @@ function Waterfall({ m, L }) {
 
 export default function Right({ m, L, mode }) {
   const lo = L.loan
-  const stat = { ACTIVE: 'ok', PAUSED: 'warn', MANDATE_FIXED: 'info', NOC_ISSUED: 'ok' }[lo.status]
+  const stat = { ACTIVE: 'ok', PAUSED: 'warn', MANDATE_FIXED: 'info', LINK_SENT: 'info', QUOTE: 'info' }[lo.status]
   return (
     <div className="col right">
       <div className="col-h">
@@ -62,7 +62,7 @@ export default function Right({ m, L, mode }) {
       <div className="rcard">
         <div className="r-h"><b>Loan EDI</b><span className={`st ${stat}`}>{lo.status}</span></div>
         <div className="steps3">
-          {['ACTIVE', 'PAUSED', 'MANDATE_FIXED', 'NOC_ISSUED'].map((k) => <span key={k} className={lo.status === k ? 'on ' + k : ''}>{k.replace('_', ' ')}</span>)}
+          {[['ACTIVE', 'ACTIVE'], ['LINK_SENT', 'UPI LINK SENT'], ['PAUSED', 'PAUSED'], ['QUOTE', 'CLOSURE QUOTE']].map(([k, lab]) => <span key={k} className={lo.status === k ? 'on ' + k : ''}>{lab}</span>)}
         </div>
         {lo.note && <div className="learn">{lo.note}</div>}
         <div className="kv2"><span>Daily EDI</span><b>{inr(lo.edi)}</b><span>Balance</span><b>{inr(lo.balance)}</b></div>
@@ -70,10 +70,26 @@ export default function Right({ m, L, mode }) {
 
       <div className="rcard">
         <div className="r-h"><b>Account & device status</b></div>
-        <div className="sts"><span>Settlement hold {inr(L.hold.amount)}</span><span className={`st ${L.hold.status === 'HELD' ? 'warn' : 'ok'}`}>{L.hold.status === 'HELD' ? 'KYC HOLD' : 'RELEASED'}</span></div>
-        <div className="sts"><span>Settlement bank · {L.bank.acct}</span><span className={`st ${L.bank.status === 'UPDATED' ? 'info' : 'ok'}`}>{L.bank.status === 'UPDATED' ? 'UPDATED' : 'ACTIVE'}</span></div>
-        <div className="sts"><span>Soundbox rent {inr(L.soundbox.rent)}/mo</span><span className={`st ${L.soundbox.status === 'REFUNDED' ? 'ok' : 'warn'}`}>{L.soundbox.status === 'REFUNDED' ? 'STOPPED · REFUNDED' : 'BILLED AFTER RETURN'}</span></div>
+        <div className="sts"><span>Bank hold</span><span className="st ok">NONE</span></div>
+        <div className="sts"><span>Settlement bank · {L.bank.acct}</span><span className={`st ${L.bank.status === 'LINK_SENT' ? 'warn' : 'ok'}`}>{L.bank.status === 'LINK_SENT' ? 'VERIFY PENDING' : 'ACTIVE'}</span></div>
+        <div className="sts"><span>Soundbox rent {inr(L.soundbox.rent)}/mo{L.soundbox.note ? ` · ${L.soundbox.note}` : ''}</span><span className={`st ${L.soundbox.status === 'PICKUP' ? 'info' : 'ok'}`}>{L.soundbox.status === 'PICKUP' ? 'PICKUP · RENT STOPS' : 'ACTIVE'}</span></div>
       </div>
+
+      {m.profile.connectors && (
+        <div className="rcard">
+          <div className="r-h"><b>Connected data sources</b><span className="muted xs">DPDP consent</span></div>
+          {Object.entries(m.profile.connectors).map(([k, v]) => (
+            <div key={k} className="sts"><span>{k.replace(/_/g, ' ')}</span><span className="st ok">{v.consent === 'GRANTED' || v.consent_status === 'GRANTED' ? 'GRANTED' : 'ACTIVE'}</span></div>
+          ))}
+        </div>
+      )}
+
+      {m.policies && (
+        <div className="rcard">
+          <div className="r-h"><b>What the AI already learned</b><span className="muted xs">strategy memory</span></div>
+          {m.policies.map((p, i) => <div key={i} className="pol"><b>{p.intent.replace(/_/g, ' ')}</b><span>{p.policy}</span></div>)}
+        </div>
+      )}
 
       <div className="rcard">
         <div className="r-h"><b>UTR verification</b><span className="muted xs">{L.utrs.length} rows</span></div>

@@ -10,13 +10,14 @@ const AGENTS = [
 const STAGES = [
   { label: 'Understand', keys: ['input'] },
   { label: 'Permission', keys: ['consent'] },
-  { label: 'Decide', keys: ['eval'] },
+  { label: 'Decide', keys: ['insight', 'eval'] },
   { label: 'Paytm agents', keys: ['dispatch', 'intelligence', 'risk', 'resolution', 'ledger'] },
   { label: 'Reply', keys: ['reply'] },
 ]
 const CAPTION = {
   input: 'Buddy understood the request',
   consent: 'Checking the merchant’s permission (DPDP)',
+  insight: 'Buddy is recalling this merchant’s history',
   eval: 'Buddy is comparing 3 ways to help',
   dispatch: 'Sending a secure request to Paytm',
   intelligence: 'Paytm is reading the data',
@@ -35,8 +36,9 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
   const done = run && reveal >= steps.length
   const cur = run && reveal > 0 ? steps[Math.min(reveal, steps.length) - 1] : null
   const stageNow = run ? STAGES.findIndex((st) => st.keys.includes(cur?.key)) : -1
-  const consent = get('consent'), ev = get('eval'), disp = get('dispatch')
-  const escalated = ev && ev.selected === 'C' && shown('eval')
+  const consent = get('consent'), ev = get('eval'), disp = get('dispatch'), ins = get('insight')
+  const escalated = run?.live ? !!run.escalated : ev && ev.selected === 'C' && shown('eval')
+  const awaiting = shown('reply') && !!get('reply')?.confirm
   const totalMs = run?.live ? run.elapsed || 0 : steps.reduce((a, s) => a + (s.ms || 0), 0)
 
   return (
@@ -72,6 +74,14 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
             <button className="cta" disabled={busy} onClick={() => onTry('settle')}>Try: “Paisa kahan kata?”</button>
             <button className="ghost" disabled={busy} onClick={() => onTry('fake')}>Try: fake screenshot</button>
           </div>
+        </div>
+      )}
+
+      {shown('insight') && ins && (
+        <div className="tcard in">
+          <div className="t-h"><span className="n">0</span><b>What the AI remembered about this merchant</b></div>
+          <div className="plain">{ins.insight.summary}</div>
+          {ins.insight.evidence?.length > 0 && <ul className="ev">{ins.insight.evidence.map((e, i) => <li key={i}>{e}</li>)}</ul>}
         </div>
       )}
 
@@ -130,7 +140,7 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
           {AGENTS.filter((a) => shown(a.key)).map((a) => {
             const s = get(a.key)
             return (
-              <div key={a.key} className={`ag ${s.tone || ''}`}>
+              <div key={a.key} className={`ag ${s.tone || ''} ${s.quiet ? 'quiet' : ''}`}>
                 <span className="ag-ic">{a.ic}</span>
                 <div><b>{a.name}</b><div className="sm">{s.say}</div></div>
               </div>
@@ -140,9 +150,9 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
       )}
 
       {shown('reply') && (
-        <div className={`tcard in result ${get('reply').tone === 'bad' ? 'bad' : escalated ? 'esc' : 'good'}`}>
+        <div className={`tcard in result ${get('reply').tone === 'bad' ? 'bad' : awaiting || escalated ? 'esc' : 'good'}`}>
           <div className="res-h">
-            <span className="res-b">{get('reply').tone === 'bad' ? 'Fraud blocked' : escalated ? 'Handed to a human' : 'Resolved by AI'}</span>
+            <span className="res-b">{get('reply').tone === 'bad' ? 'Fraud blocked' : awaiting ? 'Waiting for your sign-off' : escalated ? 'Handed to a human' : 'Resolved by AI'}</span>
             <span className="muted xs">{run.live ? `${(totalMs / 1000).toFixed(1)}s live round trip` : `${(totalMs / 1000).toFixed(1)}s of agent time`}</span>
           </div>
           <div className="sm">“{get('reply').reply}”</div>

@@ -535,3 +535,31 @@ img[alt="Paytm for Business"]{mix-blend-mode:multiply}
 .pgk .sh-f{padding:10px 16px 16px}
 .pg-body{padding-bottom:44px}
 .pgk .sh-f{padding-bottom:38px;background:var(--ios-bg)}
+
+/* ===== iOS status bar (clean, aligned with the Dynamic Island) ===== */
+.statusbar{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 36px;color:#000;pointer-events:none}
+.sb-time{font-size:16.5px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.sb-right{display:flex;align-items:center;gap:6px;color:#000}
+.sb-right svg{display:block}
+
+.ev{margin:6px 0 0 16px;font-size:12.5px;color:#3c4a60;display:flex;flex-direction:column;gap:3px}
+.ag.quiet .sm{color:var(--mu)}
+.pol{display:flex;flex-direction:column;gap:2px;font-size:12px;padding:6px 0;border-bottom:1px dashed #eef1f7}.pol:last-child{border:0}.pol b{font-size:11px;letter-spacing:.04em;color:var(--navy)}.pol span{color:#3c4a60;line-height:1.35}
+.steps3 span{font-size:9px}
+.edi-h{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.edi-h .st{font-size:11px}
+
+/* ===== deeper, calmer "AI" palette: navy-indigo instead of bright blue ===== */
+:root{--ios-blue:#1b4fa8;--ai-a:#0a2a63;--ai-b:#143e8f;--ai-c:#2563b8}
+.screen.buddy{background:radial-gradient(130% 50% at 50% -8%,#dde6fa 0%,#ecf0fa 42%,#f2f2f7 100%)}
+.msg.me .bubble{background:linear-gradient(135deg,var(--ai-a) 0%,var(--ai-b) 62%,var(--ai-c) 100%);color:#fff;border-bottom-right-radius:6px;box-shadow:0 8px 18px rgba(10,42,99,.28),inset 0 1px 0 rgba(255,255,255,.16)}
+.msg.ai .bubble{background:rgba(255,255,255,.92);color:#10213f;border-bottom-left-radius:6px;box-shadow:0 0 0 1px rgba(20,62,143,.10),0 6px 16px rgba(10,42,99,.06)}
+.msg.ai .bubble.bad{background:#fff1f1;color:#a02020;box-shadow:0 0 0 1px #f3c4c4}
+.typing i{background:#5b78b3}
+.send{background:linear-gradient(135deg,var(--ai-a),var(--ai-c))}
+.confirm-btn{background:linear-gradient(135deg,#0f7a4d,#14935d)}
+.sug.primary{background:linear-gradient(125deg,#0a2a63 0%,#16409a 62%,#2b6cc4 100%);box-shadow:0 10px 22px rgba(10,42,99,.28),inset 0 1px 0 rgba(255,255,255,.14)}
+.sug{box-shadow:0 0 0 1px rgba(20,62,143,.08),0 4px 12px rgba(10,42,99,.05)}
+.pg-back,.sr-r,.plus-menu button,.upl button{color:var(--ios-blue)}
+.cats button.on{color:var(--navy)}
+.field{box-shadow:0 0 0 1px rgba(20,62,143,.10);border:0}
+.plus.on{background:linear-gradient(135deg,var(--ai-a),var(--ai-c))}
