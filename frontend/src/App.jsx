@@ -411,6 +411,9 @@ function Header({ title, back }) {
 
 /* ---------------- Shell: 3-column command center ---------------- */
 const STEP_MS = 700
+// How long each step "takes" on screen (ms). Agents get ~1.8s each so you can watch them work one by one.
+const DUR = { input: 500, insight: 800, eval: 1800, consent: 1300, dispatch: 700, intelligence: 1800, risk: 1800, resolution: 1800, ledger: 1800, reply: 900 }
+const SPEEDS = { Slow: 1.5, Normal: 1, Fast: 0.35 }
 const welcome = (m) => [{ who: 'ai', text: `Namaste ${m.profile.owner.split(' ')[0]} ji! Main ${m.profile.name} ka AI Buddy hoon. Settlement, UTR, chargeback, refund, loan EDI — kuch bhi poochiye.` }]
 
 const LIVE_MERCHANT = 'sharma_electronics' // real backends only know PAYTM_MERCH_8821
@@ -434,6 +437,9 @@ export default function App() {
   const [lang, setLangState] = useState(loadLang)
   const setLang = (l) => { setLangState(l); saveLang(l) }
   const [queue, setQueue] = useState([])
+  const [speedKey, setSpeedKey] = useState('Normal')
+  const speedRef = useRef('Normal')
+  speedRef.current = speedKey
   const timers = useRef([])
   const scroller = useRef(null)
   const modeRef = useRef(mode)
@@ -478,10 +484,14 @@ export default function App() {
   }, [svc.merchant])
 
   // Plays a run (local or live) step by step: reveals trace cards, applies ledger effects, posts the reply.
-  const play = (r, gap) => {
+  const play = (r) => {
     setTab('buddy'); setSub(null)
+    const durs = r.steps.map((s) => Math.round((DUR[s.key] ?? 600) * SPEEDS[speedRef.current]))
+    r.durs = durs
+    let at = 0
     setRun(r); setReveal(0); setBusy(true)
     r.steps.forEach((s, i) => {
+      at += durs[i]
       timers.current.push(setTimeout(() => {
         setReveal(i + 1)
         if (s.effects) setLedger((L) => applyEffects(L, s.effects))
@@ -493,7 +503,7 @@ export default function App() {
             getStrategyMemory().then((sm) => sm && setLedger((L) => overlayStrategy(L, sm)))
           }
         }
-      }, gap * (i + 1)))
+      }, at))
     })
   }
 
@@ -622,6 +632,7 @@ export default function App() {
               <i className={`dot-s ${svc.merchant ? 'up' : ''}`} />Live services
             </button>
           </div>
+          <div className="mode spd" role="group" aria-label="Animation speed">{Object.keys(SPEEDS).map((k) => <button key={k} className={speedKey === k ? 'on' : ''} onClick={() => setSpeedKey(k)}>{k}</button>)}</div>
           <button className="play" onClick={playDemo}>{queue.length ? '■ Stop demo' : '▶ Play guided demo'}</button>
           <button className="reset" onClick={() => { setQueue([]); reset(mkey, true) }}>Reset</button>
         </div>
