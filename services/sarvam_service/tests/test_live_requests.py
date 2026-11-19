@@ -22,22 +22,39 @@ def test_stt_sends_key_model_and_autodetect(live_client, wav_bytes):
     body = req.content.decode(errors="ignore")
     assert 'name="model"' in body and "saaras:v3" in body
     assert 'name="language_code"' in body and "unknown" in body
-    assert 'name="mode"' in body and "transcribe" in body
+    assert 'name="mode"' in body and "codemix" in body
 
 
 @respx.mock
-def test_tts_falls_back_to_language_code_field(live_client):
+def test_tts_uses_v4_flash_with_language_code_first(live_client):
     clip = tone_wav_base64(0.1)
-    route = respx.post(f"{BASE}/text-to-speech").mock(side_effect=[
-        httpx.Response(422, json={"error": {"message": "target_language_code not allowed"}}),
-        httpx.Response(200, json={"request_id": "r", "audios": [clip]}),
-    ])
+    route = respx.post(f"{BASE}/text-to-speech").mock(return_value=httpx.Response(200, json={"audios": [clip]}))
     r = live_client.post("/tts", json={"text": "नमस्ते", "language_code": "hi-IN"})
     assert r.status_code == 200 and r.json()["audio_base64"] == clip
-    first, second = (json.loads(c.request.content) for c in route.calls)
-    assert first["target_language_code"] == "hi-IN" and "language_code" not in first
-    assert second["language_code"] == "hi-IN" and "target_language_code" not in second
-    assert first["model"] == "bulbul:v3" and first["speaker"] == "priya"
+    sent = json.loads(route.calls.last.request.content)
+    assert len(route.calls) == 1  # no wasted round trip
+    assert sent["model"] == "bulbul:v4-flash" and sent["language_code"] == "hi-IN"
+    assert "speaker" not in sent  # v4 default voice; a v3 name like 'priya' would be a 400
+
+
+@respx.mock
+def test_tts_falls_back_to_v3_then_old_field_and_remembers(live_client):
+    clip = tone_wav_base64(0.1)
+    route = respx.post(f"{BASE}/text-to-speech").mock(side_effect=[
+        httpx.Response(400, json={"error": {"message": "model not available"}}),   # v4 rejected
+        httpx.Response(422, json={"error": {"message": "language_code not allowed"}}),  # v3 + new field rejected
+        httpx.Response(200, json={"audios": [clip]}),                                # v3 + old field works
+        httpx.Response(200, json={"audios": [clip]}),                                # next call
+    ])
+    assert live_client.post("/tts", json={"text": "नमस्ते", "language_code": "hi-IN"}).status_code == 200
+    a, b, c = (json.loads(x.request.content) for x in route.calls)
+    assert a["model"] == "bulbul:v4-flash"
+    assert b["model"] == "bulbul:v3" and b["speaker"] == "priya" and "language_code" in b
+    assert c["model"] == "bulbul:v3" and c["target_language_code"] == "hi-IN"
+    # the working combination is remembered: the next call goes straight to it
+    live_client.post("/tts", json={"text": "फिर से", "language_code": "hi-IN"})
+    assert len(route.calls) == 4
+    assert json.loads(route.calls[3].request.content)["target_language_code"] == "hi-IN"
 
 
 @respx.mock

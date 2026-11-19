@@ -10,7 +10,8 @@ from app.audio import tone_wav_base64
 
 
 def _use_settings(monkeypatch, **env):
-    for k in ["SARVAM_API_KEY", "SARVAM_MODE", "SARVAM_FALLBACK_TO_MOCK", "SARVAM_DOC_POLL_INTERVAL", "SARVAM_LATENCY_BUDGET"]:
+    for k in ["SARVAM_API_KEY", "SARVAM_MODE", "SARVAM_FALLBACK_TO_MOCK", "SARVAM_DOC_POLL_INTERVAL", "SARVAM_LATENCY_BUDGET",
+              "MOCK_MODE", "SARVAM_STT_MODE", "SARVAM_TTS_MODEL", "SARVAM_TTS_SPEAKER"]:
         monkeypatch.delenv(k, raising=False)
     for k, v in env.items():
         monkeypatch.setenv(k, v)
@@ -18,6 +19,8 @@ def _use_settings(monkeypatch, **env):
     for mod in (config, main, sarvam_client):
         monkeypatch.setattr(mod, "settings", s)
     main._doc_cache.clear()
+    main._sample_tasks.clear()
+    monkeypatch.setattr(sarvam_client, "_tts_variant", None)
     return s
 
 

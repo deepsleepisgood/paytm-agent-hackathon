@@ -76,5 +76,14 @@ with httpx.Client(base_url=BASE, timeout=90) as c:
     check("/doc-extract", r.status_code == 200 and doc.get("source") == "sarvam",
           f"fields={doc.get('extracted_fields') or r.text[:120]} conf={doc.get('confidence')} warnings={doc.get('warnings')}", t)
 
+    t = time.perf_counter()
+    r = c.post("/doc-extract", data={"doc_type": "pod", "use_sample_connector": "true"})
+    pod = r.json() if r.status_code == 200 else {}
+    f = pod.get("extracted_fields", {})
+    check("/doc-extract", r.status_code == 200 and pod.get("source") == "sarvam" and f.get("order_id") == "9981",
+          f"[sample PoD via {pod.get('connector', {}).get('name')}] order={f.get('order_id')} "
+          f"amt={f.get('amount')} delivered={f.get('delivery_date')} to={f.get('recipient_name')} "
+          f"signed={f.get('signature_present')} conf={pod.get('confidence')}", t)
+
 print(f"\n{sum(results)}/{len(results)} live checks passed")
 sys.exit(0 if all(results) else 1)

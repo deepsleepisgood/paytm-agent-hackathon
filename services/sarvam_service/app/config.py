@@ -27,16 +27,24 @@ class Settings:
 
     # mode: "live" = always call Sarvam, "mock" = never call Sarvam,
     # "auto" = live when a key is present, otherwise mock.
-    mode: str = field(default_factory=lambda: os.getenv("SARVAM_MODE", "auto").strip().lower())
+    # MOCK_MODE=true (the name plan.md uses) is a shortcut for SARVAM_MODE=mock.
+    mode: str = field(default_factory=lambda: "mock" if _bool("MOCK_MODE", False)
+                      else os.getenv("SARVAM_MODE", "auto").strip().lower())
     # In live mode, if Sarvam errors/times out, answer from mock instead of failing.
     # Keep this ON for the demo, OFF while you are debugging the live integration.
     fallback_to_mock: bool = field(default_factory=lambda: _bool("SARVAM_FALLBACK_TO_MOCK", True))
 
     # Models (all overridable so a Sarvam model rename never needs a code change)
     stt_model: str = field(default_factory=lambda: os.getenv("SARVAM_STT_MODEL", "saaras:v3"))
-    stt_mode: str = field(default_factory=lambda: os.getenv("SARVAM_STT_MODE", "transcribe"))
-    tts_model: str = field(default_factory=lambda: os.getenv("SARVAM_TTS_MODEL", "bulbul:v3"))
-    tts_speaker: str = field(default_factory=lambda: os.getenv("SARVAM_TTS_SPEAKER", "priya"))
+    # codemix keeps English words ("settlement", "UPI") in Latin script inside Hindi text,
+    # which is how merchants actually talk (plan.md: Saaras v3 codemix).
+    stt_mode: str = field(default_factory=lambda: os.getenv("SARVAM_STT_MODE", "codemix"))
+    # plan.md: Bulbul v4 Flash. v4 voices are named <name>_<lang>_<style>; empty = model default.
+    tts_model: str = field(default_factory=lambda: os.getenv("SARVAM_TTS_MODEL", "bulbul:v4-flash"))
+    tts_speaker: str = field(default_factory=lambda: os.getenv("SARVAM_TTS_SPEAKER", "").strip())
+    # If the primary voice model is rejected, retry once with this known-good pair.
+    tts_fallback_model: str = field(default_factory=lambda: os.getenv("SARVAM_TTS_FALLBACK_MODEL", "bulbul:v3"))
+    tts_fallback_speaker: str = field(default_factory=lambda: os.getenv("SARVAM_TTS_FALLBACK_SPEAKER", "priya"))
     tts_sample_rate: int = field(default_factory=lambda: int(os.getenv("SARVAM_TTS_SAMPLE_RATE", "22050")))
     llm_model: str = field(default_factory=lambda: os.getenv("SARVAM_LLM_MODEL", "sarvam-105b"))
     # "none" turns reasoning off (fastest). Intent classification and rephrasing don't need

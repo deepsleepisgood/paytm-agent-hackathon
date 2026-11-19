@@ -78,36 +78,67 @@ async def speech_to_text(audio: bytes, filename: str, content_type: str | None, 
 
 
 # ---------------------------------------------------------------- Text to speech
+def _speaker_for(model: str, speaker: str | None) -> str | None:
+    """Voices are model-specific: v4 voices look like 'shubh_enhi_ads', v3/v2 like 'priya'.
+    Sending a voice from the wrong family is a 400, so drop it and use the model's default."""
+    if not speaker:
+        return None
+    is_v4_voice = "_" in speaker
+    return speaker if is_v4_voice == model.startswith("bulbul:v4") else None
+
+
+# (model, speaker, language field) that last worked. Saves a failed round trip on every call.
+_tts_variant: tuple[str, str | None, str] | None = None
+
+
 async def text_to_speech(text: str, language_code: str, speaker: str | None, pace: float | None) -> str:
-    """Returns base64 WAV for one chunk of text (<= 2,500 chars)."""
-    payload: dict[str, Any] = {
-        "text": text,
-        "target_language_code": language_code,
-        "model": settings.tts_model,
-        "speaker": speaker or settings.tts_speaker,
-        "speech_sample_rate": settings.tts_sample_rate,
-    }
-    if pace is not None:
-        payload["pace"] = pace
+    """Returns base64 WAV for one chunk of text (<= 2,500 chars).
+
+    Tries, in order: primary model (v4-flash) -> fallback model (v3) -> v3 with the older
+    `target_language_code` field. A 400/422 moves to the next variant; anything else
+    (timeouts, 5xx) is a real outage and is raised.
+    """
+    global _tts_variant
+    wanted = speaker or settings.tts_speaker
+    variants = [
+        (settings.tts_model, _speaker_for(settings.tts_model, wanted), "language_code"),
+        (settings.tts_fallback_model,
+         _speaker_for(settings.tts_fallback_model, speaker) or settings.tts_fallback_speaker, "language_code"),
+        (settings.tts_fallback_model, settings.tts_fallback_speaker, "target_language_code"),
+    ]
+    if _tts_variant in variants:
+        variants.remove(_tts_variant)
+        variants.insert(0, _tts_variant)
+
+    last_exc: SarvamError | None = None
     async with httpx.AsyncClient(timeout=settings.http_timeout) as client:
-        try:
-            resp = await _request(client, "POST", "/text-to-speech", headers=_headers(True), json=payload)
-        except SarvamError as exc:
-            # Sarvam's docs show both `target_language_code` and `language_code` for this
-            # endpoint depending on the page/version. If the first is rejected, try the other.
-            if exc.status_code not in (400, 422):
-                raise
-            payload["language_code"] = payload.pop("target_language_code")
-            resp = await _request(client, "POST", "/text-to-speech", headers=_headers(True), json=payload)
-    audios = resp.json().get("audios") or []
-    if not audios:
-        raise SarvamError("Sarvam TTS returned no audio")
-    return audios[0]
+        for model, voice, lang_field in variants:
+            payload: dict[str, Any] = {"text": text, lang_field: language_code, "model": model,
+                                       "speech_sample_rate": settings.tts_sample_rate}
+            if voice:
+                payload["speaker"] = voice
+            if pace is not None:
+                payload["pace"] = pace
+            try:
+                resp = await _request(client, "POST", "/text-to-speech", headers=_headers(True), json=payload)
+            except SarvamError as exc:
+                if exc.status_code not in (400, 422):
+                    raise
+                log.warning("tts: %s/%s/%s rejected (%s), trying next", model, voice, lang_field, exc.status_code)
+                last_exc = exc
+                continue
+            audios = resp.json().get("audios") or []
+            if not audios:
+                raise SarvamError("Sarvam TTS returned no audio")
+            _tts_variant = (model, voice, lang_field)
+            return audios[0]
+    raise last_exc or SarvamError("Sarvam TTS failed")
 
 
 # ---------------------------------------------------------------- Chat / LLM
 async def chat(system_prompt: str, user_prompt: str, response_format: str,
-               json_schema: dict | None, temperature: float | None, max_tokens: int | None) -> dict:
+               json_schema: dict | None, temperature: float | None, max_tokens: int | None,
+               reasoning_effort: str | None = None) -> dict:
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
@@ -118,7 +149,8 @@ async def chat(system_prompt: str, user_prompt: str, response_format: str,
         "messages": messages,
         "max_tokens": max_tokens or settings.llm_max_tokens,
     }
-    effort = settings.llm_reasoning_effort
+    # Per-request override: e.g. Person 3's Option A/B/C evaluation can ask for "low".
+    effort = reasoning_effort or settings.llm_reasoning_effort
     if settings.llm_model == "sarvam-105b":  # the -conversations model ignores this anyway
         payload["reasoning_effort"] = None if effort == "none" else effort
     if temperature is not None:

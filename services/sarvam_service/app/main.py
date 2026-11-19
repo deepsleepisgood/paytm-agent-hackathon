@@ -14,6 +14,8 @@ import hashlib
 import json
 import logging
 import re
+from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Awaitable, Callable, TypeVar
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -38,7 +40,15 @@ from .schemas import (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("sarvam_service")
 
-app = FastAPI(title="Sarvam Service (Person 1)", version="1.0.0")
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    await _prewarm_samples()
+    yield
+    for task in _sample_tasks.values():
+        task.cancel()
+
+
+app = FastAPI(title="Sarvam Service (Person 1)", version="2.0.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=list(settings.cors_origins),
@@ -81,9 +91,11 @@ async def health() -> dict:
         "fallback_to_mock": settings.fallback_to_mock,
         "models": {
             "stt": settings.stt_model,
-            "tts": f"{settings.tts_model} ({settings.tts_speaker})",
+            "stt_mode": settings.stt_mode,
+            "tts": f"{settings.tts_model} ({settings.tts_speaker or 'default voice'}), fallback {settings.tts_fallback_model}",
             "llm": settings.llm_model,
             "doc": "doc-ai extract (Sarvam Vision)",
+            "samples_ready": {k: (t.done() and not t.cancelled() and t.exception() is None) for k, t in _sample_tasks.items()},
         },
     }
 
@@ -126,24 +138,35 @@ async def tts(req: TTSRequest) -> TTSResponse:
 
 
 # ----------------------------------------------------------------------------- /doc-extract
-@app.post("/doc-extract", response_model=DocExtractResponse)
-async def doc_extract(file: UploadFile = File(...), doc_type: DocType = Form(...)) -> DocExtractResponse:
-    data = await file.read()
-    if not data:
-        raise HTTPException(400, "Empty file")
-    if len(data) > settings.max_doc_bytes:
-        raise HTTPException(413, "File too large (max 15 MB)")
+# Sample connector documents (plan.md: use_sample_connector=true). Clearly marked demo
+# images that match the seed data, so the "Shiprocket PoD for #9981" step works without
+# anyone uploading a file.
+SAMPLES_DIR = Path(__file__).parent / "samples"
+SAMPLE_DOCS: dict[str, dict] = {
+    "pod": {"file": "pod_9981.png", "connector": "SHIPROCKET_SYNC"},
+    "upi_screenshot": {"file": "upi_632184920111.png", "connector": "SAMPLE_UPI_SCREENSHOT"},
+}
+_sample_tasks: dict[str, asyncio.Task] = {}
 
+
+def _sample(doc_type: str) -> tuple[bytes, str, dict]:
+    meta = SAMPLE_DOCS[doc_type]
+    data = (SAMPLES_DIR / meta["file"]).read_bytes()
+    return data, meta["file"], {"name": meta["connector"], "document": meta["file"], "sample": True,
+                                "consent": "GRANTED"}
+
+
+async def _extract(data: bytes, filename: str, content_type: str | None, doc_type: str,
+                   connector: dict | None = None) -> DocExtractResponse:
     key = hashlib.sha256(data + doc_type.encode()).hexdigest()
     if key in _doc_cache:
         return _doc_cache[key]
 
     async def live() -> dict:
-        out = await sarvam_client.extract_document(data, file.filename or "upload", file.content_type, SCHEMAS[doc_type])
-        return out
+        return await sarvam_client.extract_document(data, filename, content_type, SCHEMAS[doc_type])
 
     result, source = await _live_or_mock(
-        "doc-extract", live, lambda: {"fields": mock.doc_extract(doc_type, file.filename or ""), "partial": False},
+        "doc-extract", live, lambda: {"fields": mock.doc_extract(doc_type, filename), "partial": False},
         budget=settings.doc_latency_budget,
     )
 
@@ -159,11 +182,48 @@ async def doc_extract(file: UploadFile = File(...), doc_type: DocType = Form(...
         extracted_fields=fields,
         confidence=score(doc_type, fields, [w for w in warnings if not w.startswith("Could not read")]),
         warnings=warnings,
+        connector=connector,
         source=source,
     )
     if source == "sarvam":
         _doc_cache[key] = response
     return response
+
+
+@app.post("/doc-extract", response_model=DocExtractResponse)
+async def doc_extract(
+    doc_type: DocType = Form(...),
+    file: UploadFile | None = File(None),
+    use_sample_connector: bool = Form(False),
+) -> DocExtractResponse:
+    if use_sample_connector:
+        task = _sample_tasks.get(doc_type)
+        if task and not task.done():  # startup warm-up still running: wait for it instead of starting a 2nd job
+            try:
+                await asyncio.wait_for(asyncio.shield(task), timeout=settings.doc_latency_budget)
+            except Exception:  # noqa: BLE001 - fall through to a normal extraction
+                pass
+        data, filename, connector = _sample(doc_type)
+        return await _extract(data, filename, "image/png", doc_type, connector)
+
+    if file is None:
+        raise HTTPException(422, "Send a file, or use_sample_connector=true")
+    data = await file.read()
+    if not data:
+        raise HTTPException(400, "Empty file")
+    if len(data) > settings.max_doc_bytes:
+        raise HTTPException(413, "File too large (max 15 MB)")
+    return await _extract(data, file.filename or "upload", file.content_type, doc_type)
+
+
+async def _prewarm_samples() -> None:
+    """In live mode, run both sample documents through Sarvam Vision once at startup, so the
+    demo's connector step answers from cache instantly instead of waiting ~5 s on stage."""
+    if not settings.use_live:
+        return
+    for doc_type in SAMPLE_DOCS:
+        data, filename, connector = _sample(doc_type)
+        _sample_tasks[doc_type] = asyncio.create_task(_extract(data, filename, "image/png", doc_type, connector))
 
 
 # ----------------------------------------------------------------------------- /llm
@@ -190,8 +250,8 @@ async def llm(req: LLMRequest) -> LLMResponse:
     result, source = await _live_or_mock(
         "llm",
         lambda: sarvam_client.chat(req.system_prompt, req.user_prompt, req.response_format,
-                                   req.json_schema, req.temperature, req.max_tokens),
-        lambda: {"reply": mock.llm(req.user_prompt, req.response_format), "model": "mock"},
+                                   req.json_schema, req.temperature, req.max_tokens, req.reasoning_effort),
+        lambda: {"reply": mock.llm(req.user_prompt, req.response_format, req.system_prompt), "model": "mock"},
     )
 
     parsed = None
