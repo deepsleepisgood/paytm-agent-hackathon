@@ -781,3 +781,7 @@ img[alt="Paytm for Business"]{mix-blend-mode:multiply}
 .v-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lang{margin-left:0;flex:none}
 .v-mute{flex:none}
+/* compact merchant pill: only as wide as its content */
+.v-who{flex:0 1 auto;max-width:172px;width:max-content;padding:4px 12px 4px 4px;gap:8px;font-size:13px}
+.v-who .m-logo{width:26px;height:26px}
+.lang{margin-left:auto}
