@@ -26,7 +26,7 @@ export const SCENARIOS = [
       return {
         purpose: 'settlement_reconciliation', scope: 'settlement_ledger:read',
         payload: { date: s.date, expected_gross: s.gross, bank_credit: s.net },
-        options: [opt('A', 'Sirf total variance batao', 48, 'Fast, but merchant gets no detail'), opt('B', 'Itemized breakdown + flag held chargeback + ITC log', 91, 'Resolves fully, no follow-up call'), opt('C', 'Escalate to human L2', 22, 'Slow, unnecessary for a standard variance')],
+        options: [opt('A', 'Just show the total variance', 48, 'Fast, but merchant gets no detail'), opt('B', 'Itemized breakdown + flag held chargeback + ITC log', 91, 'Resolves fully, no follow-up call'), opt('C', 'Escalate to human L2', 22, 'Slow, unnecessary for a standard variance')],
         selected: 'B',
         response: { status: 'RESOLVED', deductions: s.deductions.map((x) => ({ code: x.key, amount: x.amount })), variance: s.variance },
         agents: {
@@ -49,7 +49,7 @@ export const SCENARIOS = [
       return {
         purpose: 'utr_verification', scope: 'upi_ledger:read',
         payload: { utr_number: t.utr },
-        options: [opt('A', 'Merchant ko wait karne bolo', 40, 'No evidence given to merchant'), opt('B', 'Check NPCI status + give T+1 timeline and safe advice', 89, 'Merchant knows exactly what to do'), opt('C', 'Escalate to human L2', 18, 'Overkill for a pending UPI')],
+        options: [opt('A', 'Tell the merchant to wait', 40, 'No evidence given to merchant'), opt('B', 'Check NPCI status + give T+1 timeline and safe advice', 89, 'Merchant knows exactly what to do'), opt('C', 'Escalate to human L2', 18, 'Overkill for a pending UPI')],
         selected: 'B',
         response: { status: 'PENDING', utr: t.utr, amount: t.amount, payer_app: t.app, note: 'NPCI T+1 auto-reversal' },
         agents: {

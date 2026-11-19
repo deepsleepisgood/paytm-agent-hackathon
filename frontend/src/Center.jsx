@@ -71,7 +71,7 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
             <span><i>1</i>Merchant asks</span><span><i>2</i>Buddy decides</span><span><i>3</i>Paytm agents act</span><span><i>4</i>Books update</span>
           </div>
           <div className="try">
-            <button className="cta" disabled={busy} onClick={() => onTry('settle')}>Try: “Paisa kahan kata?”</button>
+            <button className="cta" disabled={busy} onClick={() => onTry('settle')}>Try: “Why was money deducted?”</button>
             <button className="ghost" disabled={busy} onClick={() => onTry('fake')}>Try: fake screenshot</button>
           </div>
         </div>

@@ -6,33 +6,33 @@ import { SCENARIOS, liveOk, sayText } from './engine.js'
 import { inr } from './data.js'
 import Khata from './Khata.jsx'
 
-// Every scenario, grouped for the "Madad menu" sheet.
+// Every scenario, grouped for the "All help" sheet.
 const GROUPS = [
   { id: 'payout', label: 'Payout', items: [
-    { id: 'settle', t: 'Paisa kahan kata?', s: 'Why is my settlement lower?' },
+    { id: 'settle', t: 'Why was money deducted?', s: 'Why is my settlement lower?' },
     { id: 'hold', t: 'Settlement hold', s: 'Bank / KYC hold on my money' },
-    { id: 'sbrent', t: 'Soundbox rent kat raha', s: 'Charged after returning device' } ] },
+    { id: 'sbrent', t: 'Rent charged after return', s: 'Soundbox returned but still billed' } ] },
   { id: 'pay', label: 'Payments', items: [
     { id: 'utr', t: 'UTR pending', s: 'Is this payment real?' },
     { id: 'dup', t: 'Duplicate payment', s: 'Charged twice for one order' },
     { id: 'fake', t: 'Fake screenshot', s: 'Catch a tampered UPI proof' },
-    { id: 'refund', t: 'Refund karna hai', s: 'Auto up to ₹5,000, else human' } ] },
+    { id: 'refund', t: 'Refund a customer', s: 'Auto up to ₹5,000, else human' } ] },
   { id: 'loan', label: 'Loan', items: [
-    { id: 'edi', t: 'Loan EDI fail', s: 'Mandate failed, fix it' },
+    { id: 'edi', t: 'Loan EDI failed', s: 'Mandate failed, fix it' },
     { id: 'noc', t: 'Loan NOC', s: 'Paid negotiated settlement' },
-    { id: 'growth', t: 'Business badhao', s: 'Ideas from my 6-month data' } ] },
+    { id: 'growth', t: 'Grow my business', s: 'Ideas from my 6-month data' } ] },
   { id: 'pro', label: 'Alerts', items: [
     { id: 'shield_cb', t: 'Chargeback incoming', s: 'AI pulls PoD, you sign off' },
     { id: 'shield_edi', t: 'Cashflow gap', s: 'AI offers a 2-day EDI pause' } ] },
   { id: 'help', label: 'Help', items: [
     { id: 'cb', t: 'Chargeback proof', s: 'Send delivery proof, free the hold' },
     { id: 'bank', t: 'Bank account update', s: 'Change settlement account' },
-    { id: 'soundbox', t: 'Soundbox kharab', s: 'Hardware issue, human ticket' } ] },
+    { id: 'soundbox', t: 'Soundbox not working', s: 'Hardware issue, human ticket' } ] },
 ]
 
 // The four big starting suggestions on the home state.
 const SUGGEST = {
-  settle: ['Paisa kahan kata?', 'Settlement ka hisaab samjhein'],
+  settle: ['Why was money deducted?', 'Settlement ka hisaab samjhein'],
   utr: ['UTR check karo', 'Payment asli hai ya fake?'],
   cb: ['Chargeback proof', 'Delivery proof bhejein, hold hatayein'],
   hold: ['Settlement hold', 'Bank / KYC hold ka reason jaanein'],
@@ -65,7 +65,7 @@ function Insights({ m, always }) {
   if (!open) {
     return (
       <button className="ins-min" onClick={() => setOpen(true)}>
-        <span><b>Aapka business</b></span>
+        <span><b>Your business</b></span>
         <span className={`trend ${pct >= 0 ? 'up' : 'dn'}`}>{pct >= 0 ? '▲' : '▼'} {Math.abs(pct)}%</span>
         <span className="chip-i">Cash health {h.score} · {h.label}</span>
         <span className="r-go">⌄</span>
@@ -74,7 +74,7 @@ function Insights({ m, always }) {
   }
   return (
     <div className="ins">
-      <div className="ins-h"><b>Aapka business, ek nazar mein</b><span className="muted xs">{i.period}</span></div>
+      <div className="ins-h"><b>Your business at a glance</b><span className="muted xs">{i.period}</span></div>
       <div className="ins-grid">
         <div>
           <div className="muted xs">Sales trend</div>
@@ -141,7 +141,7 @@ export default function Buddy({ m, L, chat, busy, mode, run, reveal, onPreset, o
   if (view === 'menu') {
     return (
       <div className="screen buddy pg">
-        <Back title="Madad menu" />
+        <Back title="All help" />
         <div className="pg-body">
           <Insights m={m} always />
           {GROUPS.map((g) => (

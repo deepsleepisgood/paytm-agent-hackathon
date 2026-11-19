@@ -1,7 +1,9 @@
 // Hindi + English UI strings for the voice Assistant. Merchant picks a language once; the choice is remembered.
 export const LANGS = { hi: 'हि', en: 'EN' }
 const KEY = 'paytm-ai-lang'
-export const loadLang = () => { try { const v = localStorage.getItem(KEY); return v in LANGS ? v : 'hi' } catch { return 'hi' } }
+// The deployed demo is English-only. Set to false to bring back the Hindi / English toggle.
+export const ENGLISH_ONLY = true
+export const loadLang = () => { if (ENGLISH_ONLY) return 'en'; try { const v = localStorage.getItem(KEY); return v in LANGS ? v : 'hi' } catch { return 'hi' } }
 export const saveLang = (l) => { try { localStorage.setItem(KEY, l) } catch { /* ignore */ } }
 
 export const STR = {

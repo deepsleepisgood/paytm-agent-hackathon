@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { summarize } from './facts.js'
 import { MerchantLogo } from './icons.jsx'
-import { t, LANGS } from './i18n.js'
+import { t, LANGS, ENGLISH_ONLY } from './i18n.js'
 
 const AGENTS = ['intelligence', 'risk', 'resolution', 'ledger']
 const AGENT_NAMES = ['Intelligence', 'Risk', 'Resolution', 'Ledger']
@@ -190,7 +190,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
       <div className="aurora" /><div className="aurora a2" />
       <div className="v-top">
         <span className="v-who"><MerchantLogo d={m.d} size={22} /><span className="v-name">{m.profile.name}</span></span>
-        <div className="lang" role="group" aria-label="Language">{Object.entries(LANGS).map(([k, lab]) => <button key={k} className={lang === k ? 'on' : ''} onClick={() => setLang(k)}>{lab}</button>)}</div>
+        {!ENGLISH_ONLY && <div className="lang" role="group" aria-label="Language">{Object.entries(LANGS).map(([k, lab]) => <button key={k} className={lang === k ? 'on' : ''} onClick={() => setLang(k)}>{lab}</button>)}</div>}
         <button className="v-mute" onClick={() => { if (speak) stopSpeaking(); setSpeak(!speak) }} aria-label={speak ? T('mute') : T('unmute')}><SpeakerIcon on={speak} /></button>
       </div>
 
