@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { summarize } from './facts.js'
+import { t, LANGS } from './i18n.js'
 
 const AGENTS = ['intelligence', 'risk', 'resolution', 'ledger']
 const AGENT_NAMES = ['Intelligence', 'Risk', 'Resolution', 'Ledger']
@@ -21,7 +22,7 @@ const SpeakerIcon = ({ on }) => (
   </svg>
 )
 
-export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mode, prompts, nudge, onText, onAudio, onPreset, onConfirm, onMenu, onKhata, onAttach }) {
+export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mode, prompts, nudge, lang, setLang, onText, onAudio, onPreset, onConfirm, onMenu, onKhata, onAttach }) {
   const [phase, setPhase] = useState('idle') // idle | listening | speaking (thinking comes from `busy`)
   const [live, setLive] = useState('')
   const [spoken, setSpoken] = useState(0)
@@ -38,7 +39,9 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
   const last = chat[chat.length - 1]
   const lastMe = [...chat].reverse().find((c) => c.who === 'me')
   const reply = last && last.who === 'ai' && chat.length > 1 ? last : null
-  const info = summarize(run, reply)
+  const shown = reply ? { ...reply, text: (reply.texts && reply.texts[lang]) || reply.text } : null
+  const info = summarize(run, shown, lang)
+  const T = (k, ...a) => t(lang, k, ...a)
   const state = busy ? 'thinking' : phase
   const agentsDone = run ? run.steps.filter((s, i) => AGENTS.includes(s.key) && i < reveal).length : 0
 
@@ -71,7 +74,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
       } catch { used = false }
     }
     if (!used && 'speechSynthesis' in window) {
-      const u = new SpeechSynthesisUtterance(msg.text); u.lang = 'hi-IN'; u.rate = 1
+      const u = new SpeechSynthesisUtterance(msg.text); u.lang = /[\u0900-\u097F]/.test(msg.text) ? 'hi-IN' : 'en-IN'; u.rate = 1
       const starts = []; let pos = 0; ws.forEach((w) => { starts.push(pos); pos += w.length + 1 })
       u.onboundary = (e) => { let idx = 0; for (let k = 0; k < starts.length; k++) if (starts[k] <= e.charIndex) idx = k; setSpoken(idx + 1) }
       u.onend = done; u.onerror = done
@@ -101,13 +104,14 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
     setPhase('idle')
     const text = (r.final || '').trim()
     const X = latest.current
+    const L = { lang: X.lang }
     if (text) {
       setLive('')
       if (X.pending && CONFIRM_RE.test(text)) return X.onConfirm(X.reply, X.chat.length - 1)
       return X.onText(text)
     }
     if (blob && blob.size > 1500 && r.heard && X.mode === 'live') { setLive(''); return X.onAudio(blob) }
-    setNote(r.heard ? 'आवाज़ समझ नहीं आई। नीचे से कोई सवाल चुन लीजिए।' : 'कुछ सुनाई नहीं दिया। माइक दबाकर फिर से बोलिए।')
+    setNote(t(L.lang, r.heard ? 'unclear' : 'silent'))
   }
   const finish = () => {
     const r = rec.current
@@ -153,14 +157,14 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
     }
     if (SR) {
       try {
-        const sr = new SR(); sr.lang = 'hi-IN'; sr.interimResults = true; sr.continuous = false
+        const sr = new SR(); sr.lang = latest.current.lang === 'en' ? 'en-IN' : 'hi-IN'; sr.interimResults = true; sr.continuous = false
         sr.onresult = (e) => { let t = ''; for (const res of e.results) t += res[0].transcript; r.final = t; r.heard = true; setLive(t) }
         sr.onerror = () => {}
         sr.onend = () => finish()
         sr.start(); r.sr = sr
       } catch { /* ignore */ }
     }
-    if (!stream && !SR) { cleanup(); r.done = true; setPhase('idle'); setNote('यहाँ माइक नहीं चल रहा। नीचे से कोई सवाल चुन लीजिए।') }
+    if (!stream && !SR) { cleanup(); r.done = true; setPhase('idle'); setNote(t(latest.current.lang, 'nomic')) }
   }
 
   /* ---------- "say it for me": tapping a prompt animates speaking, then runs it ---------- */
@@ -177,7 +181,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
 
   // Voice sign-off: when a confirm button is pending, saying "haan" works too.
   const pending = reply && reply.confirm && !reply.done
-  latest.current = { pending, reply, chat, mode, onText, onAudio, onConfirm }
+  latest.current = { pending, reply, chat, mode, onText, onAudio, onConfirm, lang }
 
   const cls = `voice ${state} ${speak ? '' : 'muted'} ${reply ? 'has-reply' : ''}`
   return (
@@ -185,11 +189,13 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
       <div className="aurora" /><div className="aurora a2" />
       <div className="v-top">
         <span className="v-who"><i className="live-dot" />{m.profile.name}</span>
-        <button className="v-mute" onClick={() => { if (speak) stopSpeaking(); setSpeak(!speak) }} aria-label={speak ? 'Mute voice replies' : 'Unmute voice replies'}><SpeakerIcon on={speak} /></button>
+        <div className="lang" role="group" aria-label="Language">{Object.entries(LANGS).map(([k, lab]) => <button key={k} className={lang === k ? 'on' : ''} onClick={() => setLang(k)}>{lab}</button>)}</div>
+        <button className="v-mute" onClick={() => { if (speak) stopSpeaking(); setSpeak(!speak) }} aria-label={speak ? T('mute') : T('unmute')}><SpeakerIcon on={speak} /></button>
       </div>
 
       <div className="orb-stage">
-        <div ref={orb} className={`orb-wrap ${state}`} onClick={startListening} role="button" aria-label="माइक दबाकर बोलिए">
+        <div ref={orb} className={`orb-wrap ${state}`} onClick={startListening} role="button" aria-label={T('idle')}>
+          <span className="halo" />
           <span className="ring r1" /><span className="ring r2" /><span className="ring r3" />
           <span className="sweep" />
           {Array.from({ length: 10 }).map((_, i) => <span key={i} className="pt" style={{ '--i': i }} />)}
@@ -198,15 +204,16 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
             <div className="vbars">{BAR_K.map((k, i) => <i key={i} style={{ '--k': k, '--d': `${(i % 4) * 0.12}s` }} />)}</div>
           </div>
         </div>
-        <div className="state-lbl">{state === 'listening' ? 'सुन रहा हूँ…' : state === 'thinking' ? 'सोच रहा हूँ…' : state === 'speaking' ? 'बता रहा हूँ' : reply ? 'और कुछ पूछना है?' : 'माइक दबाकर बोलिए'}</div>
-        {state === 'idle' && <button className="upbtn" onClick={() => onAttach()}><CameraIcon /> फ़ोटो भेजें</button>}
+        <div className="reflect"><i /></div>
+        <div className="state-lbl">{state === 'listening' ? T('listen') : state === 'thinking' ? T('think') : state === 'speaking' ? T('speak') : reply ? T('more') : T('idle')}</div>
+        {state === 'idle' && <button className="upbtn" onClick={() => onAttach()}><CameraIcon /> {T('up')}</button>}
         {state === 'thinking' && (
           <div className="agent-dots">{AGENT_NAMES.map((n, i) => <span key={n} className={i < agentsDone ? 'on' : ''}><i />{n}</span>)}</div>
         )}
       </div>
 
       <div className="v-cap">
-        {state === 'listening' && <div className="cap live">{live || <span className="ph">बोलिए…</span>}</div>}
+        {state === 'listening' && <div className="cap live">{live || <span className="ph">{T('ph')}</span>}</div>}
         {state === 'thinking' && lastMe && <div className="cap me">“{lastMe.text}”</div>}
         {(state === 'speaking' || state === 'idle') && reply && info && (
           <div className="answer">
@@ -223,29 +230,29 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
           <div className="cap intro">
             {nudge ? (
               <div className="nudge">
-                <em>आज का ज़रूरी काम</em>
+                <em>{T('nudgeLabel')}</em>
                 <b>{nudge.title}</b>
                 <span>{nudge.text}</span>
                 <div className="n-act">
-                  <button className="n-main" onClick={() => onAttach('pod')}><CameraIcon /> सबूत की फ़ोटो भेजें</button>
-                  <button className="n-alt" onClick={() => sayPrompt(nudge)}>डेमो देखें</button>
+                  <button className="n-main" onClick={() => onAttach('pod')}><CameraIcon /> {T('nudgeCta')}</button>
+                  <button className="n-alt" onClick={() => sayPrompt(nudge)}>{T('nudgeDemo')}</button>
                 </div>
               </div>
-            ) : (<>हिंदी या English में पूछिए</>)}
+            ) : (<>{T('intro')}</>)}
           </div>
         )}
         {note && state === 'idle' && <div className="cap note">{note}</div>}
         {pending && (
           <div className="sign">
             <button className="yes" onClick={() => onConfirm(reply, chat.length - 1)} disabled={busy}>{reply.confirm.label}</button>
-            <span>या बोलिए “हाँ”</span>
+            <span>{T('yesSay')}</span>
           </div>
         )}
       </div>
 
-      {state === 'listening' && <div className="v-act"><button className="stop-btn" onClick={finish}>बोल चुका, भेजिए</button></div>}
+      {state === 'listening' && <div className="v-act"><button className="stop-btn" onClick={finish}>{T('stop')}</button></div>}
       {(state === 'idle' || state === 'speaking') && reply && !pending && (
-        <div className="v-act"><button className="ask-more" onClick={startListening}><MicIcon /> बोलकर और पूछिए</button></div>
+        <div className="v-act"><button className="ask-more" onClick={startListening}><MicIcon /> {T('ask')}</button></div>
       )}
 
       <div className={`v-prompts ${state === 'idle' ? '' : 'dim'}`}>
@@ -253,13 +260,13 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
         <div className="vp-row">
           {prompts.map((p) => (
             <button key={p.id} className="vp" disabled={busy || !p.ok} onClick={() => sayPrompt(p)}>
-              <b>{p.hi}</b><span>बोलकर पूछें</span>
+              <b>{p.label}</b><span>{T('askVoice')}</span>
             </button>
           ))}
         </div>
         <div className="vp-links">
-          <button onClick={onMenu}>सारी मदद</button>
-          <button onClick={onKhata}>खाता</button>
+          <button onClick={onMenu}>{T('menu')}</button>
+          <button onClick={onKhata}>{T('khata')}</button>
           
         </div>
       </div>
