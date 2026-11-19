@@ -1,0 +1,336 @@
+import React, { useEffect, useRef, useState } from 'react'
+import { I, PaytmLogo } from './icons.jsx'
+import { SEED, inr } from './data.js'
+import { getLedger } from './api.js'
+
+const TABS = [
+  { id: 'home', label: 'Home', icon: I.Home },
+  { id: 'history', label: 'History', icon: I.History },
+  { id: 'soundbox', label: 'Soundbox', icon: I.Speaker },
+  { id: 'loans', label: 'Loans', icon: I.Loan },
+  { id: 'account', label: 'Account', icon: I.User },
+]
+
+function StatusBar() {
+  return (
+    <div className="statusbar">
+      <span>9:41</span>
+      <span className="sb-right">
+        <i className="sig" /> <span>5G</span> <i className="bat" />
+      </span>
+    </div>
+  )
+}
+
+function Badge({ status }) {
+  const cls = { SUCCESS: 'ok', PENDING: 'warn', REFUNDED: 'info', HELD: 'warn', PROCESSED: 'ok' }[status] || 'info'
+  return <span className={`badge ${cls}`}>{status === 'SUCCESS' ? 'Success' : status[0] + status.slice(1).toLowerCase()}</span>
+}
+
+/* ---------------- Home ---------------- */
+function Home({ d, go }) {
+  const [hide, setHide] = useState(false)
+  const today = d.transactions.filter((t) => t.status !== 'REFUNDED').reduce((s, t) => s + t.amount, 0)
+  const actions = [
+    { l: 'Show QR', i: I.QR, to: 'qr' },
+    { l: 'Settlements', i: I.Settle, to: 'settlement' },
+    { l: 'Payment\nHistory', i: I.History, tab: 'history' },
+    { l: 'Soundbox', i: I.Speaker, tab: 'soundbox' },
+    { l: 'Refunds', i: I.Refund, to: 'refunds' },
+    { l: 'Reports', i: I.Report, to: 'settlement' },
+    { l: 'Business\nLoan', i: I.Loan, tab: 'loans' },
+    { l: 'Offers', i: I.Offer, to: 'offers' },
+  ]
+  return (
+    <div className="screen">
+      <div className="hero">
+        <div className="hero-top">
+          <PaytmLogo />
+          <div className="hero-ic">
+            <I.Help size={22} />
+            <span className="dotwrap"><I.Bell size={22} /><em /></span>
+          </div>
+        </div>
+        <div className="merchant-row">
+          <div className="avatar">SE</div>
+          <div>
+            <div className="m-name">{d.merchant}</div>
+            <div className="m-id">MID: {d.mid}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card float collect">
+        <div className="row between">
+          <span className="muted">Today's Collection</span>
+          <button className="icon-btn" onClick={() => setHide(!hide)}><I.Eye size={18} /></button>
+        </div>
+        <div className="big">{hide ? '₹ ••••••' : inr(today)}</div>
+        <div className="row gap">
+          <div className="pill">{d.transactions.length} payments</div>
+          <button className="link" onClick={() => go('settlement')}>View settlement <I.Chev size={14} /></button>
+        </div>
+      </div>
+
+      <div className="card grid">
+        {actions.map((a) => (
+          <button key={a.l} className="ga" onClick={() => (a.tab ? go(null, a.tab) : go(a.to))}>
+            <span className="ga-ic"><a.i size={24} /></span>
+            <span className="ga-l">{a.l}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="card settle-card" onClick={() => go('settlement')}>
+        <div className="row between">
+          <b>Latest Settlement</b>
+          <span className="muted sm">{d.settlement.date}</span>
+        </div>
+        <div className="row between mt">
+          <div><div className="muted sm">Gross</div><div className="v">{inr(d.settlement.gross)}</div></div>
+          <div><div className="muted sm">Deductions</div><div className="v red">−{inr(d.settlement.variance)}</div></div>
+          <div><div className="muted sm">Bank credit</div><div className="v green">{inr(d.settlement.net)}</div></div>
+        </div>
+        <div className="hint"><I.Alert size={16} /> {inr(d.settlement.variance)} less than expected? Tap to see why</div>
+      </div>
+
+      <div className="card promo">
+        <div>
+          <b>Merchant Loan</b>
+          <p>Daily EDI {inr(d.loan.edi)} · Balance {inr(d.loan.balance)}</p>
+        </div>
+        <button className="cta sm" onClick={() => go(null, 'loans')}>View</button>
+      </div>
+
+      <div className="card txn-list">
+        <div className="row between"><b>Recent payments</b><button className="link" onClick={() => go(null, 'history')}>See all</button></div>
+        {d.transactions.slice(0, 3).map((t) => <TxnRow key={t.utr} t={t} />)}
+      </div>
+    </div>
+  )
+}
+
+function TxnRow({ t }) {
+  const refund = t.status === 'REFUNDED'
+  return (
+    <div className="txn">
+      <div className={`t-ic ${refund ? 'r' : ''}`}>{refund ? <I.Refund size={18} /> : <I.Down size={18} />}</div>
+      <div className="t-mid">
+        <div className="t-name">{t.name}</div>
+        <div className="muted sm">{t.app} · UTR {t.utr} · {t.time}</div>
+      </div>
+      <div className="t-r">
+        <div className={refund ? 'red b' : 'b'}>{refund ? '−' : '+'}{inr(t.amount)}</div>
+        <Badge status={t.status} />
+      </div>
+    </div>
+  )
+}
+
+/* ---------------- History ---------------- */
+function History({ d }) {
+  const [f, setF] = useState('ALL')
+  const list = d.transactions.filter((t) => f === 'ALL' || t.status === f)
+  return (
+    <div className="screen">
+      <Header title="Payment History" />
+      <div className="chips">
+        {['ALL', 'SUCCESS', 'PENDING', 'REFUNDED'].map((c) => (
+          <button key={c} className={`chip ${f === c ? 'on' : ''}`} onClick={() => setF(c)}>{c === 'ALL' ? 'All' : c[0] + c.slice(1).toLowerCase()}</button>
+        ))}
+      </div>
+      <div className="card txn-list">{list.map((t) => <TxnRow key={t.utr} t={t} />)}</div>
+    </div>
+  )
+}
+
+/* ---------------- Settlement ---------------- */
+function Settlement({ d, back }) {
+  const s = d.settlement
+  return (
+    <div className="screen">
+      <Header title="Settlement Details" back={back} />
+      <div className="card center-card">
+        <div className="muted">Credited to bank · {s.date}</div>
+        <div className="big green">{inr(s.net)}</div>
+        <div className="pill ok"><I.Check size={14} /> Settled to HDFC ••4821</div>
+      </div>
+      <div className="card">
+        <div className="row between line"><span>Gross collection</span><b>{inr(s.gross)}</b></div>
+        {s.deductions.map((x) => (
+          <div className="line" key={x.key}>
+            <div className="row between"><span>{x.label}</span><b className="red">−{inr(x.amount)}</b></div>
+            <div className="muted sm">{x.note}</div>
+          </div>
+        ))}
+        <div className="row between line total"><b>Net bank credit</b><b className="green">{inr(s.net)}</b></div>
+      </div>
+      <div className="card info">
+        <I.Spark size={18} />
+        <span>Total deductions {inr(s.variance)}. Fees and GST can be claimed as ITC; chargeback hold releases after proof of delivery.</span>
+      </div>
+    </div>
+  )
+}
+
+/* ---------------- Soundbox ---------------- */
+function Soundbox() {
+  return (
+    <div className="screen">
+      <Header title="Soundbox" />
+      <div className="card center-card">
+        <div className="sb-device"><I.Speaker size={56} /></div>
+        <b>Paytm Soundbox 4G</b>
+        <div className="muted sm">Device ID SB-88213 · Connected</div>
+        <div className="pill ok mt">Battery 82%</div>
+      </div>
+      <div className="card">
+        <div className="row between line"><span>Language</span><b>हिन्दी</b></div>
+        <div className="row between line"><span>Volume</span><b>High</b></div>
+        <div className="row between line"><span>Monthly rental</span><b>{inr(149)}</b></div>
+        <div className="row between line"><span>Last payment announced</span><b>{inr(3200)}</b></div>
+      </div>
+    </div>
+  )
+}
+
+/* ---------------- Loans ---------------- */
+function Loans({ d }) {
+  const l = d.loan
+  const pct = Math.round(((100000 - l.balance) / 100000) * 100)
+  return (
+    <div className="screen">
+      <Header title="Business Loan" />
+      <div className="card loan">
+        <div className="muted">Outstanding balance</div>
+        <div className="big">{inr(l.balance)}</div>
+        <div className="bar"><i style={{ width: pct + '%' }} /></div>
+        <div className="muted sm">{pct}% repaid of ₹1,00,000</div>
+      </div>
+      <div className="card">
+        <div className="row between line"><span>Daily EDI</span><b>{inr(l.edi)}/day</b></div>
+        <div className="row between line"><span>Next deduction</span><b>{l.next}</b></div>
+        <div className="row between line"><span>Deducted from</span><b>Daily settlement</b></div>
+      </div>
+    </div>
+  )
+}
+
+/* ---------------- Account ---------------- */
+function Account({ d }) {
+  const rows = [
+    ['Business profile', d.merchant], ['Merchant ID', d.mid], ['Bank account', 'HDFC ••4821'],
+    ['GST number', '07AABCS1429B1Z5'], ['Language', 'English'], ['Help & Support', ''],
+  ]
+  return (
+    <div className="screen">
+      <Header title="Account" />
+      <div className="card center-card"><div className="avatar lg">SE</div><b>{d.merchant}</b><div className="muted sm">{d.mid}</div></div>
+      <div className="card">
+        {rows.map(([a, b]) => (
+          <div key={a} className="row between line"><span>{a}</span><span className="muted">{b} <I.Chev size={14} /></span></div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ---------------- Simple extras ---------------- */
+function QR({ back, d }) {
+  const cells = Array.from({ length: 169 }, (_, i) => ((i * 7 + (i >> 3) * 3) % 5 < 2) || [0, 1, 2, 10, 11, 12].includes(i % 13) && [0, 1, 2, 10, 11, 12].includes(i / 13 | 0))
+  return (
+    <div className="screen">
+      <Header title="Payment QR" back={back} />
+      <div className="card center-card">
+        <b>{d.merchant}</b>
+        <div className="qr">{cells.map((c, i) => <i key={i} className={c ? 'on' : ''} />)}</div>
+        <div className="muted sm">Scan with any UPI app to pay</div>
+      </div>
+    </div>
+  )
+}
+
+function Refunds({ back, d }) {
+  const r = d.transactions.filter((t) => t.status === 'REFUNDED')
+  return (
+    <div className="screen">
+      <Header title="Refunds" back={back} />
+      <div className="card txn-list">{r.map((t) => <TxnRow key={t.utr} t={t} />)}</div>
+    </div>
+  )
+}
+
+function Offers({ back }) {
+  return (
+    <div className="screen">
+      <Header title="Offers" back={back} />
+      {['Zero MDR on Bank UPI payments', 'Get a free Soundbox 4G on ₹50k monthly volume', 'Business loan up to ₹10L, instant approval'].map((o) => (
+        <div className="card promo" key={o}><b>{o}</b></div>
+      ))}
+    </div>
+  )
+}
+
+function Header({ title, back }) {
+  return (
+    <div className="hdr">
+      {back ? <button className="icon-btn" onClick={back}><I.Back size={22} /></button> : <span style={{ width: 22 }} />}
+      <b>{title}</b>
+      <span style={{ width: 22 }} />
+    </div>
+  )
+}
+
+/* ---------------- Shell ---------------- */
+export default function App() {
+  const [tab, setTab] = useState('home')
+  const [sub, setSub] = useState(null)
+  const [d, setD] = useState(SEED)
+  const [live, setLive] = useState(false)
+  const scroller = useRef(null)
+  useEffect(() => { scroller.current?.scrollTo(0, 0) }, [tab, sub])
+
+  // Pull live state from the Paytm agent (8002) when it's running; fall back to seed data.
+  useEffect(() => {
+    let off = false
+    getLedger().then((l) => { if (!off && l) setLive(true) })
+    return () => { off = true }
+  }, [])
+
+  const go = (to, t) => { if (t) { setTab(t); setSub(null) } else setSub(to) }
+  const back = () => setSub(null)
+
+  let body
+  if (sub === 'settlement') body = <Settlement d={d} back={back} />
+  else if (sub === 'qr') body = <QR d={d} back={back} />
+  else if (sub === 'refunds') body = <Refunds d={d} back={back} />
+  else if (sub === 'offers') body = <Offers back={back} />
+  else if (tab === 'home') body = <Home d={d} go={go} />
+  else if (tab === 'history') body = <History d={d} />
+  else if (tab === 'soundbox') body = <Soundbox />
+  else if (tab === 'loans') body = <Loans d={d} />
+  else body = <Account d={d} />
+
+  return (
+    <div className="stage">
+      <div className="side">
+        <h2>Paytm for Business</h2>
+        <p>Mobile clone · Person 4 frontend</p>
+        <div className={`conn ${live ? 'on' : ''}`}>{live ? 'Live: Paytm agent connected' : 'Offline: using seed data'}</div>
+      </div>
+      <div className="phone">
+        <div className="notch" />
+        <StatusBar />
+        <div className="content" ref={scroller}>{body}</div>
+        <nav className="tabs">
+          {TABS.map((t) => (
+            <button key={t.id} className={tab === t.id && !sub ? 'on' : ''} onClick={() => { setTab(t.id); setSub(null) }}>
+              <t.icon size={22} /><span>{t.label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="home-ind" />
+      </div>
+    </div>
+  )
+}
