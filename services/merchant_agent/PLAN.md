@@ -1,67 +1,82 @@
-# Build for Bharat Hackathon — Master Execution Plan (`plan.md`)
+# Build for Bharat — Master Architecture & Execution Plan (`plan.md`, V3)
 
-> Team master plan, copied here as context for the Merchant Agent (Person 3). The canonical copy belongs at the repo root.
+> Team master plan, copied here as context for the Merchant AI Buddy (Person 3). The canonical copy belongs at the repo root.
+> This V3 replaces the earlier plan. The Person 3 briefs that came with it are at the bottom.
 
-**Event:** Masters' Union School of AI Hackathon (Paytm $\times$ Sarvam AI) — Gurugram  
-**Track:** Track 3 — Autonomous AI Teammates  
-**MVP Freeze Deadline:** Thursday, 19 Nov 2026 — **21:00 IST (9:00 PM)**  
-**Day 2 Sell Sprint & Pitch:** Friday, 20 Nov 2026 — **09:00 to 18:00 IST**
-
----
-
-## 1. Core Concept & Track 3 Positioning
-
-### What We Are Building
-An **Agent-to-Agent (A2A) Merchant–Paytm Resolution Network** featuring two autonomous AI teammates that sit on opposite sides of the data boundary and negotiate structured, consent-verified resolutions in seconds:
-
-1. **Merchant AI Teammate (Merchant Side):** Lives with the merchant (Hindi/Hinglish voice + document upload), enforces explicit **DPDP consent**, tracks local order sheets and **GST Input Tax Credit (ITC)**, and dispatches structured A2A requests.
-2. **Paytm AI Teammate (Acquirer Side):** Lives on Paytm’s acquiring settlement ledger, validates consent tokens, reconciles settlement deductions, verifies 12-digit UTRs across all payer UPI apps (GPay, PhonePe, Paytm, BHIM), processes Proof of Delivery (PoD) to release chargeback holds, and escalates hardware/high-value edge cases to L2 human support.
-
-### Why This Wins Track 3
-* **Outcome Over Chatbot:** Resolves full end-to-end customer service & settlement workflows (zero manual CSV reconciliation, automated chargeback PoD collection, instant fake-screenshot fraud blocking).
-* **Regulatory & Data-Boundary Native:** Respects RBI Digital Lending/Payments guidelines and the **DPDP Act**—no raw phone-number scraping, explicit timestamped consent tokens on every A2A hop, and strict separation between merchant books and Paytm's internal ledger.
-* **Wedge-to-Teammate Vision:** Starts with the sharpest, highest-anxiety wedge (settlement variances, stuck UPI payments, and chargeback holds) and expands into the merchant's full 24/7 vernacular operations teammate.
+**Event:** Masters' Union School of AI Hackathon (Paytm $\times$ Sarvam AI) — Gurugram
+**Track:** Track 3 — Autonomous AI Teammates
+**Architecture Paradigm:** Two-Tier Autonomous Merchant Operating System (Merchant AI Buddy $\leftrightarrow$ Paytm 4-Agent Resolution Mesh)
 
 ---
 
-## 2. Verified Market Sizing (For Day 2 Pitch Deck)
+## 1. Core Vision & Two-Tier Architecture
+
+Instead of a reactive single-purpose support bot, we are building a **Closed-Loop, Goal-Oriented Multi-Agent System** that sits on both sides of the merchant–acquirer boundary:
+
+1. **Frontend Tier — All-in-One Merchant AI Buddy (`services/merchant_agent` | Port `8003`):**
+   * Lives with the merchant inside *Paytm for Business* in natural Hindi/Hinglish voice and text.
+   * **Historical Memory & Business Intelligence:** Analyzes 6 months of local sales, peak-day multipliers, supplier payables, and past dispute history to give proactive CFO/growth advice.
+   * **Root-Cause Friction Diagnosis:** Distinguishes *payment friction* (e.g., mandate failure, temporary rain/holiday cash dip) from *unwillingness*, evaluates multiple candidate interventions (`Option A vs. B vs. C`), and selects the highest-ROI, DPDP-consented action.
+2. **Backend Tier — Paytm Multi-Agent Mesh (`services/paytm_agent` | Port `8002`):**
+   * A central **Paytm Master Orchestrator** that enforces DPDP consent tokens and coordinates **4 specialized solver sub-agents**:
+     1. **Intelligence & Root-Cause Agent:** Investigates UTRs, settlement deductions, and mandate bounce reasons.
+     2. **Risk & Policy Engine:** Evaluates RBI Digital Lending KFS clauses, autonomous refund limits ($\le ₹5,000$), and hardship eligibility.
+     3. **Resolution & Friction-Removal Agent:** Releases chargeback holds upon PoD verification, switches failed mandates to 1-tap UPI links, and executes KFS-compliant EDI pauses.
+     4. **Ledger & Learning Operations Agent:** Mutates settlement/loan states and feeds verified outcomes back into future strategy evaluation.
+
+---
+
+## 2. Closed-Loop Cognitive Workflow (5-Step Execution Cycle)
+
+Every merchant interaction or proactive webhook follows this exact verifiable loop:
+
+1. **Understand Merchant (`Merchant Buddy`):** Load merchant profile, 6-month QR/POS sales history, active Loan EDI (`₹500/day`), and supplier payables (`₹4,500` due tomorrow).
+2. **Generate & Evaluate Interventions (`Merchant Buddy`):** Compare candidate actions (e.g., *Option A: Send reminder* vs. *Option B: Troubleshoot mandate / 48h KFS EDI pause* vs. *Option C: Escalate to specialist*) against historical outcomes, cost, UX, and policy constraints.
+3. **Execute Permitted Intervention (`DPDP Gate + A2A Dispatch`):** Mint timestamped `DPDP_VERIFIED_TS_*` consent token and dispatch structured JSON to the **Paytm Master Orchestrator**.
+4. **Multi-Agent Collaborative Resolution (`Paytm 4-Agent Mesh`):** Paytm's 4 sub-agents execute in sequence (`Intelligence` $\rightarrow$ `Risk & Policy` $\rightarrow$ `Resolution` $\rightarrow$ `Ledger Ops`) and return a full `agent_trace`.
+5. **Verify Outcome & Learn (`Closed-Loop Feedback`):** Confirm actual ledger/repayment resolution, log verified metrics into `strategy_memory` for future decisions, and deliver a concise, empathetic Hindi/Hinglish voice response via Sarvam TTS.
+
+---
+
+## 3. Top 8 Merchant Problems Solved End-to-End
+
+| # | Merchant Scenario | Intent Key | Merchant AI Buddy (`8003`) | Paytm 4-Agent Mesh (`8002`) |
+| :--- | :--- | :--- | :--- | :--- |
+| **1** | **Mandate Failed / Missed Loan EDI** | `MANDATE_TROUBLESHOOT` | Checks sales history; sees temporary 40% rain/holiday dip—diagnoses *friction, not default*. | **Intelligence** flags eNACH bounce $\rightarrow$ **Risk** approves KFS pause/UPI switch $\rightarrow$ **Resolution** sends 1-tap UPI link or 48h EDI holiday. |
+| **2** | **T+1 Settlement Variance ("₹4,160 kahan kata?")** | `SETTLEMENT_RECONCILE` | Matches local gross sales (`₹1,00,000`) vs. bank credit (`₹95,840`); auto-logs `₹261` GST ITC. | **Intelligence** itemizes MDR, GST, refunds, Soundbox rental, and flags `₹800` chargeback hold (`#9981`). |
+| **3** | **Proactive Chargeback Defense (`#9981`)** | `CHARGEBACK_RESOLVE` | Auto-fetches signed PoD from consented Shiprocket connector; asks 1-tap Hindi sign-off. | **Resolution** verifies PoD via Sarvam Vision; **Ledger Ops** flips `#9981` from `HELD` $\rightarrow$ `RELEASED`. |
+| **4** | **Stuck / Fake Customer UPI Screenshot** | `UTR_VERIFY` | Extracts 12-digit UTR & tamper flags via Sarvam Vision; warns merchant out loud if fake. | **Intelligence** checks NPCI acquiring logs (`SUCCESS`, `PENDING`, or `NOT_FOUND_SUSPECTED_FAKE`). |
+| **5** | **Duplicate Payment / Out-of-Sync Records** | `DUPLICATE_RECONCILE` | Detects customer paid twice for same order in local khata; recommends instant refund. | **Intelligence** matches both UTRs; **Risk** approves ($\le ₹5,000$); **Ledger Ops** executes refund. |
+| **6** | **Historical Growth & Credit Advisory** | `GROWTH_ADVISORY` | Analyzes 6-month trend (`2.3x` Friday–Sunday spike); recommends stocking up + working capital line. | **Intelligence + Risk** pre-underwrites transparent KFS credit offer matched to weekend cashflows. |
+| **7** | **High Refund vs. Working Capital Crunch** | `CASHFLOW_EDI_SWITCH` | Detects `₹8,500` refund will drop tomorrow's payout (`₹1,200`) below stock payable (`₹4,500`). | **Risk & Resolution** negotiate a 2-day KFS Clause 4.2 EDI pause (`Clix Capital`) saving `₹1,000` liquidity. |
+| **8** | **Hardware / Soundbox Fault Escalation** | `ESCALATE_HUMAN` | Runs device battery/network check from historical logs; packages diagnostics. | **Resolution + Ledger Ops** create priority L2 replacement ticket (`TKT-PAYTM-xxxx`) with zero repeat questions. |
+
+---
+
+## 4. Verified Market Sizing (For Pitch Deck)
 
 | Metric | Verified Figure | Primary Source |
 | :--- | :--- | :--- |
-| **Monthly UPI Scale** | **25.47 billion** txns worth **₹31.53 lakh crore** (Oct 2026) | NPCI UPI Product Statistics (Nov 2026) |
+| **Monthly UPI Volume & Value** | **25.47 billion** txns worth **₹31.53 lakh crore** (Oct 2026) | NPCI UPI Product Statistics (Nov 2026) |
 | **Annual UPI Scale** | **24,162 crore** txns worth **₹314.23 lakh crore** (FY25–26) | PIB / Ministry of Finance (July–Aug 2026) |
 | **Paytm Merchant Network** | **4 crore+ (40M+)** MSME merchants on Paytm QR/Acquiring | Paytm (One97) Q1 FY26 Earnings Release |
 | **Digital Payment Frauds** | **24 lakh** cases (2024) $\rightarrow$ **28 lakh** cases (**₹22,931 Cr**) in 2025 | RBI Discussion Paper (Apr 2026), citing NCRP |
-| **True Merchant Dispute Cost** | Every **₹1** of fraud/dispute costs Indian merchants **₹4** total | LexisNexis (cited via Razorpay, Aug 2026) |
+| **True Merchant Dispute Multiplier** | Every **₹1** of fraud/dispute costs Indian merchants **₹4** total | LexisNexis (cited via Razorpay, Aug 2026) |
 
 ---
 
-## 3. System Architecture & Tech Stack
+## 5. Tech Stack & Repo Structure
 
-### Hackathon MVP Stack (Shipping by 9:00 PM)
-* **Speech-to-Text (STT):** Sarvam `Saaras v4` (`mode="codemix"` for noisy Hindi/Hinglish shop audio).
-* **Text-to-Speech (TTS):** Sarvam `Bulbul v4 Flash` (fallback `bulbul:v3`, `hi-IN`).
-* **Reasoning & Intent Routing:** Sarvam `Sarvam-105B` (`/chat/completions`, JSON mode) + deterministic keyword fallbacks.
-* **Document Intelligence:** Sarvam `Vision 2.1` (`POST /doc-ai/v1/job/extract` via `sarvamai` SDK) for PoD receipts & UPI screenshots.
-* **Backend Microservices:** Python 3.11+, FastAPI, Uvicorn, Pydantic v2, async `httpx`, in-memory state with 1-click `/reset`.
-* **Frontend:** React (Vite or Next.js), Tailwind CSS, native browser `MediaRecorder API`.
+### Core Stack
+* **Voice & Indic AI:** Sarvam `Saaras v3` (STT `codemix`), Sarvam `Bulbul v4 Flash` (TTS `hi-IN`), Sarvam `Sarvam-105B` (JSON reasoning & Hinglish advisory), Sarvam `Vision 2.1` (Document AI extraction).
+* **Backend Services:** Python 3.11+, FastAPI, Uvicorn, Pydantic v2, async `httpx`, in-memory state + `/reset`.
+* **Frontend:** React (Vite / Next.js), Tailwind CSS, Web `MediaRecorder API`.
 
-### Production Scale-Up Story (For VC & Paytm Q&A)
-* **Latency:** Swap LLM router for **Sarvam Prism** (~44ms System-1 routing).
-* **Transport:** Upgrade HTTP polling to **WebSockets/SSE** + **Apache Kafka** for async settlement/chargeback webhooks.
-* **Security:** Upgrade mock consent tokens to **mTLS + OAuth 2.0/JWT** scoped per MID + PostgreSQL immutable DPDP Consent Ledger.
-* **Distribution:** Deploy the exact same Merchant Agent (`8003`) inside **WhatsApp Business API** and **Paytm for Business App**.
-
----
-
-## 4. Repo Structure & Team Ownership (Zero Merge Conflicts)
-
-Every team member works on their own branch and **strictly only edits their assigned folder**.
-
+### Folder Ownership (Zero Merge Conflicts)
 ```text
 a2a-paytm-teammates/
-├── plan.md                      <-- This master plan
-├── CONTRACT.md                  <-- Frozen API & seed-data contract (read-only)
+├── plan.md                      <-- This master architecture & execution plan
+├── CONTRACT.md                  <-- Frozen API & JSON schemas
 ├── services/
 │   ├── sarvam_service/          <-- Person 1 (Port 8001 | branch: feat/sarvam)
 │   ├── paytm_agent/             <-- Person 2 (Port 8002 | branch: feat/paytm-agent)
@@ -69,93 +84,71 @@ a2a-paytm-teammates/
 └── frontend/                    <-- Person 4 (Port 3000 | branch: feat/frontend)
 ```
 
-| Role | Owner | Port | Core Responsibility |
-| :--- | :--- | :--- | :--- |
-| **Person 1** | Sarvam AI Wrapper | `8001` | `/stt`, `/tts`, `/llm`, `/doc-extract` (`pod` & `upi_screenshot`) + `MOCK_MODE` & <8s fallback. |
-| **Person 2** | Paytm AI Teammate | `8002` | Acquiring settlement ledger, DPDP 403 guardrail, `/a2a/dispatch` for all 6 intents, `/ledger/{mid}`, `/ledger/reset`. |
-| **Person 3** | Merchant AI Teammate (Glue) | `8003` | Intent router + keyword fallback, DPDP consent minting, A2A orchestration, local GST ITC logging, Hinglish voice formatting, `/events`, `/reset`. |
-| **Person 4** | 3-Column Demo UI | `3000` | Left: Mobile Voice/Doc App + Preset Chips; Center: Live A2A & DPDP Bus; Right: Paytm Ledger & KPI Command Center. |
+---
+
+## 6. Frozen API & Seed Data Contract (`CONTRACT.md`)
+
+### Unified Seed Profile (`PAYTM_MERCH_8821` — "Sharma Electronics")
+* **6-Month Historical Memory:** `daily_avg_sales: 32000`, `weekend_multiplier: "2.3x (Fri–Sun)"`, `past_edi_success_rate: "96%"`, `tomorrow_stock_payable: 4500`, `active_lender: "Clix Capital"`, `daily_edi: 500`, `loan_balance: 42000`, `kfs_edi_holiday_eligible: true`.
+* **Settlement (`2026-11-18`):** Gross `₹1,00,000` | Net Credit `₹95,840` | Variance `₹4,160` (`MDR: ₹1,450`, `GST_ITC: ₹261`, `Refund #4412: ₹1,500`, `Soundbox: ₹149`, `Chargeback Hold #9981: ₹800 [HELD]`).
+* **Consented Connectors:** `SHIPROCKET_SYNC` (`ACTIVE`, holds PoD for `#9981`), `VYAPAR_POS_SYNC` (`ACTIVE`), `RBI_ACCOUNT_AGGREGATOR` (`ACTIVE`).
+* **UPI UTR Ledger:** `632184920111` (`₹1,250`, GPay, `SUCCESS`), `632184920999` (`₹2,400`, PhonePe, `PENDING`), unknown/tampered UTRs $\rightarrow$ `NOT_FOUND_SUSPECTED_FAKE`.
+
+### Service Endpoints (All Enable CORS for `http://localhost:3000`)
+* **Port `8001` (`sarvam_service`):** `POST /stt`, `POST /tts`, `POST /doc-extract` (`doc_type`: `"pod" | "upi_screenshot"`), `POST /llm` (`response_format`: `"text" | "json"`).
+* **Port `8002` (`paytm_agent`):**
+  * `POST /a2a/dispatch` $\rightarrow$ Accepts `{ "request_id", "mid", "intent", "selected_intervention", "payload", "consent_token" }`, enforces DPDP `403` check, runs the 4 sub-agents, and returns `{ "status", "intent", "agent_trace": [...], "data": {...}, "verified_outcome": {...} }`.
+  * `POST /a2a/proactive-alert` $\rightarrow$ Pushes `CHARGEBACK_INCOMING` or `MANDATE_FAILED_ALERT`.
+  * `GET /ledger/{mid}` & `POST /ledger/reset`.
+* **Port `8003` (`merchant_agent`):**
+  * `POST /merchant/query`, `POST /merchant/query-audio`, `POST /merchant/upload-doc`, `POST /merchant/proactive-shield`.
+  * Returns `{ "hindi_reply", "audio_base64", "historical_insight", "intervention_evaluation": {...}, "paytm_agent_trace": [...], "a2a_events": [...], "pending_action": {...} | null }`.
+  * `GET /events` & `POST /reset`.
 
 ---
 
-## 5. Frozen Data & Intent Contract
+## 7. Team Coding Prompts (Ready to Copy-Paste)
 
-### The 6 Supported Merchant Intents
-1. `SETTLEMENT_RECONCILE`: Explain net payout vs. gross sales variance (MDR, GST, refunds, Soundbox, chargeback hold).
-2. `UTR_VERIFY`: Verify 12-digit UTR from voice or GPay/PhonePe screenshot (`SUCCESS`, `PENDING`, or `NOT_FOUND_SUSPECTED_FAKE`).
-3. `CHARGEBACK_RESOLVE`: Extract Proof of Delivery (`pod`), submit A2A to Paytm, release `HELD` $\rightarrow$ `RELEASED`.
-4. `REFUND_MANAGE`: Check status of `ORDER #4412` (`PROCESSED`) or auto-initiate refund ($\le ₹5,000$ autonomous; $> ₹5,000$ human escalation).
-5. `FEE_GST_LOAN`: Itemized MDR rates (Credit Card 2%, Wallet-on-UPI >₹2k 1.1%, Bank UPI 0%), GST ITC (`₹261`), and Merchant Loan EDI (`₹500/day`, balance `₹42,000`).
-6. `ESCALATE_HUMAN`: Hardware issues (Soundbox) or disputes $> ₹5,000$ $\rightarrow$ creates pre-filled L2 ticket (`TKT-PAYTM-xxxx`).
+### Person 1 — Sarvam AI Wrapper (`services/sarvam_service` | Port `8001`)
+> Read `plan.md` and `CONTRACT.md`. You ONLY own `/services/sarvam_service` on Port `8001`. Build `/stt` (`saaras:v3`, `codemix`), `/tts` (`bulbul:v4-flash`, `hi-IN`), `/llm` (`sarvam-105b`, supporting `response_format="json"`), and `/doc-extract` (`pod` and `upi_screenshot`, supporting `use_sample_connector=true`). Include `MOCK_MODE=true` and automatic `<6s` timeout fallbacks so downstream services never block.
 
-### Unified Seed Data (MID: `PAYTM_MERCH_8821` — "Sharma Electronics")
-* **Settlement Date:** `2026-11-18`
-* **Expected Gross:** `₹1,00,000` | **Net Bank Credit:** `₹95,840` | **Variance:** `₹4,160`
-  * `MDR_FEE`: `₹1,450` (2% on ₹50k CC + 1.1% on ₹25k Wallet-on-UPI >₹2k + 0% on ₹25k Bank UPI)
-  * `GST_ON_MDR`: `₹261` (18% GST — auto-logged to merchant ITC sheet)
-  * `CUSTOMER_REFUND`: `₹1,500` (`ORDERID #4412`, `PROCESSED`)
-  * `SOUNDBOX_RENTAL`: `₹149` (Monthly fee)
-  * `CHARGEBACK_HOLD`: `₹800` (`TXNID #9981`, `ORDERID #9981`, initial status `HELD`, PoD due in 48h)
-* **Recent UPI UTR Ledger:**
-  * `632184920111` | `₹1,250` | GPay | `SUCCESS` (Settled)
-  * `632184920999` | `₹2,400` | PhonePe | `PENDING` (NPCI T+1 auto-reversal)
-  * Any unknown/tampered UTR | `NOT_FOUND_SUSPECTED_FAKE` (Increments `frauds_blocked_count`)
+### Person 2 — Paytm 4-Agent Resolution Mesh (`services/paytm_agent` | Port `8002`)
+> Read `plan.md` and `CONTRACT.md`. You ONLY own `/services/paytm_agent` on Port `8002`. Refactor `POST /a2a/dispatch` into a **Paytm Master Orchestrator** that validates `consent_token` (`403` if missing) and visibly runs 4 sub-agents (`IntelligenceAgent`, `RiskPolicyAgent`, `ResolutionAgent`, `LedgerOpsAgent`), returning an `agent_trace` array with each agent's step and output. Support all 8 intents in `plan.md` (`MANDATE_TROUBLESHOOT`, `SETTLEMENT_RECONCILE`, `CHARGEBACK_RESOLVE`, `UTR_VERIFY`, `DUPLICATE_RECONCILE`, `GROWTH_ADVISORY`, `CASHFLOW_EDI_SWITCH`, `ESCALATE_HUMAN`), plus `POST /a2a/proactive-alert`, `GET /ledger/{mid}`, and `POST /ledger/reset`.
 
-### Endpoint Summary (All Services Enable CORS for `http://localhost:3000`)
-* **Port `8001` (Sarvam):** `POST /stt`, `POST /tts`, `POST /doc-extract`, `POST /llm`
-* **Port `8002` (Paytm):** `GET /ledger/{mid}`, `POST /a2a/dispatch`, `POST /ledger/reset`
-* **Port `8003` (Merchant):** `POST /merchant/query`, `POST /merchant/query-audio`, `POST /merchant/upload-doc`, `GET /events`, `POST /reset`
+### Person 3 — All-in-One Merchant AI Buddy (`services/merchant_agent` | Port `8003`)
+> Read `plan.md` and `CONTRACT.md`. You ONLY own `/services/merchant_agent` on Port `8003`. Build the **All-in-One Merchant AI Buddy** seeded with the 6-month historical profile for `PAYTM_MERCH_8821`. On every request (`/merchant/query`, `/merchant/query-audio`, `/merchant/upload-doc`, `/merchant/proactive-shield`):
+> 1. Diagnose root cause using historical sales/cashflow context (distinguish payment friction from default).
+> 2. Evaluate 3 candidate interventions (`Option A`, `Option B`, `Option C`) and select the best one in `intervention_evaluation`.
+> 3. Mint a DPDP consent token and dispatch via A2A to `http://localhost:8002/a2a/dispatch` (with clean fallback if `8002` is offline).
+> 4. Log verified outcomes into `strategy_memory` and generate a warm, $\le 35$-word Hinglish voice reply (`8001/llm` + `8001/tts`) combining immediate resolution with a historical business insight. Expose `GET /events` and `POST /reset`.
+
+### Person 4 — 3-Column Command Center UI (`frontend` | Port `3000`)
+> Read `plan.md` and `CONTRACT.md`. You ONLY own `/frontend` on Port `3000`. Build a high-contrast 3-column dashboard:
+> - **Left Column (Merchant AI Buddy):** Mobile frame with Hindi/Hinglish voice mic + text chat, **6-Month Business Insights Banner** (`₹32k/day avg`, `2.3x Fri–Sun peak`, `Shiprocket & Vyapar Consented`), 1-click demo chips for all 8 scenarios (including Mandate Failed, Growth Advice, Settlement Variance, Fake Screenshot, and Proactive Chargeback Shield), plus PoD/Screenshot upload.
+> - **Center Column (Cognitive & A2A Orchestration Trace):** Shows Merchant Buddy's **Intervention Evaluation (`Option A vs B vs C -> Selected`)**, DPDP Consent verification badge, and Paytm's **4 Sub-Agents firing in sequence** (`Intelligence` $\rightarrow$ `Risk` $\rightarrow$ `Resolution` $\rightarrow$ `Ledger Ops`).
+> - **Right Column (Paytm Acquiring & Lending Ledger):** Live settlement waterfall, Loan EDI status (`ACTIVE` / `PAUSED 48H` / `UPI LINK SENT`), Chargeback `#9981` (`HELD` $\rightarrow$ `RELEASED`), UTR verification table, and `Verified Outcomes Learned` counter + top-right **Reset Demo** button.
 
 ---
 
-## 6. Hour-by-Hour Timeline (Now $\rightarrow$ 9:00 PM Freeze)
+## 8. Integration & Demo Walkthrough Sequence
 
-* **3:55 PM – 5:30 PM | Parallel Build Sprint:**
-  * All 4 teammates build & unit-test their respective ports standalone using mocks/fallbacks.
-  * Person 3 tunes Hinglish system prompts ($\le 35$ words / 2 sentences per reply) and verifies `test_merchant.py` passes all 6 intents.
-* **5:30 PM – 5:45 PM | Contract Police Check (Led by Person 3):**
-  * 15-minute sync across all 4 teammates to verify exact JSON keys match `CONTRACT.md` character-for-character (especially `audio_base64`, `utr_number`, `doc_type`, and WebM/WAV audio handling).
-* **5:45 PM – 6:30 PM | Final Polish Before Merge:**
-  * Fix any schema mismatches, push feature branches, and prepare sample `pod_9981.png` and `fake_upi.png` test files.
-* **6:30 PM – 7:30 PM | Master Integration Hour (On 1 Demo Laptop):**
-  * Pull all 4 branches onto the master demo machine.
-  * Boot `8001`, `8002`, `8003`, `3000` simultaneously (with `SARVAM_SERVICE_URL` and `PAYTM_AGENT_URL` configured via `.env`).
-  * Verify Golden Path + Fake Screenshot Path + Escalation Path + 1-click Reset.
-* **7:30 PM – 8:30 PM | Demo Hardening & Backup Recording:**
-  * Test noisy-room preset buttons and real mic audio.
-  * Record a clean 60-second screen capture of the full working flow as an emergency backup.
-  * Expose backend/frontend via public tunnel (`ngrok` / Render / Vercel) for tomorrow's mobile field testing.
-* **8:30 PM – 9:00 PM | MVP Freeze & Submission:**
-  * Lock repo, verify live URL, submit before **21:00 IST**.
+1. **Standalone Verification:** Each teammate runs their service's smoke test (`test_sarvam.py`, `test_paytm.py`, `test_merchant.py`) to confirm `200 OK` across all 8 intents.
+2. **4-Port Live Wiring:** Boot `8001`, `8002`, `8003`, and `3000` together on the demo machine and verify `SARVAM_SERVICE_URL` and `PAYTM_AGENT_URL` env vars point to live ports.
+3. **3-Act Demo Flow for Judges:**
+   * **Act 1 (Root-Cause Mandate Troubleshooting):** Trigger *"Mera ₹500 ka loan EDI mandate fail ho gaya"* $\rightarrow$ Center Panel shows Merchant Buddy diagnosing temporary rain/cash dip (`Friction, not default`), evaluating `Option A (Reminder)` vs. `Option B (UPI Switch / 48h KFS Pause)`, and Paytm's 4 sub-agents resolving it without penalty.
+   * **Act 2 (Proactive Chargeback Save):** Trigger incoming chargeback alert `#9981` $\rightarrow$ Merchant Buddy pulls Shiprocket PoD automatically $\rightarrow$ 1-tap Hindi approval $\rightarrow$ `#9981` flips from Amber `HELD` to Emerald `RELEASED`.
+   * **Act 3 (Historical Growth & Cashflow Advisory):** Ask *"Mere pichle 6 mahine ke data se business badhane ka suggestion do"* $\rightarrow$ Buddy cites the `2.3x` Friday–Sunday sales surge and recommends a KFS-transparent working capital boost.
 
 ---
 
-## 7. Live Demo Script (2-Minute Golden Path for Judges)
+## Person 3 briefs (received with V3)
 
-1. **Setup:** Show the 3-column screen. Point out **Left** (Merchant Hindi Voice App), **Center** (Live A2A & DPDP Compliance Bus), **Right** (Paytm Acquiring Ledger).
-2. **Step 1 — Settlement Variance (Voice / Preset 1):**
-   * Trigger: *"Kal ₹1,00,000 sale tha, bank mein ₹95,840 aaya — ₹4,160 kahan kata?"*
-   * **What Judges See:** DPDP consent minted (Center) $\rightarrow$ Merchant Agent sends A2A JSON to Paytm Agent $\rightarrow$ Paytm returns itemized breakdown $\rightarrow$ ₹261 GST ITC auto-logged $\rightarrow$ App speaks crisp Hindi reply flagging the ₹800 chargeback hold on `#9981`.
-3. **Step 2 — Autonomous Chargeback Resolution:**
-   * Tap **"Haan, Delivery Proof Bhejo (Order #9981)"** (uploads `pod_9981.png`).
-   * **What Judges See:** Sarvam Vision extracts `order_id: #9981, DELIVERED` $\rightarrow$ A2A `CHARGEBACK_RESOLVE` sent $\rightarrow$ Right Panel animates `#9981` from **Amber (`HELD`)** to **Emerald (`RELEASED — T+1`)** $\rightarrow$ `Tickets Deflected` increments.
-4. **Step 3 — Fake UPI Screenshot Fraud Catch:**
-   * Trigger **Fake Screenshot Check** (uploads `fake_upi.png`).
-   * **What Judges See:** Sarvam Vision extracts tampered UTR $\rightarrow$ Paytm Ledger returns `NOT_FOUND_SUSPECTED_FAKE` $\rightarrow$ Urgent Hindi audio alert warns merchant not to hand over goods $\rightarrow$ `Frauds Blocked` increments.
-5. **Reset:** Click **"Reset Demo"** in top-right before the next judge approaches.
+**Brief A.** Upgrade `/services/merchant_agent` into an All-in-One Merchant AI Buddy with a rich 6-Month Merchant Historical Dataset (`daily_avg_sales: 32000`, `weekend_multiplier: 2.3x`, `past_edi_success_rate: 96%`, `supplier_payable_tomorrow: 4500`, `recent_customers: [...]`). For every query (`POST /merchant/query`, `/merchant/query-audio`, `/merchant/upload-doc`, or `/merchant/proactive-shield`):
+- **Understand Merchant & Diagnose Root Cause:** analyze the query against the merchant's historical data (e.g., distinguish temporary cash dip / mandate friction from willful default).
+- **Evaluate Interventions:** generate 2–3 possible actions (e.g., Option A: send reminder, Option B: troubleshoot mandate / pause EDI, Option C: escalate), score them against policy/cost/UX, and pick the best one.
+- **A2A Dispatch to Paytm Mesh (8002):** send the chosen intervention + DPDP consent token and capture Paytm's multi-agent `agent_trace`.
+- **Verify & Learn + Hindi Buddy Reply:** log the verified outcome into `strategy_memory` so future decisions improve, and reply in warm, insightful Hinglish voice (immediate problem resolution + a smart historical business tip).
 
----
-
-## 8. Day 2 Playbook: 3-Hour Sell Sprint (Friday, 20 Nov)
-
-**Goal:** Put the live MVP in the hands of **15–20 real Gurugram merchants** (Vyapar Kendra, Sector 29, local kiranas, electronics shops, clinics, salons) and bring back hard traction metrics for the Grand Finale pitch.
-
-### Field Script (2 Minutes Per Shop)
-1. **Hook:** *"Uncle/Bhaiya, aap Paytm QR ya machine use karte ho? Kabhi aisa hua hai ki settlement kam aaya ya customer ne fake UPI screenshot dikhaya?"*
-2. **Live Test:** Hand them the phone/tablet, let them speak a Hindi question or tap the ₹4,160 / fake screenshot demo, and watch them react to the Hindi voice breakdown.
-3. **Capture Proof (Track in a Google Sheet):**
-   * Shop Name, Category, Owner Name, and Monthly Paytm Volume (approx.).
-   * **The 3 Traction Metrics to Log:**
-     1. Number of merchants who completed a live voice/doc test.
-     2. Number who signed up for the WhatsApp pilot (collect phone/consent or WhatsApp opt-in).
-     3. 2–3 verbatim Hindi quotes on their biggest pain point (put these on Slide 2 of your Grand Finale deck).
+**Brief B.**
+- Add keyword/LLM routing for 4 new intents: "soundbox wapas / bill kat raha", "loan settle / NOC", "bank account / KYC change", "settlement hold / bank inactive". *(Names chosen in 8003, to be confirmed with Person 2: `SOUNDBOX_RETURN`, `LOAN_CLOSURE_NOC`, `BANK_KYC_UPDATE`, `SETTLEMENT_HOLD_BANK`.)*
+- Upgrade `local_gst_itc_log` into a full `khata_bookkeeping_ledger` (`GET /merchant/khata-export`) that aggregates daily sales, bank credits, MDR fees, GST ITC (₹261), and refunds into a downloadable Tally-ready JSON/CSV summary.
