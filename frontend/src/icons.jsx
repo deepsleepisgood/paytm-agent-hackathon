@@ -32,9 +32,17 @@ export const I = {
   Plus: (p) => <P {...p} sw={2}><path d="M12 5v14M5 12h14" /></P>,
 }
 
-export const PaytmLogo = ({ height = 18 }) => (
-  <span className="logo" style={{ fontSize: height }}>
-    <b className="pay">pay</b><b className="tm">tm</b>
-    <small>for Business</small>
-  </span>
-)
+// Paytm for Business wordmark. If you drop the official file at frontend/public/paytm-business-logo.svg
+// it is used automatically; otherwise this CSS/text wordmark is shown.
+export function PaytmLogo({ size = 30 }) {
+  const [ok, setOk] = React.useState(true)
+  if (ok)
+    return <img src="/paytm-business-logo.svg" alt="Paytm for Business" height={size * 1.5} onError={() => setOk(false)} style={{ display: 'block' }} />
+  return (
+    <span className="logo" style={{ fontSize: size }} aria-label="Paytm for Business">
+      <span className="lg-top"><b className="pay">pay</b><b className="tm">tm</b></span>
+      <span className="lg-for"><i />for<i /></span>
+      <span className="lg-biz">Business</span>
+    </span>
+  )
+}
