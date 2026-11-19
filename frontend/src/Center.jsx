@@ -28,7 +28,7 @@ const CAPTION = {
 }
 
 
-/* ---------- Autonomous agent team: a relay, one agent in the spotlight at a time ---------- */
+/* ---------- Parent agent + chosen specialist: a relay, one agent in the spotlight at a time ---------- */
 const ico = (children, s = 22) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{children}</svg>
 const ICONS = {
   consent: <><rect x="5" y="10.5" width="14" height="9.5" rx="2.4" /><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" /><path d="M9.6 15.2l1.7 1.7 3.2-3.4" /></>,
@@ -37,7 +37,7 @@ const ICONS = {
   resolution: <><circle cx="6" cy="6" r="2.1" /><circle cx="6" cy="18" r="2.1" /><circle cx="18" cy="12" r="2.1" /><path d="M8 6h3a3 3 0 0 1 3 3v0M8 18h3a3 3 0 0 0 3-3v0M14 12h2" /></>,
   ledger: <><path d="M6 4.5h10.5A1.5 1.5 0 0 1 18 6v13.5H7.5A1.5 1.5 0 0 1 6 18z" /><path d="M9.5 9h5M9.5 12.5h5M9.5 16h3" /></>,
 }
-const FLOW = [
+const TEAM = [
   { id: 'buddy', key: 'eval', from: 0, name: 'Merchant Buddy', short: 'Buddy', side: 'Merchant side', role: 'Understands, recalls and decides', tone: 'blue', link: 'Decision', brand: true,
     now: 'Working out the best way to help', tasks: ['Understanding what the merchant said', 'Recalling this merchant’s history', 'Scoring options A, B and C', 'Picking the best action'], tools: ['Memory', 'Intent router', 'Option scorer'] },
   { id: 'consent', key: 'consent', name: 'DPDP Consent Gate', short: 'Consent', side: 'Compliance', role: 'Nothing is shared without permission', tone: 'teal', link: 'Signed request',
@@ -51,6 +51,33 @@ const FLOW = [
   { id: 'ledger', key: 'ledger', name: 'Ledger Ops Agent', short: 'Ledger', side: 'Paytm side', role: 'Updates the books', tone: 'green', link: '',
     now: 'Recording what happened', tasks: ['Writing entries to the ledger', 'Updating counters and status', 'Logging for audit (DPDP)'], tools: ['Ledger DB', 'Audit log', 'Counters'] },
 ]
+
+// The parent agent (Merchant Buddy) reads the request, picks ONE specialist, waits for the answer and then acts on the app.
+const LEAD = {
+  intelligence: ['SETTLEMENT_RECONCILE', 'DUPLICATE_RECONCILE', 'FEE_GST_LOAN', 'GROWTH_ADVISORY'],
+  risk: ['UTR_VERIFY', 'SETTLEMENT_HOLD_BANK', 'BANK_KYC_UPDATE'],
+  resolution: ['CHARGEBACK_RESOLVE', 'REFUND_MANAGE', 'MANDATE_TROUBLESHOOT', 'CASHFLOW_EDI_SWITCH', 'SOUNDBOX_RETURN', 'LOAN_CLOSURE_NOC', 'ESCALATE_HUMAN'],
+}
+const SPEC = {
+  intelligence: { role: 'Specialist for questions about money and history', now: 'Reading the ledger and working out what happened', tasks: ['Opening the merchant ledger', 'Reading transactions and history', 'Working out the answer', 'Writing the finding back to the Buddy'], link: 'Findings' },
+  risk: { role: 'Specialist for fraud, verification and policy', now: 'Verifying this is genuine and allowed', tasks: ['Verifying the consent token', 'Checking payment, bank and fraud signals', 'Checking limits and policy', 'Sending the verdict back to the Buddy'], link: 'Verdict' },
+  resolution: { role: 'Specialist for fixing and acting', now: 'Choosing the right fix and applying it', tasks: ['Choosing the right remedy', 'Applying the fix in the ledger', 'Logging it for audit', 'Sending the outcome back to the Buddy'], link: 'Outcome' },
+}
+function flowFor(run) {
+  const intent = run?.sc?.intent
+  const lead = Object.keys(LEAD).find((k) => LEAD[k].includes(intent)) || 'resolution'
+  const base = TEAM.find((a) => a.id === lead)
+  const buddy = TEAM.find((a) => a.id === 'buddy'), consent = TEAM.find((a) => a.id === 'consent')
+  const steps = run?.steps || []
+  const first = steps.findIndex((s) => ['intelligence', 'risk', 'resolution', 'ledger'].includes(s.key))
+  const spec = { ...base, ...SPEC[lead], key: 'ledger', from: first >= 0 ? first : undefined, side: 'Chosen specialist · Paytm side', tools: base.tools }
+  return [
+    { ...buddy, name: 'Merchant Buddy (parent)', link: 'Routes to ' + base.short, role: 'Understands the request and picks who handles it', now: 'Understanding the request and choosing a specialist', tasks: ['Understanding what the merchant said', 'Recalling this merchant’s history', 'Deciding which specialist should handle this', 'Getting permission before sharing anything'] },
+    consent,
+    spec,
+    { ...buddy, id: 'buddy', art: 'buddy', key: 'reply', from: undefined, uid: 'buddy-reply', name: 'Merchant Buddy (parent)', short: 'Buddy', side: 'Merchant side', link: '', role: 'Takes the answer and updates the app', now: 'Turning the answer into a reply and updating the app', tasks: ['Receiving the specialist’s answer', 'Updating the ledger and the app', 'Speaking the reply to the merchant'], tools: ['Voice reply', 'App state'] },
+  ]
+}
 
 // Cyberpunk cartoon AI faces: one character per agent (skin, neon hair/gear, expression).
 const INK = '#0a0f2c'
@@ -167,12 +194,13 @@ function Robot({ id, size }) {
 function Avatar({ n, size = 44 }) {
   return (
     <div className="ag-av" style={{ '--s': size + 'px' }}>
-      <Robot id={n.id} size={Math.round(size * 0.94)} />
+      <Robot id={n.art || n.id} size={Math.round(size * 0.94)} />
     </div>
   )
 }
 
 function AgentFlow({ run, reveal, done, escalated, totalMs }) {
+  const FLOW = flowFor(run)
   const steps = run.steps
   const durs = run.durs || []
   const at = (key) => steps.findIndex((s) => s.key === key)
@@ -192,12 +220,13 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
   const resultOf = (n) => {
     const s = get(n.key)
     if (!s) return ''
+    if (n.key === 'reply') return 'Reply spoken · app and ledger updated'
     if (n.id === 'buddy') {
-      if (s.options) { const o = s.options.find((x) => x.id === s.selected); return `Chose option ${s.selected}: ${o ? o.label : ''}` }
-      return `Understood: ${s.route?.intent || 'the request'}`
+      if (s.options) { const o = s.options.find((x) => x.id === s.selected); return `Routed to ${FLOW[2].name} · option ${s.selected}: ${o ? o.label : ''}` }
+      return `Routed to ${FLOW[2].name}`
     }
     if (n.id === 'consent') return `Token ${s.consent.token.slice(0, 18)}… · ${s.consent.purpose.replace(/_/g, ' ')}`
-    return s.say
+    return get('ledger')?.say || get('resolution')?.say || s.say
   }
   // how long the spotlighted agent has to work (ms): from when it became active to when its step is revealed
   const windowMs = (n) => {
@@ -212,7 +241,7 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
   return (
     <div className="af">
       <div className="af-h">
-        <div><b>Autonomous agent team</b><span>One agent works at a time, then hands over to the next</span></div>
+        <div><b>Parent agent + chosen specialist</b><span>The parent picks one specialist, waits for the answer, then updates the app</span></div>
         <div className="af-chips">
           <i>{doneN}/{FLOW.length} done</i>
           <i className={escalated ? 'esc' : 'auto'}>{escalated ? '1 human handoff' : '0 humans in the loop'}</i>
@@ -225,7 +254,7 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
         {FLOW.map((n, k) => {
           const st = states[k]
           return (
-            <React.Fragment key={n.id}>
+            <React.Fragment key={n.uid || n.id}>
               <div className={`rl-n ${st} t-${n.tone}`}>
                 <Avatar n={n} size={38} />
                 <span className="rl-tick"><I.Check size={9} /></span>
@@ -244,7 +273,7 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
         const n = FLOW[spot]
         const win = windowMs(n)
         return (
-          <div className={`sp work t-${n.tone}`} key={n.id} style={{ '--win': win + 'ms' }}>
+          <div className={`sp work t-${n.tone}`} key={n.uid || n.id} style={{ '--win': win + 'ms' }}>
             <div className="sp-head">
               <div className="sp-av"><Avatar n={n} size={58} /></div>
               <div className="sp-id">
@@ -273,7 +302,7 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
       {spot < 0 && done && (
         <div className="sp fin">
           <div className="fin-ic"><I.Check size={26} /></div>
-          <div><b>{escalated ? 'Handed to a human' : 'All six agents finished on their own'}</b><span>{FLOW.length} steps · {(totalMs / 1000).toFixed(1)}s · {escalated ? 'a person takes it from here' : 'no human needed'}</span></div>
+          <div><b>{escalated ? 'Handed to a human' : 'Parent and specialist finished on their own'}</b><span>{FLOW.length} steps · {(totalMs / 1000).toFixed(1)}s · {escalated ? 'a person takes it from here' : 'no human needed'}</span></div>
         </div>
       )}
       {spot < 0 && !done && lastDone >= 0 && <div className="sp wait"><span>Passing the baton…</span></div>}
@@ -285,7 +314,7 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
           {FLOW.map((n, k) => ({ n, k })).filter(({ k }) => states[k] === 'done').reverse().map(({ n }) => {
             const s = get(n.key)
             return (
-              <div key={n.id} className={`hist-r t-${n.tone} ${s?.tone || ''}`}>
+              <div key={n.uid || n.id} className={`hist-r t-${n.tone} ${s?.tone || ''}`}>
                 <Avatar n={n} size={30} />
                 <div><b>{n.name}</b><span>{resultOf(n)}</span></div>
                 <i className="hist-tick"><I.Check size={11} /></i>
@@ -313,6 +342,7 @@ function Section({ title, sub, badge, tone, open, onToggle, children }) {
 }
 
 function flowInfo(run, reveal) {
+  const FLOW = flowFor(run)
   const at = (key) => run.steps.findIndex((s) => s.key === key)
   const states = FLOW.map((n) => {
     const i = at(n.key)
@@ -321,7 +351,7 @@ function flowInfo(run, reveal) {
     if (reveal >= (n.from ?? i)) return 'work'
     return 'idle'
   })
-  return { states, doneN: states.filter((s) => s === 'done').length, cur: states.findIndex((s) => s === 'work') }
+  return { FLOW, states, doneN: states.filter((s) => s === 'done').length, cur: states.findIndex((s) => s === 'work') }
 }
 
 export default function Center({ run, reveal, busy, onTry, demoActive }) {
@@ -351,6 +381,7 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
   const toggle = (k) => { pinned.current = true; setOpenSet((s) => ({ ...s, [k]: !s[k] })) }
 
   const fi = run ? flowInfo(run, reveal) : null
+  const FLOW = fi ? fi.FLOW : []
   const resBadge = run && shown('reply') ? (get('reply').tone === 'bad' ? 'Fraud blocked' : awaiting ? 'Needs your OK' : escalated ? 'Human handoff' : 'Resolved by AI') : ''
   const sections = run ? [
     { k: 'agents', show: true, title: 'Agent team', sub: done ? `${fi.doneN}/${FLOW.length} agents finished · ${escalated ? '1 human handoff' : '0 humans in the loop'}` : fi.cur >= 0 ? `Working now: ${FLOW[fi.cur].name}` : 'Getting ready…', badge: `${fi.doneN}/${FLOW.length}` },
