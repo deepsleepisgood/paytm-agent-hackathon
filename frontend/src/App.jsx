@@ -399,7 +399,7 @@ export default function App() {
     settlements: <Settlement d={d} />,
     loans: <Loans d={d} />,
     account: <Account d={d} />,
-    buddy: <Buddy m={m} chat={chat} busy={busy} onPreset={onPreset} onText={onText} onUpload={onUpload} speak={speak} setSpeak={setSpeak} />,
+    buddy: <Buddy m={m} L={ledger} chat={chat} busy={busy} onPreset={onPreset} onText={onText} onUpload={onUpload} speak={speak} setSpeak={setSpeak} />,
   }
   const body = (sub && subs[sub]) || tabs[tab]
 

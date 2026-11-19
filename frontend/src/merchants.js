@@ -34,6 +34,7 @@ function load(slug) {
       settlement: {
         date: settlement.date,
         gross: settlement.gross,
+        mix: settlement.gross_mix,
         net: settlement.net_bank_credit,
         variance: settlement.variance,
         deductions: settlement.deductions.map((x) => ({

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { I, PaytmLogo } from './icons.jsx'
 import { SCENARIOS } from './engine.js'
 import { inr } from './data.js'
+import Khata from './Khata.jsx'
 
 function Insights({ m }) {
   const i = m.insights
@@ -40,10 +41,11 @@ function Insights({ m }) {
   )
 }
 
-export default function Buddy({ m, chat, busy, onPreset, onText, onUpload, speak, setSpeak }) {
+export default function Buddy({ m, L, chat, busy, onPreset, onText, onUpload, speak, setSpeak }) {
   const [text, setText] = useState('')
   const [rec, setRec] = useState(false)
   const [micNote, setMicNote] = useState('')
+  const [khata, setKhata] = useState(false)
   const end = useRef(null)
   const podRef = useRef(null)
   const shotRef = useRef(null)
@@ -89,6 +91,8 @@ export default function Buddy({ m, chat, busy, onPreset, onText, onUpload, speak
           })}
         </div>
 
+        <button className="khata-btn" onClick={() => setKhata(true)}>📊 Khata & Tally Export <span>›</span></button>
+
         <div className="chat">
           {chat.map((c, k) => (
             <div key={k} className={`msg ${c.who}`}>
@@ -100,6 +104,8 @@ export default function Buddy({ m, chat, busy, onPreset, onText, onUpload, speak
           <div ref={end} />
         </div>
       </div>
+
+      {khata && <Khata m={m} L={L} onClose={() => setKhata(false)} />}
 
       <div className="composer">
         <div className="upl">

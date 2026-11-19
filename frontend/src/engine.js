@@ -8,6 +8,7 @@ const tkt = () => 'TKT-PAYTM-' + (1000 + Math.floor(Math.random() * 9000))
 const ded = (m, code) => m.d.settlement.deductions.find((x) => x.key === code)?.amount || 0
 const REFUND_ASK = { PAYTM_MERCH_1101: 1200, PAYTM_MERCH_1102: 5800, PAYTM_MERCH_1103: 6500 }
 const FAKE_UTR = '632184929999'
+const HOLD_AMT = { PAYTM_MERCH_1101: 3200, PAYTM_MERCH_1102: 18500, PAYTM_MERCH_1103: 18500 }
 
 const opt = (id, label, score, why) => ({ id, label, score, why })
 
@@ -192,6 +193,93 @@ export const SCENARIOS = [
       }
     },
   },
+  {
+    id: 'hold', chip: 'Settlement hold', intent: 'SETTLEMENT_HOLD_UNBLOCK',
+    utterance: (m) => `Mera ${inr(HOLD_AMT[m.mid] || 18500)} settlement bank/KYC hold pe kyun hai?`,
+    build(m) {
+      const amt = HOLD_AMT[m.mid] || 18500
+      return {
+        purpose: 'settlement_hold_review', scope: 'settlement_ledger:write',
+        payload: { topic: 'SETTLEMENT_HOLD', amount: amt },
+        options: [opt('A', 'Tell merchant to wait for bank', 25, 'No action, cash stays blocked'), opt('B', 'Diagnose hold, auto-verify KYC on file, request release', 92, 'Unblocks cash the same day'), opt('C', 'Escalate to compliance', 34, 'Slow for a name-mismatch hold')],
+        selected: 'B',
+        response: { status: 'HOLD_RELEASED', amount: amt, release: 'next settlement' },
+        agents: {
+          intelligence: { say: `Hold found: ${inr(amt)} · reason: bank account name mismatch (KYC re-verification pending)` },
+          risk: { say: 'KYC documents on file valid · no AML / fraud flag · release permitted' },
+          resolution: { say: 'Penny-drop re-verification passed → release approved' },
+          ledger: { say: `Hold ${inr(amt)} HELD → RELEASED (next settlement)`, effects: [{ t: 'HOLD_RELEASE' }, { t: 'DEFLECT' }] },
+        },
+        reply: `Aapka ${inr(amt)} bank-name mismatch ki wajah se KYC hold par tha. Documents verify ho gaye, hold hata diya — agle settlement mein aa jayega.`,
+        win: true,
+      }
+    },
+  },
+  {
+    id: 'sbrent', chip: 'Soundbox rent', intent: 'SOUNDBOX_BILLING_REFUND',
+    utterance: () => 'Soundbox wapas kar diya phir bhi ₹149 rent kat raha hai',
+    build() {
+      return {
+        purpose: 'billing_dispute', scope: 'billing:write',
+        payload: { topic: 'SOUNDBOX_RENT_AFTER_RETURN', amount: 149 },
+        options: [opt('A', 'Ask merchant for return receipt', 30, 'Return is already scanned in logistics'), opt('B', 'Match return scan, stop rental, refund ₹149', 94, 'Fixes billing and refunds in one go'), opt('C', 'Escalate to human L2', 28, 'Not needed, return is verified')],
+        selected: 'B',
+        response: { status: 'RENT_STOPPED', refund: 149 },
+        agents: {
+          intelligence: { say: 'Return scan found for the device · rent still billing after return' },
+          risk: { say: 'Billing error confirmed · refund ≤ ₹5,000 policy → autonomous' },
+          resolution: { say: 'Stop rental, refund ₹149 to settlement' },
+          ledger: { say: 'Rental stopped · ₹149 refunded', effects: [{ t: 'SOUNDBOX_FIX' }, { t: 'DEFLECT' }] },
+        },
+        reply: 'Aapka Soundbox return scan mein mil gaya. Rent band kar diya aur ₹149 wapas kar diya.',
+        win: true,
+      }
+    },
+  },
+  {
+    id: 'noc', chip: 'Loan NOC', intent: 'LOAN_SETTLEMENT_NOC',
+    utterance: () => 'Negotiated loan settlement bhar diya, NOC do',
+    build(m) {
+      const paid = Math.round((m.d.loan.balance * 0.7) / 100) * 100, noc = 'NOC-' + (100000 + Math.floor(Math.random() * 899999))
+      return {
+        purpose: 'loan_closure', scope: 'lending_ledger:write',
+        payload: { topic: 'SETTLEMENT_NOC', paid_amount: paid },
+        options: [opt('A', 'Ask merchant for payment proof', 28, 'Slow, payment is already in our ledger'), opt('B', 'Verify payment in lending ledger and auto-issue NOC', 95, 'Closes the loan instantly'), opt('C', 'Escalate to lending ops', 30, 'Unneeded delay')],
+        selected: 'B',
+        response: { status: 'LOAN_CLOSED_SETTLED', noc, paid_amount: paid },
+        agents: {
+          intelligence: { say: `Payment ${inr(paid)} matches negotiated settlement offer` },
+          risk: { say: 'Payment cleared · no pending charges · EDI stopped' },
+          resolution: { say: `Loan closed as SETTLED, NOC ${noc} generated` },
+          ledger: { say: 'Lending ledger balance → ₹0', effects: [{ t: 'LOAN', status: 'NOC_ISSUED', balance: 0 }] },
+        },
+        reply: `Aapka ${inr(paid)} ka negotiated settlement mil gaya. Loan close ho gaya, NOC ${noc} Paytm app par bhej diya.`,
+        win: true,
+      }
+    },
+  },
+  {
+    id: 'bank', chip: 'Bank update', intent: 'KYC_BANK_UPDATE',
+    utterance: () => 'Mera settlement bank account update karo',
+    build(m) {
+      const from = m.profile.bank_account, to = 'Axis ••6204'
+      return {
+        purpose: 'kyc_bank_update', scope: 'kyc_profile:write',
+        payload: { topic: 'BANK_ACCOUNT_UPDATE', from, to },
+        options: [opt('A', 'Update immediately, no verification', 10, 'High fraud / diversion risk'), opt('B', 'Penny-drop verify + owner-name match, then update', 96, 'Safe and instant'), opt('C', 'Human KYC branch visit', 36, 'Safe but slow')],
+        selected: 'B',
+        response: { status: 'BANK_UPDATED', to, effective: 'next settlement' },
+        agents: {
+          intelligence: { say: `Request: move settlements from ${from} to ${to}` },
+          risk: { say: '₹1 penny-drop success · account holder name matches owner' },
+          resolution: { say: 'Change approved, effective from next settlement' },
+          ledger: { say: `Settlement account → ${to}`, effects: [{ t: 'BANK_UPDATE', to }] },
+        },
+        reply: `Naya bank account ${to} verify ho gaya (penny-drop). Agle settlement se paise isi mein aayenge.`,
+        win: true,
+      }
+    },
+  },
 ]
 
 export function runScenario(sc, m, ctx = {}) {
@@ -219,6 +307,10 @@ export function runScenario(sc, m, ctx = {}) {
 export function routeText(text) {
   const t = text.toLowerCase()
   const has = (...k) => k.some((x) => t.includes(x))
+  if (has('noc', 'negotiated', 'loan settlement')) return 'noc'
+  if (has('rent', '149')) return 'sbrent'
+  if (has('kyc', 'hold pe', 'settlement hold')) return 'hold'
+  if (has('account update', 'bank account', 'bank update', 'update karo')) return 'bank'
   if (has('edi', 'mandate')) return 'edi'
   if (has('suggest', 'badhane', 'badhao', '6 mahine', 'growth')) return 'growth'
   if (has('screenshot', 'fake', 'nakli')) return 'fake'
@@ -235,6 +327,9 @@ export function initLedger(m) {
     chargeback: m.d.chargeback ? { ...m.d.chargeback, status: 'HELD' } : null,
     loan: { status: 'ACTIVE', edi: m.d.loan.edi, balance: m.d.loan.balance },
     utrs: m.d.transactions.filter((t) => t.status !== 'REFUNDED').map((t) => ({ ...t, check: null })),
+    hold: { amount: HOLD_AMT[m.mid] || 18500, status: 'HELD' },
+    bank: { acct: m.profile.bank_account, status: 'ACTIVE' },
+    soundbox: { status: 'BILLED_AFTER_RETURN', rent: 149 },
     refunds: [], tickets: [], itc: 0, verified: 0, learned: 0, learnedLog: [], deflected: 0, fraud: 0,
   }
 }
@@ -244,7 +339,10 @@ export function applyEffects(L, effects = []) {
   for (const e of effects) {
     if (e.t === 'ITC') s.itc += e.amount
     if (e.t === 'CB_RELEASE' && s.chargeback) s.chargeback = { ...s.chargeback, status: 'RELEASED' }
-    if (e.t === 'LOAN') s.loan = { ...s.loan, status: e.status }
+    if (e.t === 'LOAN') s.loan = { ...s.loan, status: e.status, ...(e.balance !== undefined ? { balance: e.balance } : {}) }
+    if (e.t === 'HOLD_RELEASE') s.hold = { ...s.hold, status: 'RELEASED' }
+    if (e.t === 'SOUNDBOX_FIX') s.soundbox = { ...s.soundbox, status: 'REFUNDED' }
+    if (e.t === 'BANK_UPDATE') s.bank = { acct: e.to, status: 'UPDATED' }
     if (e.t === 'UTR_CHECK') s.utrs = s.utrs.map((u) => (u.utr === e.utr ? { ...u, check: e.result } : u))
     if (e.t === 'UTR_ADD') s.utrs = [{ ...e.row, check: 'FAKE' }, ...s.utrs]
     if (e.t === 'FRAUD') s.fraud += 1

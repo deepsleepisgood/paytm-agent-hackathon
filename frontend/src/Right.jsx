@@ -7,8 +7,8 @@ function Waterfall({ m, L }) {
   let run = s.gross
   rows.push({ label: 'Gross sales', amount: s.gross, start: 0, end: s.gross, kind: 'total' })
   for (const x of s.deductions) {
-    const released = x.key === 'CHARGEBACK_HOLD' && L.chargeback?.status === 'RELEASED'
-    rows.push({ label: x.label, amount: x.amount, start: run - x.amount, end: run, kind: released ? 'released' : x.key === 'CHARGEBACK_HOLD' ? 'hold' : 'ded', note: released ? 'Released T+1' : undefined })
+    const released = (x.key === 'CHARGEBACK_HOLD' && L.chargeback?.status === 'RELEASED') || (x.key === 'SOUNDBOX_RENTAL' && L.soundbox.status === 'REFUNDED')
+    rows.push({ label: x.label, amount: x.amount, start: run - x.amount, end: run, kind: released ? 'released' : x.key === 'CHARGEBACK_HOLD' ? 'hold' : 'ded', note: released ? (x.key === 'SOUNDBOX_RENTAL' ? 'Refunded' : 'Released T+1') : undefined })
     if (!released) run -= x.amount
   }
   rows.push({ label: 'Bank credit', amount: run, start: 0, end: run, kind: 'net' })
@@ -29,7 +29,7 @@ function Waterfall({ m, L }) {
 
 export default function Right({ m, L }) {
   const lo = L.loan
-  const stat = { ACTIVE: 'ok', PAUSED: 'warn', MANDATE_FIXED: 'info' }[lo.status]
+  const stat = { ACTIVE: 'ok', PAUSED: 'warn', MANDATE_FIXED: 'info', NOC_ISSUED: 'ok' }[lo.status]
   return (
     <div className="col right">
       <div className="col-h">
@@ -59,9 +59,16 @@ export default function Right({ m, L }) {
       <div className="rcard">
         <div className="r-h"><b>Loan EDI</b><span className={`st ${stat}`}>{lo.status}</span></div>
         <div className="steps3">
-          {['ACTIVE', 'PAUSED', 'MANDATE_FIXED'].map((k) => <span key={k} className={lo.status === k ? 'on ' + k : ''}>{k.replace('_', ' ')}</span>)}
+          {['ACTIVE', 'PAUSED', 'MANDATE_FIXED', 'NOC_ISSUED'].map((k) => <span key={k} className={lo.status === k ? 'on ' + k : ''}>{k.replace('_', ' ')}</span>)}
         </div>
         <div className="kv2"><span>Daily EDI</span><b>{inr(lo.edi)}</b><span>Balance</span><b>{inr(lo.balance)}</b></div>
+      </div>
+
+      <div className="rcard">
+        <div className="r-h"><b>Account & device status</b></div>
+        <div className="sts"><span>Settlement hold {inr(L.hold.amount)}</span><span className={`st ${L.hold.status === 'HELD' ? 'warn' : 'ok'}`}>{L.hold.status === 'HELD' ? 'KYC HOLD' : 'RELEASED'}</span></div>
+        <div className="sts"><span>Settlement bank · {L.bank.acct}</span><span className={`st ${L.bank.status === 'UPDATED' ? 'info' : 'ok'}`}>{L.bank.status === 'UPDATED' ? 'UPDATED' : 'ACTIVE'}</span></div>
+        <div className="sts"><span>Soundbox rent {inr(L.soundbox.rent)}/mo</span><span className={`st ${L.soundbox.status === 'REFUNDED' ? 'ok' : 'warn'}`}>{L.soundbox.status === 'REFUNDED' ? 'STOPPED · REFUNDED' : 'BILLED AFTER RETURN'}</span></div>
       </div>
 
       <div className="rcard">
