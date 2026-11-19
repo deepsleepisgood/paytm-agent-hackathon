@@ -1,38 +1,24 @@
-"""Smoke tests for the Merchant AI Teammate, run fully offline.
+"""Smoke tests for the Merchant AI Teammate, run fully offline against the built-in seed.
 
-8001/8002 are pointed at a dead port so every upstream call exercises its fallback.
+8001/8002 point at a dead port (see conftest.py), so every upstream call exercises its fallback.
 Run:  python -m pytest -q   (from services/merchant_agent)
 """
-import os
+from datetime import date
 
-for _k in ("SARVAM_URL", "SARVAM_SERVICE_URL", "PAYTM_URL", "PAYTM_AGENT_URL"):
-    os.environ[_k] = "http://127.0.0.1:9"  # set all names so a local .env can't override
-os.environ["UPSTREAM_TIMEOUT_S"] = "1"
+import pytest
 
-from datetime import date  # noqa: E402
-
-import pytest  # noqa: E402
-from fastapi.testclient import TestClient  # noqa: E402
-
-import router  # noqa: E402
-from main import app  # noqa: E402
-
-MID = "PAYTM_MERCH_8821"
+import router
+from conftest import MID, NO_DATASET, ask, use_dataset
 
 
-@pytest.fixture(scope="module")
-def client():
-    with TestClient(app) as c:
-        yield c
+@pytest.fixture(scope="module", autouse=True)
+def _builtin_seed():
+    use_dataset(NO_DATASET)  # deterministic: CONTRACT.md values, whatever is in dataset/
 
 
 @pytest.fixture(autouse=True)
 def _reset(client):
     client.post("/reset")
-
-
-def ask(client, text, consent=True):
-    return client.post("/merchant/query", json={"text": text, "mid": MID, "consent_granted": consent})
 
 
 # ------------------------------------------------------------------ router unit tests
@@ -110,7 +96,8 @@ def test_all_intents_offline(client, text, intent, status):
     for t in ("DPDP_CONSENT_VERIFIED", "INTENT_CLASSIFIED", "MERCHANT_TO_PAYTM", "PAYTM_TO_MERCHANT", "VOICE_REPLY_READY"):
         assert t in types
     m2p = next(e for e in body["a2a_events"] if e["type"] == "MERCHANT_TO_PAYTM")["payload"]
-    assert set(m2p) == {"request_id", "mid", "intent", "payload", "consent_token"}
+    assert set(m2p) == {"request_id", "mid", "intent", "selected_intervention", "payload", "consent_token",
+                        "session_id", "language_code"}
     assert "text" not in m2p["payload"]  # data minimisation: raw utterance never leaves merchant side
 
 
@@ -193,6 +180,9 @@ def test_golden_path_settlement(client):
     assert body["intent"] == "SETTLEMENT_RECONCILE"
     assert body["gst_itc_logged"]["amount"] == 261
     assert "9981" in body["reply_text"] and "₹800" in body["reply_text"]
+    # every deduction labelled correctly (GST_ON_MDR once came out as "MDR ₹261")
+    for part in ("MDR ₹1,450", "GST ₹261", "refund ₹1,500", "soundbox ₹149", "#9981 का ₹800 chargeback hold"):
+        assert part in body["reply_text"], (part, body["reply_text"])
 
 
 def test_template_replies_within_word_budget(client):
@@ -217,6 +207,7 @@ def test_escalation_ticket_format(client):
     body = ask(client, "mera soundbox kharab ho gaya").json()
     assert body["intent"] == "ESCALATE_HUMAN"
     assert body["paytm_response"]["escalation_ticket"]["ticket_id"].startswith("TKT-PAYTM-")
+    assert "Soundbox" in body["reply_text"]  # even with no device on file in the dataset
 
 
 def test_refund_above_5000_escalates(client):

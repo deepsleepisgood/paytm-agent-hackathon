@@ -1,0 +1,11 @@
+ticket_id,opened_at,intent,summary,channel,resolution,resolved_at,outcome,csat
+TKT-PAYTM-1041,2026-06-14 10:20,ESCALATE_HUMAN,Soundbox not announcing payments,app_chat,Remote restart + volume reset,2026-06-14 11:05,RESOLVED,5.0
+TKT-PAYTM-1107,2026-07-14 09:10,MANDATE_TROUBLESHOOT,EDI bounced after heavy rain,voice,Reminder sent; re-presented next day,2026-07-15 07:05,RESOLVED,3.0
+TKT-PAYTM-1119,2026-07-28 08:40,MANDATE_TROUBLESHOOT,EDI bounced after heavy rain,voice,1-tap UPI link sent,2026-07-28 10:30,RESOLVED,5.0
+TKT-PAYTM-1162,2026-08-21 12:00,SETTLEMENT_RECONCILE,Why was MDR deducted?,app_chat,Explained card/wallet MDR + GST ITC,2026-08-21 12:20,RESOLVED,4.0
+TKT-PAYTM-1178,2026-08-07 07:32,CHARGEBACK_RESOLVE,Chargeback on ONDC order #9920,app_chat,No PoD (parcel lost by courier); chargeback accepted,2026-08-10 07:32,LOST,2.0
+TKT-PAYTM-1204,2026-09-22 09:30,MANDATE_TROUBLESHOOT,EDI bounced: bank outage,voice,Auto re-presented next day,2026-09-23 07:05,RESOLVED,4.0
+TKT-PAYTM-1236,2026-10-03 19:15,UTR_VERIFY,"Customer showed payment screenshot, no Soundbox alert",voice,UTR not in NPCI log; merchant asked customer to pay again,2026-10-03 19:18,FRAUD_PREVENTED,5.0
+TKT-PAYTM-1251,2026-10-13 08:15,MANDATE_TROUBLESHOOT,EDI bounced after Diwali stock payment,voice,1-tap UPI link sent,2026-10-13 11:20,RESOLVED,5.0
+TKT-PAYTM-1263,2026-10-21 19:11,CHARGEBACK_RESOLVE,Chargeback on ONDC order #9962,app_chat,Submitted OTP-verified Shiprocket PoD; hold released,2026-10-23 19:11,WON,5.0
+TKT-PAYTM-1290,2026-11-16 21:40,ESCALATE_HUMAN,"Soundbox battery drains by evening, misses announcements",app_chat,Advised full charge overnight; issue persists,,OPEN,

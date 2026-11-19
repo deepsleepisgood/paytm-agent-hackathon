@@ -1,0 +1,329 @@
+outcome_id,mid,date,intent,situation,options,option_chosen,verified_outcome,time_to_outcome,success,source
+OUT-SM-001,PAYTM_MERCH_8821,2026-07-14,MANDATE_TROUBLESHOOT,eNACH bounce after 2 heavy-rain days (sales -35%),A: reminder | B: 1-tap UPI link | C: escalate to collections,A,Paid next day on re-presentment,24h,True,data/seed/strategy_memory.json
+OUT-SM-002,PAYTM_MERCH_8821,2026-07-28,MANDATE_TROUBLESHOOT,eNACH bounce after heavy rain,A: reminder | B: 1-tap UPI link,B,UPI link after mandate bounce -> paid within 2h,1h 50m,True,data/seed/strategy_memory.json
+OUT-SM-003,PAYTM_MERCH_8821,2026-08-11,MANDATE_TROUBLESHOOT,eNACH bounce after heavy rain,B: 1-tap UPI link,B,Paid within 2h 10m,2h 10m,True,data/seed/strategy_memory.json
+OUT-SM-004,PAYTM_MERCH_8821,2026-08-19,MANDATE_TROUBLESHOOT,eNACH bounce after heavy rain,B: 1-tap UPI link,B,Paid within 1h 35m,1h 35m,True,data/seed/strategy_memory.json
+OUT-SM-005,PAYTM_MERCH_8821,2026-08-10,CHARGEBACK_RESOLVE,"Chargeback, no PoD available (parcel lost)",A: accept | C: escalate,A,Lost ₹2949; lesson: insist on OTP delivery,3 days,False,data/seed/strategy_memory.json
+OUT-SM-006,PAYTM_MERCH_8821,2026-10-03,UTR_VERIFY,"Screenshot shown, no Soundbox alert",A: trust screenshot | B: verify UTR with NPCI log,B,UTR not found; goods not handed over; fraud prevented,3 min,True,data/seed/strategy_memory.json
+OUT-SM-007,PAYTM_MERCH_8821,2026-10-13,MANDATE_TROUBLESHOOT,"eNACH bounce after ₹38,000 Diwali stock payment (cash-flow timing, not sales)",A: reminder | B: 1-tap UPI link,B,Paid within 3h 05m,3h 05m,True,data/seed/strategy_memory.json
+OUT-SM-008,PAYTM_MERCH_8821,2026-10-23,CHARGEBACK_RESOLVE,Chargeback with OTP-verified PoD in Shiprocket,A: accept | B: submit PoD,B,Won; ₹2198 hold released,2 days,True,data/seed/strategy_memory.json
+OUT-C0001,PAYTM_MERCH_9111,2026-10-15,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,3389 min,True,cohort
+OUT-C0002,PAYTM_MERCH_9143,2026-06-09,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,20 min,True,cohort
+OUT-C0003,PAYTM_MERCH_9117,2026-10-27,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,resolved,,True,cohort
+OUT-C0004,PAYTM_MERCH_9103,2026-09-14,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0005,PAYTM_MERCH_9146,2026-08-14,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,26 min,True,cohort
+OUT-C0006,PAYTM_MERCH_9140,2026-09-14,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,3 min,True,cohort
+OUT-C0007,PAYTM_MERCH_9114,2026-06-19,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,42 min,True,cohort
+OUT-C0008,PAYTM_MERCH_9132,2026-11-13,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,758 min,True,cohort
+OUT-C0009,PAYTM_MERCH_9121,2026-08-23,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,2180 min,True,cohort
+OUT-C0010,PAYTM_MERCH_9133,2026-09-02,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0011,PAYTM_MERCH_9109,2026-08-05,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,4085 min,True,cohort
+OUT-C0012,PAYTM_MERCH_9143,2026-07-24,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,not resolved,,False,cohort
+OUT-C0013,PAYTM_MERCH_9133,2026-10-10,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,1677 min,True,cohort
+OUT-C0014,PAYTM_MERCH_9145,2026-08-31,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0015,PAYTM_MERCH_9120,2026-08-06,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,1160 min,True,cohort
+OUT-C0016,PAYTM_MERCH_9111,2026-10-06,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0017,PAYTM_MERCH_9136,2026-06-08,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,not resolved,,False,cohort
+OUT-C0018,PAYTM_MERCH_9122,2026-11-15,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,851 min,True,cohort
+OUT-C0019,PAYTM_MERCH_9143,2026-10-03,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,not resolved,,False,cohort
+OUT-C0020,PAYTM_MERCH_9133,2026-06-07,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,not resolved,,False,cohort
+OUT-C0021,PAYTM_MERCH_9149,2026-09-01,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,not resolved,,False,cohort
+OUT-C0022,PAYTM_MERCH_9116,2026-07-03,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,not resolved,,False,cohort
+OUT-C0023,PAYTM_MERCH_9123,2026-09-22,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,4 min,True,cohort
+OUT-C0024,PAYTM_MERCH_9140,2026-07-20,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,not resolved,,False,cohort
+OUT-C0025,PAYTM_MERCH_9136,2026-10-07,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,1235 min,True,cohort
+OUT-C0026,PAYTM_MERCH_9104,2026-09-16,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,15 min,True,cohort
+OUT-C0027,PAYTM_MERCH_9124,2026-09-08,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,670 min,True,cohort
+OUT-C0028,PAYTM_MERCH_9126,2026-06-22,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,93 min,True,cohort
+OUT-C0029,PAYTM_MERCH_9127,2026-09-28,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,not resolved,,False,cohort
+OUT-C0030,PAYTM_MERCH_9101,2026-10-15,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0031,PAYTM_MERCH_9130,2026-10-22,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,673 min,True,cohort
+OUT-C0032,PAYTM_MERCH_9120,2026-08-08,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,2 min,True,cohort
+OUT-C0033,PAYTM_MERCH_9138,2026-10-10,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,4174 min,True,cohort
+OUT-C0034,PAYTM_MERCH_9141,2026-05-28,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,resolved,,True,cohort
+OUT-C0035,PAYTM_MERCH_9128,2026-06-19,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,36 min,True,cohort
+OUT-C0036,PAYTM_MERCH_9150,2026-11-03,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,313 min,True,cohort
+OUT-C0037,PAYTM_MERCH_9134,2026-09-28,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,resolved,,True,cohort
+OUT-C0038,PAYTM_MERCH_9109,2026-10-11,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,471 min,True,cohort
+OUT-C0039,PAYTM_MERCH_9146,2026-07-05,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,4056 min,True,cohort
+OUT-C0040,PAYTM_MERCH_9101,2026-08-16,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,not resolved,,False,cohort
+OUT-C0041,PAYTM_MERCH_9139,2026-06-03,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,225 min,True,cohort
+OUT-C0042,PAYTM_MERCH_9139,2026-08-10,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,928 min,True,cohort
+OUT-C0043,PAYTM_MERCH_9104,2026-05-27,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,510 min,True,cohort
+OUT-C0044,PAYTM_MERCH_9130,2026-08-11,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,not resolved,,False,cohort
+OUT-C0045,PAYTM_MERCH_9120,2026-10-23,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,46 min,True,cohort
+OUT-C0046,PAYTM_MERCH_9116,2026-06-23,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,not resolved,,False,cohort
+OUT-C0047,PAYTM_MERCH_9148,2026-10-16,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,not resolved,,False,cohort
+OUT-C0048,PAYTM_MERCH_9134,2026-05-30,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0049,PAYTM_MERCH_9128,2026-06-19,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,1838 min,True,cohort
+OUT-C0050,PAYTM_MERCH_9142,2026-08-05,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,33 min,True,cohort
+OUT-C0051,PAYTM_MERCH_9115,2026-08-23,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0052,PAYTM_MERCH_9102,2026-06-04,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,not resolved,,False,cohort
+OUT-C0053,PAYTM_MERCH_9142,2026-10-21,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,resolved,1584 min,True,cohort
+OUT-C0054,PAYTM_MERCH_9119,2026-08-02,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,not resolved,,False,cohort
+OUT-C0055,PAYTM_MERCH_9115,2026-06-11,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,resolved,,True,cohort
+OUT-C0056,PAYTM_MERCH_9144,2026-07-23,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,2672 min,True,cohort
+OUT-C0057,PAYTM_MERCH_9104,2026-05-27,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,1386 min,True,cohort
+OUT-C0058,PAYTM_MERCH_9102,2026-05-30,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,892 min,True,cohort
+OUT-C0059,PAYTM_MERCH_9138,2026-05-20,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0060,PAYTM_MERCH_9124,2026-08-07,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,resolved,5991 min,True,cohort
+OUT-C0061,PAYTM_MERCH_9115,2026-06-12,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,1679 min,True,cohort
+OUT-C0062,PAYTM_MERCH_9140,2026-09-11,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,15 min,True,cohort
+OUT-C0063,PAYTM_MERCH_9150,2026-08-25,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,resolved,4948 min,True,cohort
+OUT-C0064,PAYTM_MERCH_9145,2026-09-26,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,1 min,True,cohort
+OUT-C0065,PAYTM_MERCH_9121,2026-05-20,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,1080 min,True,cohort
+OUT-C0066,PAYTM_MERCH_9147,2026-07-01,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,resolved,2636 min,True,cohort
+OUT-C0067,PAYTM_MERCH_9113,2026-05-31,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,2908 min,True,cohort
+OUT-C0068,PAYTM_MERCH_9124,2026-06-07,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0069,PAYTM_MERCH_9110,2026-07-26,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,86 min,True,cohort
+OUT-C0070,PAYTM_MERCH_9136,2026-10-18,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,616 min,True,cohort
+OUT-C0071,PAYTM_MERCH_9144,2026-06-25,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,not resolved,,False,cohort
+OUT-C0072,PAYTM_MERCH_9148,2026-11-13,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0073,PAYTM_MERCH_9139,2026-07-02,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,676 min,True,cohort
+OUT-C0074,PAYTM_MERCH_9141,2026-11-13,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,1 min,True,cohort
+OUT-C0075,PAYTM_MERCH_9115,2026-11-01,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0076,PAYTM_MERCH_9125,2026-07-08,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,4 min,True,cohort
+OUT-C0077,PAYTM_MERCH_9108,2026-10-25,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0078,PAYTM_MERCH_9139,2026-08-22,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,3 min,True,cohort
+OUT-C0079,PAYTM_MERCH_9146,2026-07-03,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,3108 min,True,cohort
+OUT-C0080,PAYTM_MERCH_9139,2026-10-07,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,2548 min,True,cohort
+OUT-C0081,PAYTM_MERCH_9114,2026-06-27,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,56 min,True,cohort
+OUT-C0082,PAYTM_MERCH_9128,2026-08-26,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,1240 min,True,cohort
+OUT-C0083,PAYTM_MERCH_9136,2026-07-16,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,not resolved,,False,cohort
+OUT-C0084,PAYTM_MERCH_9132,2026-10-07,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,201 min,True,cohort
+OUT-C0085,PAYTM_MERCH_9113,2026-06-15,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,12 min,True,cohort
+OUT-C0086,PAYTM_MERCH_9140,2026-09-04,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,not resolved,,False,cohort
+OUT-C0087,PAYTM_MERCH_9128,2026-05-24,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,not resolved,,False,cohort
+OUT-C0088,PAYTM_MERCH_9107,2026-09-16,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,324 min,True,cohort
+OUT-C0089,PAYTM_MERCH_9136,2026-08-16,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,126 min,True,cohort
+OUT-C0090,PAYTM_MERCH_9148,2026-11-03,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,49 min,True,cohort
+OUT-C0091,PAYTM_MERCH_9122,2026-09-19,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,982 min,True,cohort
+OUT-C0092,PAYTM_MERCH_9114,2026-07-29,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,29 min,True,cohort
+OUT-C0093,PAYTM_MERCH_9126,2026-09-05,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,678 min,True,cohort
+OUT-C0094,PAYTM_MERCH_9119,2026-06-23,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0095,PAYTM_MERCH_9120,2026-09-26,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,not resolved,,False,cohort
+OUT-C0096,PAYTM_MERCH_9126,2026-05-24,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,not resolved,,False,cohort
+OUT-C0097,PAYTM_MERCH_9114,2026-09-01,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,1106 min,True,cohort
+OUT-C0098,PAYTM_MERCH_9111,2026-06-15,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,41 min,True,cohort
+OUT-C0099,PAYTM_MERCH_9147,2026-08-19,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,not resolved,,False,cohort
+OUT-C0100,PAYTM_MERCH_9143,2026-10-05,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,1950 min,True,cohort
+OUT-C0101,PAYTM_MERCH_9142,2026-06-15,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,not resolved,,False,cohort
+OUT-C0102,PAYTM_MERCH_9141,2026-05-20,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,191 min,True,cohort
+OUT-C0103,PAYTM_MERCH_9126,2026-09-28,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,153 min,True,cohort
+OUT-C0104,PAYTM_MERCH_9122,2026-05-21,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,1532 min,True,cohort
+OUT-C0105,PAYTM_MERCH_9105,2026-08-25,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,120 min,True,cohort
+OUT-C0106,PAYTM_MERCH_9114,2026-11-13,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,not resolved,,False,cohort
+OUT-C0107,PAYTM_MERCH_9147,2026-05-22,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,140 min,True,cohort
+OUT-C0108,PAYTM_MERCH_9130,2026-09-30,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,not resolved,,False,cohort
+OUT-C0109,PAYTM_MERCH_9148,2026-08-20,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0110,PAYTM_MERCH_9134,2026-09-22,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,not resolved,,False,cohort
+OUT-C0111,PAYTM_MERCH_9145,2026-09-24,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,2 min,True,cohort
+OUT-C0112,PAYTM_MERCH_9142,2026-06-11,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,2924 min,True,cohort
+OUT-C0113,PAYTM_MERCH_9105,2026-08-08,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,28 min,True,cohort
+OUT-C0114,PAYTM_MERCH_9109,2026-09-27,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,188 min,True,cohort
+OUT-C0115,PAYTM_MERCH_9120,2026-05-27,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,resolved,4347 min,True,cohort
+OUT-C0116,PAYTM_MERCH_9149,2026-08-28,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0117,PAYTM_MERCH_9115,2026-05-28,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,4161 min,True,cohort
+OUT-C0118,PAYTM_MERCH_9110,2026-07-05,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,resolved,,True,cohort
+OUT-C0119,PAYTM_MERCH_9111,2026-08-24,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,not resolved,,False,cohort
+OUT-C0120,PAYTM_MERCH_9136,2026-08-15,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,not resolved,,False,cohort
+OUT-C0121,PAYTM_MERCH_9143,2026-10-13,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,37 min,True,cohort
+OUT-C0122,PAYTM_MERCH_9143,2026-11-05,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,6 min,True,cohort
+OUT-C0123,PAYTM_MERCH_9129,2026-11-02,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,not resolved,,False,cohort
+OUT-C0124,PAYTM_MERCH_9113,2026-06-29,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,2315 min,True,cohort
+OUT-C0125,PAYTM_MERCH_9148,2026-08-06,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0126,PAYTM_MERCH_9129,2026-06-20,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,3 min,True,cohort
+OUT-C0127,PAYTM_MERCH_9109,2026-06-03,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,188 min,True,cohort
+OUT-C0128,PAYTM_MERCH_9117,2026-09-04,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,not resolved,,False,cohort
+OUT-C0129,PAYTM_MERCH_9121,2026-08-27,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,not resolved,,False,cohort
+OUT-C0130,PAYTM_MERCH_9103,2026-09-06,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,1235 min,True,cohort
+OUT-C0131,PAYTM_MERCH_9138,2026-10-03,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0132,PAYTM_MERCH_9107,2026-08-25,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,4250 min,True,cohort
+OUT-C0133,PAYTM_MERCH_9122,2026-05-29,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,not resolved,,False,cohort
+OUT-C0134,PAYTM_MERCH_9131,2026-10-25,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,1938 min,True,cohort
+OUT-C0135,PAYTM_MERCH_9103,2026-08-03,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,2 min,True,cohort
+OUT-C0136,PAYTM_MERCH_9122,2026-06-26,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,2 min,True,cohort
+OUT-C0137,PAYTM_MERCH_9101,2026-10-19,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,resolved,2746 min,True,cohort
+OUT-C0138,PAYTM_MERCH_9144,2026-10-30,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,not resolved,,False,cohort
+OUT-C0139,PAYTM_MERCH_9109,2026-07-17,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,4 min,True,cohort
+OUT-C0140,PAYTM_MERCH_9141,2026-10-12,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,not resolved,,False,cohort
+OUT-C0141,PAYTM_MERCH_9109,2026-09-29,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0142,PAYTM_MERCH_9104,2026-07-31,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,resolved,1197 min,True,cohort
+OUT-C0143,PAYTM_MERCH_9115,2026-07-05,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,3140 min,True,cohort
+OUT-C0144,PAYTM_MERCH_9137,2026-07-15,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,199 min,True,cohort
+OUT-C0145,PAYTM_MERCH_9129,2026-06-12,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,10 min,True,cohort
+OUT-C0146,PAYTM_MERCH_9105,2026-09-20,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,123 min,True,cohort
+OUT-C0147,PAYTM_MERCH_9114,2026-08-23,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,resolved,,True,cohort
+OUT-C0148,PAYTM_MERCH_9106,2026-09-14,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,204 min,True,cohort
+OUT-C0149,PAYTM_MERCH_9144,2026-06-07,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,2 min,True,cohort
+OUT-C0150,PAYTM_MERCH_9115,2026-11-10,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,4 min,True,cohort
+OUT-C0151,PAYTM_MERCH_9138,2026-11-06,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,1509 min,True,cohort
+OUT-C0152,PAYTM_MERCH_9144,2026-05-20,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0153,PAYTM_MERCH_9149,2026-06-15,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,697 min,True,cohort
+OUT-C0154,PAYTM_MERCH_9119,2026-05-28,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,resolved,7159 min,True,cohort
+OUT-C0155,PAYTM_MERCH_9114,2026-07-25,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,not resolved,,False,cohort
+OUT-C0156,PAYTM_MERCH_9116,2026-08-04,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,resolved,,True,cohort
+OUT-C0157,PAYTM_MERCH_9105,2026-11-09,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,1076 min,True,cohort
+OUT-C0158,PAYTM_MERCH_9144,2026-11-06,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,not resolved,,False,cohort
+OUT-C0159,PAYTM_MERCH_9115,2026-10-15,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,48 min,True,cohort
+OUT-C0160,PAYTM_MERCH_9124,2026-08-07,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,211 min,True,cohort
+OUT-C0161,PAYTM_MERCH_9137,2026-09-14,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,4096 min,True,cohort
+OUT-C0162,PAYTM_MERCH_9138,2026-11-07,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,3065 min,True,cohort
+OUT-C0163,PAYTM_MERCH_9127,2026-08-29,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,not resolved,,False,cohort
+OUT-C0164,PAYTM_MERCH_9147,2026-09-21,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,not resolved,,False,cohort
+OUT-C0165,PAYTM_MERCH_9148,2026-05-31,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,66 min,True,cohort
+OUT-C0166,PAYTM_MERCH_9107,2026-09-13,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,not resolved,,False,cohort
+OUT-C0167,PAYTM_MERCH_9111,2026-07-31,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,not resolved,,False,cohort
+OUT-C0168,PAYTM_MERCH_9135,2026-10-10,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,not resolved,,False,cohort
+OUT-C0169,PAYTM_MERCH_9149,2026-09-29,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,resolved,6587 min,True,cohort
+OUT-C0170,PAYTM_MERCH_9135,2026-05-26,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,100 min,True,cohort
+OUT-C0171,PAYTM_MERCH_9111,2026-10-23,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,not resolved,,False,cohort
+OUT-C0172,PAYTM_MERCH_9109,2026-07-30,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,resolved,1401 min,True,cohort
+OUT-C0173,PAYTM_MERCH_9117,2026-07-14,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0174,PAYTM_MERCH_9114,2026-11-16,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,not resolved,,False,cohort
+OUT-C0175,PAYTM_MERCH_9132,2026-09-14,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,68 min,True,cohort
+OUT-C0176,PAYTM_MERCH_9146,2026-07-23,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,resolved,,True,cohort
+OUT-C0177,PAYTM_MERCH_9101,2026-10-29,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,708 min,True,cohort
+OUT-C0178,PAYTM_MERCH_9116,2026-11-10,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,1 min,True,cohort
+OUT-C0179,PAYTM_MERCH_9141,2026-10-08,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,348 min,True,cohort
+OUT-C0180,PAYTM_MERCH_9125,2026-06-29,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,2235 min,True,cohort
+OUT-C0181,PAYTM_MERCH_9111,2026-07-27,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,653 min,True,cohort
+OUT-C0182,PAYTM_MERCH_9139,2026-08-14,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,not resolved,,False,cohort
+OUT-C0183,PAYTM_MERCH_9146,2026-08-29,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,resolved,,True,cohort
+OUT-C0184,PAYTM_MERCH_9127,2026-09-05,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,48 min,True,cohort
+OUT-C0185,PAYTM_MERCH_9129,2026-10-22,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,3587 min,True,cohort
+OUT-C0186,PAYTM_MERCH_9130,2026-11-03,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,1348 min,True,cohort
+OUT-C0187,PAYTM_MERCH_9103,2026-09-14,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,not resolved,,False,cohort
+OUT-C0188,PAYTM_MERCH_9145,2026-06-10,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,resolved,1282 min,True,cohort
+OUT-C0189,PAYTM_MERCH_9137,2026-10-18,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,751 min,True,cohort
+OUT-C0190,PAYTM_MERCH_9141,2026-07-14,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,1231 min,True,cohort
+OUT-C0191,PAYTM_MERCH_9104,2026-11-16,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,558 min,True,cohort
+OUT-C0192,PAYTM_MERCH_9129,2026-09-07,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,156 min,True,cohort
+OUT-C0193,PAYTM_MERCH_9102,2026-08-30,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,not resolved,,False,cohort
+OUT-C0194,PAYTM_MERCH_9104,2026-09-06,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,4 min,True,cohort
+OUT-C0195,PAYTM_MERCH_9116,2026-08-09,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0196,PAYTM_MERCH_9130,2026-11-10,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,not resolved,,False,cohort
+OUT-C0197,PAYTM_MERCH_9104,2026-09-12,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,resolved,1271 min,True,cohort
+OUT-C0198,PAYTM_MERCH_9128,2026-06-12,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0199,PAYTM_MERCH_9120,2026-07-06,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,464 min,True,cohort
+OUT-C0200,PAYTM_MERCH_9116,2026-10-08,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,347 min,True,cohort
+OUT-C0201,PAYTM_MERCH_9113,2026-11-03,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,106 min,True,cohort
+OUT-C0202,PAYTM_MERCH_9127,2026-09-20,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,983 min,True,cohort
+OUT-C0203,PAYTM_MERCH_9139,2026-07-06,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0204,PAYTM_MERCH_9129,2026-06-01,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0205,PAYTM_MERCH_9143,2026-08-12,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,1844 min,True,cohort
+OUT-C0206,PAYTM_MERCH_9133,2026-06-06,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,543 min,True,cohort
+OUT-C0207,PAYTM_MERCH_9107,2026-11-08,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,not resolved,,False,cohort
+OUT-C0208,PAYTM_MERCH_9139,2026-07-25,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,161 min,True,cohort
+OUT-C0209,PAYTM_MERCH_9147,2026-09-11,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,61 min,True,cohort
+OUT-C0210,PAYTM_MERCH_9131,2026-07-10,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0211,PAYTM_MERCH_9103,2026-07-10,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,1151 min,True,cohort
+OUT-C0212,PAYTM_MERCH_9123,2026-05-29,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,resolved,,True,cohort
+OUT-C0213,PAYTM_MERCH_9141,2026-07-28,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,102 min,True,cohort
+OUT-C0214,PAYTM_MERCH_9112,2026-07-03,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,not resolved,,False,cohort
+OUT-C0215,PAYTM_MERCH_9121,2026-10-14,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,648 min,True,cohort
+OUT-C0216,PAYTM_MERCH_9103,2026-08-20,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,6 min,True,cohort
+OUT-C0217,PAYTM_MERCH_9149,2026-09-15,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,3154 min,True,cohort
+OUT-C0218,PAYTM_MERCH_9134,2026-10-18,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0219,PAYTM_MERCH_9112,2026-05-31,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,1035 min,True,cohort
+OUT-C0220,PAYTM_MERCH_9123,2026-05-21,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,not resolved,,False,cohort
+OUT-C0221,PAYTM_MERCH_9106,2026-06-26,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,not resolved,,False,cohort
+OUT-C0222,PAYTM_MERCH_9146,2026-10-01,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,4003 min,True,cohort
+OUT-C0223,PAYTM_MERCH_9122,2026-06-28,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,66 min,True,cohort
+OUT-C0224,PAYTM_MERCH_9112,2026-10-13,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,1153 min,True,cohort
+OUT-C0225,PAYTM_MERCH_9109,2026-10-27,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0226,PAYTM_MERCH_9127,2026-07-26,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,18 min,True,cohort
+OUT-C0227,PAYTM_MERCH_9124,2026-07-10,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,not resolved,,False,cohort
+OUT-C0228,PAYTM_MERCH_9110,2026-10-28,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,not resolved,,False,cohort
+OUT-C0229,PAYTM_MERCH_9115,2026-05-24,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0230,PAYTM_MERCH_9132,2026-05-26,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,not resolved,,False,cohort
+OUT-C0231,PAYTM_MERCH_9114,2026-10-03,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,resolved,5311 min,True,cohort
+OUT-C0232,PAYTM_MERCH_9133,2026-09-27,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,2 min,True,cohort
+OUT-C0233,PAYTM_MERCH_9123,2026-07-27,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,not resolved,,False,cohort
+OUT-C0234,PAYTM_MERCH_9111,2026-07-01,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,not resolved,,False,cohort
+OUT-C0235,PAYTM_MERCH_9138,2026-10-27,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,2497 min,True,cohort
+OUT-C0236,PAYTM_MERCH_9118,2026-10-26,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,49 min,True,cohort
+OUT-C0237,PAYTM_MERCH_9135,2026-11-11,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,not resolved,,False,cohort
+OUT-C0238,PAYTM_MERCH_9117,2026-09-11,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,2913 min,True,cohort
+OUT-C0239,PAYTM_MERCH_9101,2026-06-29,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,4 min,True,cohort
+OUT-C0240,PAYTM_MERCH_9138,2026-08-09,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,not resolved,,False,cohort
+OUT-C0241,PAYTM_MERCH_9143,2026-06-11,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,382 min,True,cohort
+OUT-C0242,PAYTM_MERCH_9147,2026-07-27,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,resolved,1023 min,True,cohort
+OUT-C0243,PAYTM_MERCH_9131,2026-06-05,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0244,PAYTM_MERCH_9141,2026-07-04,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,4 min,True,cohort
+OUT-C0245,PAYTM_MERCH_9110,2026-08-05,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,3 min,True,cohort
+OUT-C0246,PAYTM_MERCH_9133,2026-10-25,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,resolved,1965 min,True,cohort
+OUT-C0247,PAYTM_MERCH_9102,2026-10-28,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,resolved,,True,cohort
+OUT-C0248,PAYTM_MERCH_9132,2026-07-15,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,219 min,True,cohort
+OUT-C0249,PAYTM_MERCH_9109,2026-10-21,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,not resolved,,False,cohort
+OUT-C0250,PAYTM_MERCH_9110,2026-09-01,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,282 min,True,cohort
+OUT-C0251,PAYTM_MERCH_9119,2026-08-10,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,982 min,True,cohort
+OUT-C0252,PAYTM_MERCH_9119,2026-06-28,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,515 min,True,cohort
+OUT-C0253,PAYTM_MERCH_9141,2026-05-28,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,not resolved,,False,cohort
+OUT-C0254,PAYTM_MERCH_9141,2026-06-10,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,1255 min,True,cohort
+OUT-C0255,PAYTM_MERCH_9107,2026-07-01,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,resolved,5185 min,True,cohort
+OUT-C0256,PAYTM_MERCH_9101,2026-06-27,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,10 min,True,cohort
+OUT-C0257,PAYTM_MERCH_9112,2026-09-16,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,not resolved,,False,cohort
+OUT-C0258,PAYTM_MERCH_9143,2026-09-24,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,315 min,True,cohort
+OUT-C0259,PAYTM_MERCH_9103,2026-07-09,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,not resolved,,False,cohort
+OUT-C0260,PAYTM_MERCH_9119,2026-06-21,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,182 min,True,cohort
+OUT-C0261,PAYTM_MERCH_9133,2026-09-26,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,4 min,True,cohort
+OUT-C0262,PAYTM_MERCH_9147,2026-06-06,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,2424 min,True,cohort
+OUT-C0263,PAYTM_MERCH_9142,2026-10-23,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,resolved,6634 min,True,cohort
+OUT-C0264,PAYTM_MERCH_9141,2026-07-01,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,resolved,,True,cohort
+OUT-C0265,PAYTM_MERCH_9104,2026-07-17,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,not resolved,,False,cohort
+OUT-C0266,PAYTM_MERCH_9134,2026-05-23,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,2539 min,True,cohort
+OUT-C0267,PAYTM_MERCH_9132,2026-07-27,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,not resolved,,False,cohort
+OUT-C0268,PAYTM_MERCH_9123,2026-07-01,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,4189 min,True,cohort
+OUT-C0269,PAYTM_MERCH_9129,2026-07-17,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,3406 min,True,cohort
+OUT-C0270,PAYTM_MERCH_9146,2026-09-12,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,1 min,True,cohort
+OUT-C0271,PAYTM_MERCH_9136,2026-11-15,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,1 min,True,cohort
+OUT-C0272,PAYTM_MERCH_9108,2026-11-16,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,3904 min,True,cohort
+OUT-C0273,PAYTM_MERCH_9105,2026-11-11,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0274,PAYTM_MERCH_9113,2026-05-22,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,3268 min,True,cohort
+OUT-C0275,PAYTM_MERCH_9103,2026-09-17,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,1368 min,True,cohort
+OUT-C0276,PAYTM_MERCH_9124,2026-08-01,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,resolved,2540 min,True,cohort
+OUT-C0277,PAYTM_MERCH_9123,2026-11-04,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,not resolved,,False,cohort
+OUT-C0278,PAYTM_MERCH_9107,2026-10-14,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,196 min,True,cohort
+OUT-C0279,PAYTM_MERCH_9111,2026-08-02,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,resolved,2803 min,True,cohort
+OUT-C0280,PAYTM_MERCH_9134,2026-05-24,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,1633 min,True,cohort
+OUT-C0281,PAYTM_MERCH_9150,2026-09-21,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,49 min,True,cohort
+OUT-C0282,PAYTM_MERCH_9126,2026-09-04,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,2 min,True,cohort
+OUT-C0283,PAYTM_MERCH_9145,2026-07-30,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,5 min,True,cohort
+OUT-C0284,PAYTM_MERCH_9110,2026-06-02,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,2 min,True,cohort
+OUT-C0285,PAYTM_MERCH_9146,2026-10-28,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,162 min,True,cohort
+OUT-C0286,PAYTM_MERCH_9104,2026-06-08,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,35 min,True,cohort
+OUT-C0287,PAYTM_MERCH_9150,2026-06-05,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,resolved,4993 min,True,cohort
+OUT-C0288,PAYTM_MERCH_9116,2026-08-14,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0289,PAYTM_MERCH_9109,2026-05-22,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,184 min,True,cohort
+OUT-C0290,PAYTM_MERCH_9149,2026-08-19,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,857 min,True,cohort
+OUT-C0291,PAYTM_MERCH_9122,2026-07-11,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,not resolved,,False,cohort
+OUT-C0292,PAYTM_MERCH_9149,2026-09-06,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,224 min,True,cohort
+OUT-C0293,PAYTM_MERCH_9147,2026-06-26,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0294,PAYTM_MERCH_9107,2026-06-01,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,resolved,5083 min,True,cohort
+OUT-C0295,PAYTM_MERCH_9137,2026-07-15,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,1271 min,True,cohort
+OUT-C0296,PAYTM_MERCH_9144,2026-08-19,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,not resolved,,False,cohort
+OUT-C0297,PAYTM_MERCH_9117,2026-08-12,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,not resolved,,False,cohort
+OUT-C0298,PAYTM_MERCH_9115,2026-10-06,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,not resolved,,False,cohort
+OUT-C0299,PAYTM_MERCH_9127,2026-08-13,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0300,PAYTM_MERCH_9148,2026-09-18,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,A,resolved,51 min,True,cohort
+OUT-C0301,PAYTM_MERCH_9142,2026-07-12,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,703 min,True,cohort
+OUT-C0302,PAYTM_MERCH_9102,2026-05-23,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0303,PAYTM_MERCH_9122,2026-09-10,DUPLICATE_RECONCILE,cohort case,A: auto-refund second UTR | B: ask merchant,B,resolved,1328 min,True,cohort
+OUT-C0304,PAYTM_MERCH_9124,2026-11-06,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,B,resolved,67 min,True,cohort
+OUT-C0305,PAYTM_MERCH_9140,2026-07-08,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,resolved,4158 min,True,cohort
+OUT-C0306,PAYTM_MERCH_9133,2026-06-24,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,C,not resolved,,False,cohort
+OUT-C0307,PAYTM_MERCH_9149,2026-08-23,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,B,resolved,186 min,True,cohort
+OUT-C0308,PAYTM_MERCH_9133,2026-10-22,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,C,resolved,2342 min,True,cohort
+OUT-C0309,PAYTM_MERCH_9141,2026-09-29,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,B,not resolved,,False,cohort
+OUT-C0310,PAYTM_MERCH_9121,2026-07-26,MANDATE_TROUBLESHOOT,cohort case,A: reminder only | B: 1-tap UPI link | C: collections call,A,resolved,848 min,True,cohort
+OUT-C0311,PAYTM_MERCH_9134,2026-06-29,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,1 min,True,cohort
+OUT-C0312,PAYTM_MERCH_9119,2026-09-28,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,not resolved,,False,cohort
+OUT-C0313,PAYTM_MERCH_9127,2026-08-03,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,resolved,,True,cohort
+OUT-C0314,PAYTM_MERCH_9112,2026-09-14,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,A,resolved,,True,cohort
+OUT-C0315,PAYTM_MERCH_9118,2026-09-04,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,resolved,6514 min,True,cohort
+OUT-C0316,PAYTM_MERCH_9118,2026-07-08,UTR_VERIFY,cohort case,A: trust screenshot | B: verify UTR in NPCI log,B,resolved,5 min,True,cohort
+OUT-C0317,PAYTM_MERCH_9112,2026-07-23,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,not resolved,,False,cohort
+OUT-C0318,PAYTM_MERCH_9124,2026-10-21,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,A,not resolved,,False,cohort
+OUT-C0319,PAYTM_MERCH_9112,2026-10-19,CHARGEBACK_RESOLVE,cohort case,A: accept | B: submit PoD | C: escalate,C,resolved,4117 min,True,cohort
+OUT-C0320,PAYTM_MERCH_9105,2026-06-25,CASHFLOW_EDI_SWITCH,cohort case,A: do nothing | B: KFS 4.2 EDI pause | C: short-term credit line,A,not resolved,,False,cohort

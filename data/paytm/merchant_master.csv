@@ -1,0 +1,52 @@
+mid,name,category,mcc,city,locality,kyc_tier,onboarded_on,risk_tier,avg_daily_gmv_6m,settlement_cycle,soundbox_count,has_loan,lender,is_demo_merchant
+PAYTM_MERCH_8821,Sharma Electronics,"Consumer electronics, appliances & electricals",5732,Gurugram,Sector 14,Full KYC (Video KYC) + GST registered,2024-03-04,LOW,32000,T+1,1,True,Clix Capital,True
+PAYTM_MERCH_9101,Gupta Electricals,Electricals & lighting,5732,Gurugram,Sohna Road,Full KYC,2022-09-25,LOW,20042,T+1,1,False,,False
+PAYTM_MERCH_9102,Shree Balaji Electronics,Home appliances,5732,Gurugram,Sector 4,Min KYC,2024-07-03,LOW,28273,T+1,1,True,Clix Capital,False
+PAYTM_MERCH_9103,Jain Mobile Point,Mobile phones & accessories,5732,Gurugram,Sushant Lok 1,Full KYC (Video KYC) + GST registered,2022-11-23,LOW,25087,T+1,1,True,Clix Capital,False
+PAYTM_MERCH_9104,Mittal Home Appliances,"Consumer electronics, appliances & electricals",5732,Gurugram,Old Gurgaon,Full KYC (Video KYC) + GST registered,2021-07-06,LOW,46349,T+1,1,False,,False
+PAYTM_MERCH_9105,Royal Electronics,Mobile phones & accessories,5732,Gurugram,Sector 14,Min KYC,2025-07-28,MEDIUM,53298,T+1,1,True,Clix Capital,False
+PAYTM_MERCH_9106,Arora Electric House,Mobile phones & accessories,5065,Gurugram,Sector 17,Full KYC,2025-08-04,LOW,15283,T+1,2,False,,False
+PAYTM_MERCH_9107,New Bharat Electricals,Electricals & lighting,5065,Gurugram,Sector 56,Min KYC,2023-05-20,LOW,15339,T+1,2,False,,False
+PAYTM_MERCH_9108,Krishna Mobile Care,Electricals & lighting,5722,Gurugram,Sector 15,Full KYC,2024-06-07,LOW,27119,T+1,1,True,Other NBFC partner,False
+PAYTM_MERCH_9109,Om Sai Electronics,"Consumer electronics, appliances & electricals",5065,Gurugram,Sector 17,Min KYC,2025-01-17,MEDIUM,32262,T+0 (instant),1,False,,False
+PAYTM_MERCH_9110,Bansal Electric Store,Electricals & lighting,5732,Gurugram,Sector 17,Full KYC,2023-03-27,LOW,75858,T+1,1,False,,False
+PAYTM_MERCH_9111,City Light House,Home appliances,5065,Gurugram,Golf Course Road,Full KYC (Video KYC) + GST registered,2025-03-28,LOW,19284,T+1,1,True,Clix Capital,False
+PAYTM_MERCH_9112,Goyal Appliances,Mobile phones & accessories,5065,Gurugram,Sohna Road,Full KYC (Video KYC) + GST registered,2023-04-16,LOW,71973,T+1,1,True,Other NBFC partner,False
+PAYTM_MERCH_9113,Durga Electronics,"Consumer electronics, appliances & electricals",5732,Gurugram,Sushant Lok 1,Min KYC,2024-03-17,MEDIUM,35060,T+1,1,False,,False
+PAYTM_MERCH_9114,Raj Electricals,Mobile phones & accessories,5732,Gurugram,Palam Vihar,Full KYC (Video KYC) + GST registered,2021-09-20,MEDIUM,12215,T+1,1,False,,False
+PAYTM_MERCH_9115,Star Mobile Accessories,"Consumer electronics, appliances & electricals",5722,Gurugram,Sushant Lok 1,Min KYC,2024-03-20,LOW,14989,T+1,1,False,,False
+PAYTM_MERCH_9116,Singh Electronics,"Consumer electronics, appliances & electricals",5722,Gurugram,Sector 15,Min KYC,2024-02-12,LOW,20067,T+1,1,False,,False
+PAYTM_MERCH_9117,Laxmi Home Appliances,Home appliances,5732,Gurugram,Sector 46,Full KYC,2025-06-19,HIGH,28494,T+1,2,True,Clix Capital,False
+PAYTM_MERCH_9118,Ganpati Electricals,Mobile phones & accessories,5732,Gurugram,Sohna Road,Min KYC,2024-08-22,LOW,36801,T+1,1,False,,False
+PAYTM_MERCH_9119,Modern Electronics,Electricals & lighting,5065,Gurugram,Sushant Lok 1,Min KYC,2022-10-23,MEDIUM,23863,T+1,1,False,,False
+PAYTM_MERCH_9120,Verma Electric Works,Home appliances,5732,Gurugram,Sector 15,Min KYC,2025-06-07,LOW,25238,T+1,2,False,,False
+PAYTM_MERCH_9121,Sai Mobile Zone,Mobile phones & accessories,5722,Gurugram,Sector 56,Full KYC,2021-05-01,LOW,27051,T+1,1,True,Clix Capital,False
+PAYTM_MERCH_9122,Kapoor Electronics,"Consumer electronics, appliances & electricals",5065,Gurugram,Sector 4,Full KYC,2022-05-28,LOW,20816,T+0 (instant),1,False,,False
+PAYTM_MERCH_9123,Hari Om Electricals,Mobile phones & accessories,5065,Gurugram,Sohna Road,Full KYC (Video KYC) + GST registered,2022-12-06,LOW,11385,T+1,1,False,,False
+PAYTM_MERCH_9124,Prime Appliances,Mobile phones & accessories,5732,Gurugram,Old Gurgaon,Full KYC,2023-03-18,MEDIUM,14567,T+1,2,False,,False
+PAYTM_MERCH_9125,Shiv Shakti Electronics,Home appliances,5732,Gurugram,DLF Phase 3,Full KYC,2023-07-04,LOW,18013,T+1,1,False,,False
+PAYTM_MERCH_9126,Agarwal Lighting Centre,Mobile phones & accessories,5722,Gurugram,Sushant Lok 1,Full KYC (Video KYC) + GST registered,2021-10-12,LOW,51136,T+0 (instant),1,False,,False
+PAYTM_MERCH_9127,Chauhan Electricals,Home appliances,5732,Gurugram,DLF Phase 3,Full KYC (Video KYC) + GST registered,2024-06-16,LOW,26168,T+1,1,False,,False
+PAYTM_MERCH_9128,Galaxy Mobiles,Electricals & lighting,5732,Gurugram,Sector 15,Full KYC,2022-02-11,MEDIUM,26410,T+1,1,True,Clix Capital,False
+PAYTM_MERCH_9129,Ahuja Electronics,Mobile phones & accessories,5065,Gurugram,Sushant Lok 1,Full KYC,2023-03-10,LOW,34832,T+1,1,False,,False
+PAYTM_MERCH_9130,Rana Electric Store,Home appliances,5722,Gurugram,Sector 17,Full KYC (Video KYC) + GST registered,2022-08-13,MEDIUM,32178,T+1,2,False,,False
+PAYTM_MERCH_9131,Yadav Electricals,Electricals & lighting,5732,Gurugram,DLF Phase 3,Min KYC,2024-09-20,MEDIUM,19381,T+1,1,False,,False
+PAYTM_MERCH_9132,Sunrise Appliances,"Consumer electronics, appliances & electricals",5732,Gurugram,Golf Course Road,Full KYC (Video KYC) + GST registered,2024-06-06,LOW,43943,T+0 (instant),1,True,Clix Capital,False
+PAYTM_MERCH_9133,Metro Electronics,Electricals & lighting,5065,Gurugram,Sector 15,Full KYC (Video KYC) + GST registered,2023-11-06,LOW,18685,T+1,1,False,,False
+PAYTM_MERCH_9134,Tiwari Electric House,Electricals & lighting,5732,Gurugram,Sushant Lok 1,Min KYC,2022-06-18,LOW,31137,T+1,1,True,Clix Capital,False
+PAYTM_MERCH_9135,Bhatia Mobile Hub,"Consumer electronics, appliances & electricals",5732,Gurugram,Sector 46,Full KYC (Video KYC) + GST registered,2023-10-24,MEDIUM,13946,T+1,1,True,Clix Capital,False
+PAYTM_MERCH_9136,National Electricals,Home appliances,5732,Gurugram,Sector 4,Full KYC,2022-03-03,LOW,32811,T+1,1,False,,False
+PAYTM_MERCH_9137,Khanna Electronics,Mobile phones & accessories,5732,Gurugram,Sector 4,Full KYC,2025-05-04,LOW,15893,T+1,1,False,,False
+PAYTM_MERCH_9138,Malhotra Appliances,Mobile phones & accessories,5065,Gurugram,Sushant Lok 1,Min KYC,2022-09-15,LOW,30650,T+1,1,False,,False
+PAYTM_MERCH_9139,Saini Electric Mart,Electricals & lighting,5065,Gurugram,Sector 31,Full KYC (Video KYC) + GST registered,2024-06-09,LOW,57640,T+1,1,False,,False
+PAYTM_MERCH_9140,Classic Electronics,"Consumer electronics, appliances & electricals",5732,Gurugram,Palam Vihar,Full KYC (Video KYC) + GST registered,2025-03-26,LOW,15179,T+1,1,False,,False
+PAYTM_MERCH_9141,Joshi Electricals,Mobile phones & accessories,5722,Gurugram,Sector 14,Min KYC,2022-10-25,MEDIUM,30852,T+1,1,False,,False
+PAYTM_MERCH_9142,Mahadev Mobile Shop,"Consumer electronics, appliances & electricals",5722,Gurugram,Sector 4,Full KYC (Video KYC) + GST registered,2021-10-13,LOW,20056,T+1,1,True,Clix Capital,False
+PAYTM_MERCH_9143,Dahiya Electronics,Electricals & lighting,5732,Gurugram,Sector 14,Full KYC (Video KYC) + GST registered,2022-11-20,LOW,11302,T+1,1,True,Clix Capital,False
+PAYTM_MERCH_9144,Ever Bright Lights,Mobile phones & accessories,5065,Gurugram,Sector 14,Full KYC,2025-01-22,MEDIUM,25820,T+0 (instant),1,True,Other NBFC partner,False
+PAYTM_MERCH_9145,Saraswati Electricals,"Consumer electronics, appliances & electricals",5732,Gurugram,Sector 14,Full KYC (Video KYC) + GST registered,2024-07-02,HIGH,66479,T+1,2,True,Other NBFC partner,False
+PAYTM_MERCH_9146,Rathi Home Appliances,Home appliances,5722,Gurugram,Sector 4,Full KYC,2024-04-27,LOW,17244,T+1,1,False,,False
+PAYTM_MERCH_9147,Mehta Electronics,"Consumer electronics, appliances & electricals",5722,Gurugram,Sohna Road,Full KYC,2023-04-30,LOW,13532,T+1,1,True,Clix Capital,False
+PAYTM_MERCH_9148,Pooja Electricals,Electricals & lighting,5722,Gurugram,Palam Vihar,Full KYC (Video KYC) + GST registered,2023-02-10,LOW,38265,T+1,2,False,,False
+PAYTM_MERCH_9149,Vision Electronics,Electricals & lighting,5732,Gurugram,Sector 56,Min KYC,2021-09-25,LOW,34444,T+1,1,True,Clix Capital,False
+PAYTM_MERCH_9150,Ambika Electric House,"Consumer electronics, appliances & electricals",5732,Gurugram,Sector 46,Full KYC (Video KYC) + GST registered,2023-11-26,MEDIUM,14656,T+1,1,False,,False

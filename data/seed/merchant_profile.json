@@ -1,0 +1,130 @@
+{
+  "mid": "PAYTM_MERCH_8821",
+  "name": "Sharma Electronics",
+  "owner": "Rajesh Sharma",
+  "category": "Consumer electronics, appliances & electricals",
+  "mcc": "5732",
+  "kyc_tier": "Full KYC (Video KYC) + GST registered",
+  "gstin": "06ABCDE1234F1Z5 (dummy)",
+  "pan_masked": "ABCDE####F (dummy)",
+  "address": {
+    "line1": "Shop 12, Sector 14 Market",
+    "city": "Gurugram",
+    "state": "Haryana",
+    "pincode": "122001"
+  },
+  "store_hours": "07:00-22:00, peaks 07-10 and 18-21",
+  "onboarded_on": "2024-03-04",
+  "settlement": {
+    "cycle": "T+1 (all instruments, daily batch credited ~08:00)",
+    "bank": "XXXXXX4821 (masked)",
+    "ifsc": "DEMO0000821",
+    "mdr_rates": {
+      "credit_card": "2%",
+      "paytm_postpaid": "2%",
+      "wallet_on_upi_above_2000": "1.1%",
+      "upi_p2m": "0%",
+      "rupay_debit": "0%"
+    }
+  },
+  "devices": [
+    {
+      "device_id": "SB-8821-01",
+      "type": "Paytm Card Soundbox",
+      "rental_inr_per_month": 149,
+      "rental_billing_day": 18,
+      "status": "DEGRADED (see device_logs.csv)"
+    },
+    {
+      "device_id": "QR-8821-01",
+      "type": "Paytm QR standee",
+      "status": "ACTIVE"
+    }
+  ],
+  "connectors": [
+    {
+      "name": "SHIPROCKET_SYNC",
+      "status": "ACTIVE",
+      "dpdp_consent": "GRANTED",
+      "granted_at": "2026-06-02",
+      "holds": "ONDC shipments + PoD (incl. signed PoD for ORDER #9981)"
+    },
+    {
+      "name": "VYAPAR_POS_SYNC",
+      "status": "ACTIVE",
+      "dpdp_consent": "GRANTED",
+      "granted_at": "2026-05-20",
+      "holds": "POS bills, inventory, supplier payables (₹4,500 due tomorrow)"
+    },
+    {
+      "name": "RBI_ACCOUNT_AGGREGATOR",
+      "status": "ACTIVE",
+      "dpdp_consent": "GRANTED",
+      "granted_at": "2026-05-28",
+      "holds": "Bank statement view used for loan underwriting and hardship checks"
+    }
+  ],
+  "historical_memory": {
+    "daily_avg_sales": 32000,
+    "weekend_multiplier": "2.3x (Fri–Sun)",
+    "past_edi_success_rate": "96%",
+    "tomorrow_stock_payable": 4500,
+    "active_lender": "Clix Capital",
+    "daily_edi": 500,
+    "loan_balance": 42000,
+    "kfs_edi_holiday_eligible": true
+  },
+  "recent_customers": [
+    {
+      "customer_id": "C001",
+      "name": "Vikram Malhotra",
+      "six_month_spend": 166203
+    },
+    {
+      "customer_id": "C003",
+      "name": "Sunita Rana",
+      "six_month_spend": 95475
+    },
+    {
+      "customer_id": "C002",
+      "name": "Geeta Saini",
+      "six_month_spend": 78314
+    },
+    {
+      "customer_id": "C006",
+      "name": "Babita Malhotra",
+      "six_month_spend": 68133
+    },
+    {
+      "customer_id": "C005",
+      "name": "Pooja Kapoor (electrician)",
+      "six_month_spend": 53285
+    },
+    {
+      "customer_id": "C007",
+      "name": "Nitin Bhatia",
+      "six_month_spend": 43852
+    },
+    {
+      "customer_id": "C037",
+      "name": "Shalini Rana (electrician)",
+      "six_month_spend": 41721
+    },
+    {
+      "customer_id": "C010",
+      "name": "Karan Gupta",
+      "six_month_spend": 41415
+    },
+    {
+      "customer_id": "C004",
+      "name": "Neha Yadav",
+      "six_month_spend": 40390
+    },
+    {
+      "customer_id": "C009",
+      "name": "Rekha Gupta",
+      "six_month_spend": 39998
+    }
+  ],
+  "as_of": "2026-11-19T09:00:00"
+}

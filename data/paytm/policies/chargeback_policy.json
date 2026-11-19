@@ -1,0 +1,20 @@
+{
+  "disclaimer": "ILLUSTRATIVE: synthetic demo values, not actual Paytm pricing or policy",
+  "hold": "Full disputed amount held from next T+1 batch",
+  "evidence_accepted": [
+    "OTP-verified PoD",
+    "signed PoD",
+    "courier delivery photo",
+    "invoice"
+  ],
+  "autonomous": {
+    "submit_evidence_if": "PoD delivered_at ≤ dispute raised_at and recipient matches order",
+    "requires_merchant_signoff": true
+  },
+  "escalate_if": [
+    "no PoD",
+    "amount > ₹25,000",
+    "repeat disputes from same customer"
+  ],
+  "release": "Hold released in the next batch after the network accepts evidence (demo: on submission)"
+}
