@@ -1,0 +1,62 @@
+{
+  "mid": "PAYTM_MERCH_8821",
+  "date": "2026-11-18",
+  "gross": 100000,
+  "net_bank_credit": 95840,
+  "variance": 4160,
+  "gross_mix": [
+    {
+      "mode": "CREDIT_CARD",
+      "amount": 50000,
+      "mdr_rate_pct": 2.0
+    },
+    {
+      "mode": "WALLET_ON_UPI_GT_2K",
+      "amount": 25000,
+      "mdr_rate_pct": 1.1
+    },
+    {
+      "mode": "BANK_UPI",
+      "amount": 25000,
+      "mdr_rate_pct": 0.0
+    }
+  ],
+  "deductions": [
+    {
+      "code": "MDR_FEE",
+      "amount": 1450,
+      "label": "MDR Fee"
+    },
+    {
+      "code": "GST_ON_MDR",
+      "amount": 261,
+      "label": "GST on MDR (18%)",
+      "itc_eligible": true
+    },
+    {
+      "code": "CUSTOMER_REFUND",
+      "amount": 1500,
+      "label": "Customer Refund",
+      "ref": "ORDER #4412",
+      "status": "PROCESSED"
+    },
+    {
+      "code": "SOUNDBOX_RENTAL",
+      "amount": 149,
+      "label": "Soundbox Rental"
+    },
+    {
+      "code": "CHARGEBACK_HOLD",
+      "amount": 800,
+      "label": "Chargeback Hold",
+      "ref": "TXNID #9981",
+      "status": "HELD",
+      "pod_due_hours": 48
+    }
+  ],
+  "checks": {
+    "sum_of_deductions": 4160,
+    "gross_minus_deductions": 95840,
+    "gst_on_mdr_18pct_of_1450": 261
+  }
+}

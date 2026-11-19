@@ -1,0 +1,19 @@
+{
+  "mdr": [
+    {
+      "mode": "CREDIT_CARD",
+      "rate_pct": 2.0
+    },
+    {
+      "mode": "WALLET_ON_UPI",
+      "rate_pct": 1.1,
+      "applies_above_inr": 2000
+    },
+    {
+      "mode": "BANK_UPI",
+      "rate_pct": 0.0
+    }
+  ],
+  "gst_pct": 18,
+  "itc_eligible": true
+}

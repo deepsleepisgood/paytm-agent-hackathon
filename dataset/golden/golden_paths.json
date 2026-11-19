@@ -1,0 +1,60 @@
+[
+  {
+    "step": 1,
+    "name": "Settlement variance",
+    "intent": "SETTLEMENT_RECONCILE",
+    "input": "intents.SETTLEMENT_RECONCILE.p1",
+    "expect": {
+      "deduction_total": 4160,
+      "itc_logged": 261,
+      "flags": [
+        "CHARGEBACK_HOLD #9981 ₹800 HELD"
+      ],
+      "consent_token_minted": true
+    }
+  },
+  {
+    "step": 2,
+    "name": "Chargeback resolution",
+    "intent": "CHARGEBACK_RESOLVE",
+    "input": "test_files/pod_9981.png (doc_type=pod)",
+    "extracted_fields": {
+      "order_id": "#9981",
+      "status": "DELIVERED"
+    },
+    "expect": {
+      "chargeback_status": "RELEASED",
+      "release_eta": "T+1",
+      "tickets_deflected": "+1"
+    }
+  },
+  {
+    "step": 3,
+    "name": "Fake UPI screenshot",
+    "intent": "UTR_VERIFY",
+    "input": "test_files/fake_upi.png (doc_type=upi_screenshot)",
+    "extracted_fields": {
+      "utr_number": "632184920000",
+      "amount": 2400
+    },
+    "expect": {
+      "status": "NOT_FOUND_SUSPECTED_FAKE",
+      "frauds_blocked": "+1",
+      "voice_alert": true
+    }
+  },
+  {
+    "step": 4,
+    "name": "Escalation",
+    "intent": "ESCALATE_HUMAN",
+    "input": "intents.ESCALATE_HUMAN.e1",
+    "expect": {
+      "escalation_ticket": "TKT-PAYTM-xxxx"
+    }
+  },
+  {
+    "step": 5,
+    "name": "Reset",
+    "expect": "initial_state.json restored on 8002 and 8003"
+  }
+]

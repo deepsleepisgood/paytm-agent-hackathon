@@ -1,0 +1,10 @@
+{
+  "chargeback_status": "HELD",
+  "tickets_deflected": 0,
+  "frauds_blocked": 0,
+  "escalation_tickets": [],
+  "merchant_itc_log": [],
+  "events": [],
+  "ticket_id_format": "TKT-PAYTM-<4 digits>",
+  "note": "reset target for POST /ledger/reset (8002) and POST /reset (8003)"
+}

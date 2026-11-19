@@ -1,0 +1,39 @@
+[
+  {
+    "utr": "632184920111",
+    "amount": 1250,
+    "payer_app": "GPay",
+    "status": "SUCCESS",
+    "settled": true,
+    "time": "10:42 AM",
+    "payer": "Rohit Verma"
+  },
+  {
+    "utr": "632184920999",
+    "amount": 2400,
+    "payer_app": "PhonePe",
+    "status": "PENDING",
+    "settled": false,
+    "note": "NPCI T+1 auto-reversal",
+    "time": "11:15 AM",
+    "payer": "Anita Singh"
+  },
+  {
+    "utr": "632184920304",
+    "amount": 780,
+    "payer_app": "Paytm",
+    "status": "SUCCESS",
+    "settled": true,
+    "time": "12:03 PM",
+    "payer": "Karan Mehta"
+  },
+  {
+    "utr": "632184920455",
+    "amount": 3200,
+    "payer_app": "Paytm",
+    "status": "SUCCESS",
+    "settled": true,
+    "time": "01:27 PM",
+    "payer": "Pooja Nair"
+  }
+]
