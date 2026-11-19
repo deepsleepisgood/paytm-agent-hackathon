@@ -14,14 +14,30 @@ from ..errors import PayloadError
 from ..escalation import REASON_CODES
 from ..mesh import Case
 
+# Used when the merchant agent routes here without saying why.
+DEFAULT_REASON_CODE = "MERCHANT_REQUESTED_HUMAN"
+
+# Shorter names the rest of the team uses for the same reasons.
+REASON_ALIASES = {
+    "MERCHANT_REQUESTED": "MERCHANT_REQUESTED_HUMAN",
+    "NEEDS_HUMAN": "MERCHANT_REQUESTED_HUMAN",
+    "BANK_ACCOUNT_CHANGE_REQUEST": "BANK_ACCOUNT_CHANGE",
+}
+
 
 def gather(case: Case) -> str:
     """IntelligenceAgent: parse what we are being asked to hand over, and why."""
     payload = case.req.payload or {}
 
-    reason_code = payload.get("reason_code")
-    if not reason_code:
-        raise PayloadError("ESCALATE_HUMAN needs a reason_code")
+    # A missing reason is not a reason to refuse. The merchant agent routes here when
+    # it has decided a person is needed and often has nothing more specific to say, and
+    # the overwhelmingly likely reason is that the merchant asked for one. Rejecting the
+    # request would drop a case the agent had already given up on, which is the worst
+    # possible moment to be pedantic about a field name.
+    reason_code = REASON_ALIASES.get(
+        payload.get("reason_code") or "", payload.get("reason_code")
+    ) or DEFAULT_REASON_CODE
+
     if reason_code not in REASON_CODES:
         raise PayloadError(
             f"reason_code {reason_code!r} is not one of {sorted(REASON_CODES)}"

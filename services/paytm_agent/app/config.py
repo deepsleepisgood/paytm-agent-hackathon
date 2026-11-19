@@ -43,9 +43,9 @@ UNKNOWN_UTR_LIMIT = 3
 # same 5,000 figure, so the two services tell the merchant the same story.
 DUPLICATE_AUTO_LIMIT_INR = 5000
 
-# Hardship pauses a merchant may take in a rolling 90 days before a human must look.
-# (assumption) Not a published Paytm or NBFC rule.
-HARDSHIP_PAUSE_WINDOW_DAYS = 90
+# Hardship pauses allowed in a rolling window before a human must look. Taken from the
+# canonical dataset's KFS clause 4.2: "at most once per 30 days".
+HARDSHIP_PAUSE_WINDOW_DAYS = 30
 HARDSHIP_PAUSES_PER_WINDOW = 1
 
 

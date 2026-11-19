@@ -68,12 +68,15 @@ class MdrBand:
         }
 
 
-# Chosen so the bands add up to the 1,450 the contract quotes.
+# Volumes and rates from the team's canonical dataset
+# (data/seed/settlement_breakdown_2026-11-18.json), not chosen by us. They add to the
+# 1,450 the contract quotes. Earlier these were a plausible split of our own invention,
+# which would have had this service quoting a different fee breakdown from the dataset
+# for the same question.
 MDR_BANDS: tuple[MdrBand, ...] = (
-    MdrBand("Credit card", 45_000, 2.0),
-    MdrBand("Wallet-on-UPI above 2000", 50_000, 1.1,
-            note="(assumption) rate taken from one third-party note, not a Paytm schedule"),
-    MdrBand("Bank UPI", 5_000, 0.0, note="zero MDR on bank-to-bank UPI"),
+    MdrBand("Credit card and postpaid", 62_600, 2.0),
+    MdrBand("Wallet-on-UPI above 2000", 18_000, 1.1),
+    MdrBand("UPI person-to-merchant", 19_400, 0.0, note="zero MDR on bank-to-bank UPI"),
 )
 
 
@@ -105,10 +108,13 @@ class UpiTxn:
     utr: str
     amount_inr: int
     payer_app: str
-    lookup_status: str  # SUCCESS_SETTLED | PENDING
+    lookup_status: str  # SUCCESS_SETTLED | PENDING | FAILED
     order_id: str | None = None
     received_at: str | None = None
     refunded: bool = False
+    # NPCI's own reason, for a FAILED payment: "Invalid MPIN", "Transaction declined by
+    # customer". Useful to the merchant, because it says whose end the problem was at.
+    resp_desc: str | None = None
 
     def as_dict(self) -> dict:
         return {
@@ -119,6 +125,7 @@ class UpiTxn:
             "order_id": self.order_id,
             "received_at": self.received_at,
             "refunded": self.refunded,
+            "resp_desc": self.resp_desc,
         }
 
 
@@ -129,28 +136,59 @@ class Mandate:
     Figures marked (assumption) are not published Paytm or NBFC policy.
     """
 
-    mandate_id: str = "ENACH_8821_01"
+    mandate_id: str = "UMRN-DEMO-0000008821"
     amount_inr: int = 500
-    status: str = "BOUNCED"  # ACTIVE | BOUNCED
-    bounce_date: str = "2026-11-19"
-    bounce_reason: str = "INSUFFICIENT_FUNDS"
-    bounce_charge_inr: int = 118  # (assumption) 100 plus 18% GST
-    # The context that turns a frightening letter into a solvable problem.
+    # The mandate itself is ACTIVE, as the canonical ledger has it. A returned
+    # presentment does not deactivate a mandate, and saying BOUNCED here would have the
+    # ledger contradict the reply's own claim that this is not a default.
+    status: str = "ACTIVE"
+    presentment_status: str = "RETURNED"  # PAID | RETURNED
+    last_return_date: str = "2026-11-17"
+    last_return_code: str = "04"
+    last_return_reason: str = "Balance insufficient"
+    # Overdue, but zero days past due: the instalment is late, the loan is not.
+    overdue_amount_inr: int = 500
+    days_past_due: int = 0
+    # Nil, not a penalty. KFS clause 4.1 lets a bounced EDI be paid the same day by UPI
+    # link without charge, and the dataset records bounce charges as waived for
+    # first-attempt friction. A fee we invented would have been the harshest number in
+    # the demo and the easiest for a mentor to disprove.
+    bounce_charge_inr: int = 0
+    bounce_charge_note: str = "Nil: waived for first-attempt friction under the hardship policy"
+    # The context that turns a frightening letter into a solvable problem. 96% is the
+    # dataset's own framing of a 0.9591 first-attempt success rate.
     on_time_rate_percent: float = 96.0
+    first_attempt_success_rate: float = 0.9591
     history_months: int = 6
-    hardship_pauses_used_90d: int = 0
+    # Why it bounced: three days of market closure cut takings by about 40%.
+    root_cause: str = "TEMPORARY_FRICTION"
+    dip_days: tuple[str, ...] = ("2026-11-14", "2026-11-15", "2026-11-16")
+    hardship_pauses_used_in_window: int = 0
+
+    @property
+    def needs_remedy(self) -> bool:
+        """A presentment was returned and the instalment is still unpaid."""
+        return self.presentment_status == "RETURNED" and self.overdue_amount_inr > 0
 
     def as_dict(self) -> dict:
         return {
             "mandate_id": self.mandate_id,
             "amount_inr": self.amount_inr,
             "status": self.status,
-            "bounce_date": self.bounce_date,
-            "bounce_reason": self.bounce_reason,
+            "presentment_status": self.presentment_status,
+            "last_return_date": self.last_return_date,
+            "last_return_code": self.last_return_code,
+            "last_return_reason": self.last_return_reason,
+            "overdue_amount_inr": self.overdue_amount_inr,
+            "days_past_due": self.days_past_due,
             "bounce_charge_inr": self.bounce_charge_inr,
+            "bounce_charge_note": self.bounce_charge_note,
             "on_time_rate_percent": self.on_time_rate_percent,
+            "first_attempt_success_rate": self.first_attempt_success_rate,
             "history_months": self.history_months,
-            "hardship_pauses_used_90d": self.hardship_pauses_used_90d,
+            "root_cause": self.root_cause,
+            "dip_days": list(self.dip_days),
+            "hardship_pauses_used_in_window": self.hardship_pauses_used_in_window,
         }
 
 
@@ -174,27 +212,9 @@ class SalesPattern:
         }
 
 
-@dataclass
-class CreditOffer:
-    """A pre-approved working capital limit.
-
-    No interest rate or tenure is quoted here, deliberately. Those are the terms an NBFC
-    must disclose in the Key Fact Statement, and inventing them for a demo would be
-    putting made-up credit pricing in front of a merchant.
-    """
-
-    pre_approved_inr: int = 150_000
-    nbfc: str = NBFC_NAME
-    kfs_required: bool = True
-
-    def as_dict(self) -> dict:
-        return {
-            "pre_approved_inr": self.pre_approved_inr,
-            "nbfc": self.nbfc,
-            "kfs_required": self.kfs_required,
-            "terms": "Rate and tenure are set out in the KFS, which the merchant must "
-                     "see and accept before any drawdown",
-        }
+# There is no pre-approved new facility in the canonical dataset, so this service does
+# not invent one. The advisory intent talks about the merchant's own trading and the
+# loan they already have, whose real terms are in Loan below.
 
 
 @dataclass
@@ -230,7 +250,16 @@ class Loan:
     # date would pass today and quietly break tomorrow.
     next_deduction_date: str = "2026-11-19"
 
+    # Real terms from the canonical dataset, so nothing about this loan is invented.
+    loan_id: str = "CLX-ML-26-008821"
     nbfc: str = NBFC_NAME
+    sanctioned_inr: int = 115_000
+    apr_percent: float = 31.89
+    collected_so_far_inr: int = 85_000
+    # "collected by eNACH from the merchant's bank account at 07:00, not netted from
+    # settlements". Recorded because it is how the loan actually works, even though the
+    # contract's projected-payout arithmetic nets it off; see cashflow.py.
+    collection_method: str = "Daily eNACH auto-debit on the merchant's bank account"
     edi_holiday_eligible: bool = True
     kfs_clause: str = KFS_CLAUSE
     max_pause_days: int = KFS_MAX_PAUSE_DAYS
@@ -253,7 +282,12 @@ class Loan:
             "edi_per_day_inr": self.edi_per_day_inr,
             "balance_inr": self.balance_inr,
             "next_deduction_date": self.next_deduction_date,
+            "loan_id": self.loan_id,
             "nbfc": self.nbfc,
+            "sanctioned_inr": self.sanctioned_inr,
+            "apr_percent": self.apr_percent,
+            "collected_so_far_inr": self.collected_so_far_inr,
+            "collection_method": self.collection_method,
             "edi_holiday_eligible": self.edi_holiday_eligible,
             "kfs_clause": self.kfs_clause,
             "max_pause_days": self.max_pause_days,
@@ -304,7 +338,6 @@ class Ledger:
     chargeback: Chargeback
     mandate: Mandate = field(default_factory=Mandate)
     sales: SalesPattern = field(default_factory=SalesPattern)
-    credit_offer: CreditOffer = field(default_factory=CreditOffer)
     connectors: tuple[Connector, ...] = CONNECTORS
     projected_gross_tomorrow_inr: int = PROJECTED_GROSS_TOMORROW_INR
 
@@ -415,10 +448,41 @@ class Ledger:
             "loan_edi_status": self.loan.status,
             "mandate": self.mandate.as_dict(),
             "sales": self.sales.as_dict(),
-            "credit_offer": self.credit_offer.as_dict(),
             "connectors": [c.as_dict() for c in self.connectors],
             "projected_net_payout_inr": self.projected_net_payout_inr(),
         }
+
+
+SEEDED_UTRS: dict[str, UpiTxn] = {
+    "632184920111": UpiTxn("632184920111", 1_250, "GPay", "SUCCESS_SETTLED",
+                           order_id="BILL-261118-0011",
+                           received_at="2026-11-18T11:03:14+00:00"),
+    "632184920999": UpiTxn("632184920999", 2_400, "PhonePe", "PENDING",
+                           order_id="BILL-261118-0018",
+                           received_at="2026-11-18T18:15:40+00:00"),
+    # One order, two settled payments 48 seconds apart: what a customer tapping twice
+    # on a slow connection looks like.
+    "632299206882": UpiTxn("632299206882", 1_180, "PhonePe", "SUCCESS_SETTLED",
+                           order_id="4489",
+                           received_at="2026-11-18T19:42:10+00:00"),
+    "632230725895": UpiTxn("632230725895", 1_180, "PhonePe", "SUCCESS_SETTLED",
+                           order_id="4489",
+                           received_at="2026-11-18T19:42:58+00:00"),
+}
+
+
+def _utrs() -> dict[str, UpiTxn]:
+    """The full canonical log where it exists, otherwise the references above.
+
+    Fresh objects each time: the ledger is mutated during a demo (a duplicate gets
+    marked refunded), and a reset has to genuinely undo that.
+    """
+    from . import dataset
+
+    loaded = dataset.load_utrs()
+    if loaded:
+        return loaded
+    return {utr: replace(txn) for utr, txn in SEEDED_UTRS.items()}
 
 
 def fresh(chargeback_hours_left: float = CHARGEBACK_DEFAULT_HOURS,
@@ -450,22 +514,12 @@ def fresh(chargeback_hours_left: float = CHARGEBACK_DEFAULT_HOURS,
             # yesterday's settlement lines.
             "4490": Order("4490", amount_inr=3_500, settled=True,
                           refund_status="PENDING", refund_amount_inr=3_500),
-            # Paid for twice. Under the duplicate auto limit, so the agent can return
-            # the second payment itself.
-            "4455": Order("4455", amount_inr=3_200, settled=True, refund_status="NONE"),
+            # Paid for twice. Order, amount and both references come from the canonical
+            # dataset (data/seed/utr_ledger.csv, flagged DUPLICATE), replacing an
+            # earlier pair of our own invention.
+            "4489": Order("4489", amount_inr=1_180, settled=True, refund_status="NONE"),
         },
-        utrs={
-            "632184920111": UpiTxn("632184920111", 1_250, "GPay", "SUCCESS_SETTLED"),
-            "632184920999": UpiTxn("632184920999", 2_400, "PhonePe", "PENDING"),
-            # The duplicate pair: the same order paid twice, 42 seconds apart, which is
-            # what a customer tapping twice on a slow connection looks like.
-            "632184925001": UpiTxn("632184925001", 3_200, "GPay", "SUCCESS_SETTLED",
-                                   order_id="4455",
-                                   received_at="2026-11-18T11:02:14+00:00"),
-            "632184925002": UpiTxn("632184925002", 3_200, "PhonePe", "SUCCESS_SETTLED",
-                                   order_id="4455",
-                                   received_at="2026-11-18T11:02:56+00:00"),
-        },
+        utrs=_utrs(),
         loan=Loan(),
         chargeback=Chargeback(
             deadline_iso=clock.plus_hours(chargeback_hours_left).isoformat(),
