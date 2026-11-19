@@ -37,7 +37,7 @@ function csv(m, K) {
   return rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
 }
 
-export default function Khata({ m, L, onClose }) {
+export default function Khata({ m, L, onClose, page }) {
   const K = buildKhata(m, L)
   const g = m.profile.gst
   const download = () => {
@@ -47,9 +47,10 @@ export default function Khata({ m, L, onClose }) {
     setTimeout(() => URL.revokeObjectURL(url), 500)
   }
   return (
-    <div className="sheet">
-      <div className="sh-h"><div><b>Khata & Tally Export</b><div className="muted xs">{m.profile.name} · {m.d.settlement.date}</div></div><button className="x" onClick={onClose}>✕</button></div>
+    <div className={page ? 'pgk' : 'sheet'}>
+      {!page && <div className="sh-h"><div><b>Khata & Tally Export</b><div className="muted xs">{m.profile.name} · {m.d.settlement.date}</div></div><button className="x" onClick={onClose}>✕</button></div>}
       <div className="sh-b">
+        {page && <div className="pgk-sub">{m.profile.name} · {m.d.settlement.date}</div>}
         <div className="gst">
           <div className="g-h"><b>GST-ready summary</b><span className={`st ${g.registered ? 'ok' : 'warn'}`}>{g.registered ? g.scheme : 'UNREGISTERED'}</span></div>
           <div className="g-r"><span>GSTIN</span><b>{g.gstin || 'Not registered'}</b></div>

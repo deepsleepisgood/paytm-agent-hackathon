@@ -102,10 +102,8 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
   const [text, setText] = useState('')
   const [rec, setRec] = useState(false)
   const [micNote, setMicNote] = useState('')
-  const [khata, setKhata] = useState(false)
-  const [menu, setMenu] = useState(false)
+  const [view, setView] = useState('chat') // 'chat' | 'menu' | 'khata'
   const [plus, setPlus] = useState(false)
-  const [cat, setCat] = useState('payout')
   const end = useRef(null)
   const podRef = useRef(null)
   const shotRef = useRef(null)
@@ -122,7 +120,7 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
   useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [chat.length, busy])
 
   const send = () => { if (text.trim() && !busy) { onText(text.trim()); setText(''); setPlus(false) } }
-  const run = (id) => { setMenu(false); setPlus(false); onPreset(id) }
+  const run = (id) => { setView('chat'); setPlus(false); onPreset(id) }
 
   const mic = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -135,6 +133,55 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
     r.onend = () => setRec(false)
     r.onresult = (e) => { setMicNote(''); onText(e.results[0][0].transcript) }
     try { r.start() } catch { setRec(false) }
+  }
+
+  const Back = ({ title }) => (
+    <div className="pg-nav">
+      <button className="pg-back" onClick={() => setView('chat')} aria-label="Back to Assistant">
+        <svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2L2 10l8 8" /></svg>
+        <span>Assistant</span>
+      </button>
+      <b>{title}</b>
+      <span className="pg-sp" />
+    </div>
+  )
+
+  if (view === 'menu') {
+    return (
+      <div className="screen buddy pg">
+        <Back title="Madad menu" />
+        <div className="pg-body">
+          <Insights m={m} always />
+          {GROUPS.map((g) => (
+            <div key={g.id} className="pg-sec">
+              <div className="ios-cap">{g.label.toUpperCase()}</div>
+              <div className="rows">
+                {g.items.map((it) => {
+                  const ok = okFor(it.id)
+                  const sc = SCENARIOS.find((x) => x.id === it.id)
+                  const why = mode === 'live' && !liveOk(sc) ? 'Local demo only (not in contract yet)' : 'Not applicable for this merchant'
+                  return (
+                    <button key={it.id} className="row-btn" disabled={busy || !ok} onClick={() => run(it.id)}>
+                      <span className="r-t"><b>{it.t}</b><em>{ok ? it.s : why}</em></span>
+                      <span className="r-go">›</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (view === 'khata') {
+    return (
+      <div className="screen buddy pg">
+        <Back title="Khata & Tally" />
+        <Khata m={m} L={L} page />
+      </div>
+    )
   }
 
   return (
@@ -163,7 +210,7 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
                 )
               })}
             </div>
-            <button className="sum-row" onClick={() => setMenu(true)}>
+            <button className="sum-row" onClick={() => setView('menu')}>
               <span className="sr-l"><b>Aapka business</b><em>Sales trend, busiest days, cash health</em></span>
               <span className="sr-r">Dekhein</span>
             </button>
@@ -185,41 +232,10 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
         )}
       </div>
 
-      {menu && (
-        <div className="msheet-wrap" onClick={() => setMenu(false)}>
-          <div className="msheet" onClick={(e) => e.stopPropagation()}>
-            <div className="grab" />
-            <div className="ms-h"><b>Madad menu</b><button onClick={() => setMenu(false)}>Done</button></div>
-            <div className="ms-b">
-              <Insights m={m} always />
-              <div className="ios-cap">KYA MADAD CHAHIYE?</div>
-              <div className="cats">
-                {GROUPS.map((g) => <button key={g.id} className={cat === g.id ? 'on' : ''} onClick={() => setCat(g.id)}>{g.label}</button>)}
-              </div>
-              <div className="rows">
-                {GROUPS.find((g) => g.id === cat).items.map((it) => {
-                  const ok = okFor(it.id)
-                  const sc = SCENARIOS.find((x) => x.id === it.id)
-                  const why = mode === 'live' && !liveOk(sc) ? 'Local demo only (not in contract yet)' : 'Not applicable for this merchant'
-                  return (
-                    <button key={it.id} className="row-btn" disabled={busy || !ok} onClick={() => run(it.id)}>
-                      <span className="r-t"><b>{it.t}</b><em>{ok ? it.s : why}</em></span>
-                      <span className="r-go">›</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {khata && <Khata m={m} L={L} onClose={() => setKhata(false)} />}
-
       <div className="composer">
         <div className="strip">
-          <button onClick={() => setMenu(true)}>Madad menu</button>
-          <button onClick={() => setKhata(true)}>Khata & Tally</button>
+          <button onClick={() => setView('menu')}>Madad menu</button>
+          <button onClick={() => setView('khata')}>Khata & Tally</button>
         </div>
         {micNote && <div className="mic-note">{micNote}</div>}
         {plus && (
