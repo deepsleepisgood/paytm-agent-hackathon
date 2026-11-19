@@ -7,7 +7,7 @@ import Buddy from './Buddy.jsx'
 import { loadLang, saveLang, t as tr } from './i18n.js'
 import Center from './Center.jsx'
 import Right from './Right.jsx'
-import { checkServices, getLedger, resetLive, getStrategyMemory, queryAudio } from './api.js'
+import { checkServices, getLedger, resetLive, getStrategyMemory, transcribe } from './api.js'
 import { callLive, responseToRun, overlayLedger, overlayStrategy, overlaySupabase } from './live.js'
 import { useLedgerRealtime } from './useLedgerRealtime.js'
 
@@ -432,7 +432,7 @@ export default function App() {
     setBusy(true); setRun(null); setReveal(0)
     const t0 = performance.now()
     try {
-      const resp = await callLive(sc, m, { ...ctx, utterance })
+      const resp = await callLive(sc, m, { ...ctx, utterance, lang })
       play(responseToRun(sc, m, resp, shownText, performance.now() - t0), 320)
     } catch (e) {
       const missing = e.status === 404
@@ -467,12 +467,15 @@ export default function App() {
 
   const onPreset = (id) => start(SCENARIOS.find((s) => s.id === id))
   const onText = (text) => {
-    const id = routeText(text)
-    const sc = SCENARIOS.find((s) => s.id === id)
-    if (mode === 'live' && !id) { // let the real router classify free text
+    // Live: the real router (Sarvam LLM + rules on 8003) classifies everything said or typed, and asks back when it
+    // doesn't understand. The local keyword matcher used to hijack phrases here (anything with "screenshot"
+    // replayed the canned fake-screenshot demo with the demo image).
+    if (modeRef.current === 'live') {
       start({ id: 'free', intent: 'ESCALATE_HUMAN', utterance: () => text, build: null }, { utterance: text })
       return
     }
+    const id = routeText(text)
+    const sc = SCENARIOS.find((s) => s.id === id)
     if (!sc || (sc.available && !sc.available(m))) {
       setChat((c) => [...c, { who: 'me', text }, { who: 'ai', text: 'Maaf kijiye, samajh nahi aaya. Neeche ke quick scenarios try kijiye.' }])
       return
@@ -487,24 +490,22 @@ export default function App() {
     }
     start(sc, { file: f.name, fileObj: f, utterance: kind === 'pod' ? `${f.name} (Proof of Delivery)` : `${f.name} (UPI screenshot)` })
   }
-  // Real voice: recorded audio goes to /merchant/query-audio (Sarvam STT + full pipeline).
-  const onAudio = async (blob) => {
+  // Real voice: Sarvam STT (via 8003 /merchant/transcribe) says what was heard; that text then goes through the same
+  // path as typing (`handle` also turns a spoken "haan" into the pending sign-off). If nothing usable was heard,
+  // the merchant is told so. Never answer a question that wasn't asked.
+  const onAudio = async (blob, fallbackText = '', handle = onText) => {
     if (busy) return
     if (modeRef.current !== 'live') {
       setChat((c) => [...c, { who: 'ai', text: tr(lang, 'needLive'), tone: 'bad' }])
       return
     }
-    setBusy(true); setRun(null); setReveal(0)
-    const t0 = performance.now()
-    try {
-      const resp = await queryAudio(blob, m.mid)
-      const utterance = resp.transcript || 'Voice request'
-      setChat((c) => [...c, { who: 'me', text: utterance }])
-      play(responseToRun({ id: 'voice', intent: resp.intent }, m, resp, utterance, performance.now() - t0), 320)
-    } catch (e) {
-      setChat((c) => [...c, { who: 'ai', text: `Awaaz samajh nahi aayi (${e.message}). Dobara boliye.`, tone: 'bad' }])
-      setBusy(false)
-    }
+    setBusy(true)
+    let res = null
+    try { res = await transcribe(blob, m.mid, lang) } catch { res = null }
+    setBusy(false)
+    const heard = (res?.transcript || '').trim() || fallbackText.trim() // browser recognizer only as a fallback
+    if (heard) return handle(heard)
+    setChat((c) => [...c, { who: 'ai', text: res?.message_hi || tr(lang, 'unclear'), tone: 'bad' }])
   }
   const onConfirm = (item, k) => {
     if (busy) return
@@ -538,6 +539,11 @@ export default function App() {
         <PaytmLogo size={20} />
         <div className="cc-title"><b>AI Teammate for Paytm merchants</b><span className="muted xs">Merchant AI Buddy ⇄ Paytm AI agents · solves problems end to end</span></div>
         <div className="cc-r">
+          {mode === 'live' && svc.sarvam && svc.sarvam !== 'live' && (
+            <span className="badge warn" title="Sarvam runs without SARVAM_API_KEY: speech recognition and Sarvam voice are off. Add the key to .env and restart.">
+              {svc.sarvam === 'mock' ? 'Voice off: Sarvam key missing' : 'Voice off: Sarvam down'}
+            </span>
+          )}
           {sb.enabled && (
             <span className={`badge ${sb.status === 'live' ? 'ok' : sb.error ? 'warn' : 'info'}`} title={sb.error || 'Supabase Realtime: Paytm ledger rows, read-only'}>
               {sb.status === 'live' ? 'Supabase live' : `Supabase ${sb.status}`}

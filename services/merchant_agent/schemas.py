@@ -24,6 +24,19 @@ Intent = Literal[
     "SETTLEMENT_HOLD_BANK",
 ]
 INTENTS: tuple[str, ...] = Intent.__args__  # type: ignore[attr-defined]
+# What the router may return: one of the 14 intents, or UNCLEAR (off-topic, too vague, or the voice was not
+# understood). UNCLEAR never reaches Paytm: the buddy asks the merchant to rephrase instead of guessing.
+UNCLEAR = "UNCLEAR"
+RoutedIntent = Literal[
+    "SETTLEMENT_RECONCILE", "UTR_VERIFY", "CHARGEBACK_RESOLVE", "REFUND_MANAGE", "FEE_GST_LOAN", "ESCALATE_HUMAN",
+    "MANDATE_TROUBLESHOOT", "DUPLICATE_RECONCILE", "GROWTH_ADVISORY", "CASHFLOW_EDI_SWITCH", "SOUNDBOX_RETURN",
+    "LOAN_CLOSURE_NOC", "BANK_KYC_UPDATE", "SETTLEMENT_HOLD_BANK", "UNCLEAR", "INFO_QUERY",
+]
+# INFO_QUERY: a question about the merchant's own books that no action covers ("अगला settlement कब आएगा?",
+# "aaj kitni sale hui"). Answered read-only from facts.merchant_facts(); nothing is sent to Paytm.
+INFO_QUERY = "INFO_QUERY"
+# Reply language chosen in the app (हि / EN tab). Replies, clarifications and the voice follow it.
+Lang = Literal["hi", "en"]
 
 DEFAULT_MID = "PAYTM_MERCH_8821"
 
@@ -36,6 +49,7 @@ class Slots(BaseModel):
 
 
 class QueryRequest(BaseModel):
+    language: Lang = "hi"
     text: str = Field(..., min_length=1)
     mid: str = DEFAULT_MID
     consent_granted: bool = False
@@ -46,18 +60,21 @@ ProactiveScenario = Literal["CHARGEBACK_INCOMING", "CASHFLOW_EDI_SWITCH", "MANDA
 
 
 class ProactiveRequest(BaseModel):
+    language: Lang = "hi"
     mid: str = DEFAULT_MID
     scenario: ProactiveScenario
     consent_granted: bool = False
 
 
 class ConfirmDisputeRequest(BaseModel):
+    language: Lang = "hi"
     mid: str = DEFAULT_MID
     consent_granted: bool = False
     packet_id: str
 
 
 class ConfirmEdiPauseRequest(BaseModel):
+    language: Lang = "hi"
     mid: str = DEFAULT_MID
     consent_granted: bool = False
     offer_id: str
@@ -65,7 +82,7 @@ class ConfirmEdiPauseRequest(BaseModel):
 
 
 class Classification(BaseModel):
-    intent: Intent
+    intent: RoutedIntent
     slots: Slots
     source: Literal["llm", "utterance_bank", "keyword_fallback"]
 
@@ -87,10 +104,10 @@ class MerchantResponse(BaseModel):
     request_id: str
     mid: str
     transcript: Optional[str] = None
-    transcript_source: Optional[Literal["live", "mock"]] = None
+    transcript_source: Optional[Literal["live", "mock", "unavailable"]] = None
     consent_token: str
-    intent: Intent
-    intent_source: Literal["llm", "utterance_bank", "keyword_fallback", "document", "proactive"]
+    intent: RoutedIntent
+    intent_source: Literal["llm", "utterance_bank", "keyword_fallback", "document", "proactive", "none"]
     slots: Slots
     doc_extract: Optional[dict[str, Any]] = None
     # Buddy cognition (PLAN.md steps 1, 2, 5)
@@ -100,7 +117,7 @@ class MerchantResponse(BaseModel):
     pending_action: Optional[dict[str, Any]] = None
     # Paytm mesh (PLAN.md steps 3, 4)
     paytm_response: dict[str, Any]
-    paytm_source: Literal["live", "mock"]
+    paytm_source: Literal["live", "mock", "none"]  # none: not understood, nothing was sent to Paytm
     paytm_agent_trace: list[dict[str, Any]]
     # Voice reply. hindi_reply == reply_text (PLAN.md name; reply_text kept for CONTRACT.md clients)
     hindi_reply: str

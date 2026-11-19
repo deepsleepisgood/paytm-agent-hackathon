@@ -150,9 +150,9 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
       )}
 
       {shown('reply') && (
-        <div className={`tcard in result ${get('reply').tone === 'bad' ? 'bad' : awaiting || escalated ? 'esc' : 'good'}`}>
+        <div className={`tcard in result ${get('reply').tone === 'bad' ? 'bad' : run.unclear || awaiting || escalated ? 'esc' : 'good'}`}>
           <div className="res-h">
-            <span className="res-b">{get('reply').tone === 'bad' ? 'Fraud blocked' : awaiting ? 'Waiting for your sign-off' : escalated ? 'Handed to a human' : 'Resolved by AI'}</span>
+            <span className="res-b">{run.unclear ? 'Asked to rephrase (nothing sent to Paytm)' : run.info ? 'Answered from your books (read-only)' : get('reply').tone === 'bad' ? 'Fraud blocked' : awaiting ? 'Waiting for your sign-off' : escalated ? 'Handed to a human' : 'Resolved by AI'}</span>
             <span className="muted xs">{run.live ? `${(totalMs / 1000).toFixed(1)}s live round trip` : `${(totalMs / 1000).toFixed(1)}s of agent time`}</span>
           </div>
           <div className="sm">“{get('reply').reply}”</div>

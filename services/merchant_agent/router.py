@@ -19,7 +19,7 @@ from typing import Any, Optional
 
 import dataset_loader as dl
 import upstream
-from schemas import INTENTS, Classification, Slots
+from schemas import INFO_QUERY, INTENTS, UNCLEAR, Classification, Slots
 
 FAST_PATH = os.getenv("UTTERANCE_FAST_PATH", "1").strip().lower() not in ("0", "false", "no")
 FUZZY_MIN = 0.7  # token-set Jaccard needed to trust a near-match from the utterance bank
@@ -150,11 +150,12 @@ KEYWORD_RULES: list[tuple[str, list[str]]] = [
 CLASSIFIER_SYSTEM_PROMPT = """You are the intent router for a Paytm merchant's AI business buddy.
 The merchant ({merchant_name}, MID {mid}) speaks Hindi, Hinglish or English.
 Classify the message into EXACTLY ONE intent:
-- SETTLEMENT_RECONCILE: settlement amount lower than expected, bank credit mismatch, "paise kam aaye", deductions overall
+- SETTLEMENT_RECONCILE: settlement amount lower than expected, bank credit mismatch, "paise kam aaye", why money was deducted
 - UTR_VERIFY: check whether a UPI payment / UTR / screenshot is genuine or received
 - CHARGEBACK_RESOLVE: chargeback, disputed or held transaction, proof of delivery (PoD)
 - REFUND_MANAGE: customer refund status or a refund deducted from settlement
-- FEE_GST_LOAN: MDR fees, GST / input tax credit (ITC), soundbox rental amount, loan EDI amount or balance
+- FEE_GST_LOAN: why / how much MDR (payment) fees or GST / input tax credit (ITC) were charged, or the loan's
+  interest rate / terms
 - MANDATE_TROUBLESHOOT: loan EDI / eNACH / auto-debit mandate failed or bounced, missed EDI
 - DUPLICATE_RECONCILE: a customer paid twice for the same order, double payment
 - GROWTH_ADVISORY: business growth advice, sales trends, past months' data, stocking up, working capital
@@ -163,11 +164,20 @@ Classify the message into EXACTLY ONE intent:
 - LOAN_CLOSURE_NOC: wants to close / settle / foreclose the loan, or asks for the NOC
 - BANK_KYC_UPDATE: change the settlement bank account, IFSC or KYC details
 - SETTLEMENT_HOLD_BANK: settlement held or not arriving because the bank account is inactive / frozen / on hold
-- ESCALATE_HUMAN: wants a human, Soundbox/QR hardware fault (not working, no sound), angry complaint, or anything unsupported
-(A Soundbox *rental fee* question is FEE_GST_LOAN; returning it is SOUNDBOX_RETURN; a faulty one is ESCALATE_HUMAN.
+- ESCALATE_HUMAN: explicitly wants a human / call / complaint, or a Soundbox/QR hardware fault (not working, no sound)
+- INFO_QUERY: any OTHER question about this merchant's own account or business numbers that needs no action:
+  WHEN the next settlement comes ("agla settlement kab aayega", "paisa kab aayega"), how much they sold today /
+  this week / yesterday, transaction counts, how much of the loan is left, next EDI date, Soundbox rent amount,
+  store details
+- UNCLEAR: NOT about this merchant's Paytm business (cricket, weather, food orders, jokes, general knowledge),
+  OR too vague to act on ("haan", "theek hai", "hello", "kuch gadbad hai" with no detail), OR garbled/incomplete
+  speech. Never guess a business intent for these: the buddy will ask the merchant to rephrase.
+(A Soundbox *rent amount* question is INFO_QUERY; returning it is SOUNDBOX_RETURN; a faulty one is ESCALATE_HUMAN.
 "Loan settle" means LOAN_CLOSURE_NOC, not SETTLEMENT_RECONCILE.)
 Extract slots when present (else null): utr_number (exactly 12 digits, as a string),
 order_id (digits only, as a string), amount (number in rupees), date (YYYY-MM-DD).
+If the message is about money, payments, settlement, loan, Soundbox, KYC or refunds but you are unsure which,
+pick the closest intent above (not UNCLEAR).
 Respond with ONLY JSON: {{"intent": "...", "slots": {{"utr_number": null, "order_id": null, "amount": null, "date": null}}}}"""
 
 
@@ -179,6 +189,9 @@ def classifier_prompt(examples_per_intent: int = 2) -> str:
     for intent in INTENTS:
         bank = sorted((u for u in d.routing_utterances() if u["intent"] == intent), key=lambda u: not u.get("preset"))
         lines += [f'"{u["text"]}" -> {intent}' for u in bank[:examples_per_intent]]
+    lines += ['"मेरा अगला settlement कब आएगा?" -> INFO_QUERY', '"aaj kitni sale hui?" -> INFO_QUERY',
+              '"When will I get my next payout?" -> INFO_QUERY',
+              '"aaj cricket match kaun jeeta?" -> UNCLEAR', '"haan theek hai" -> UNCLEAR']
     return prompt + ("\nExamples:\n" + "\n".join(lines) if lines else "")
 
 
@@ -200,12 +213,14 @@ def _rules() -> list[tuple[str, list[str]]]:
     return [(intent, patterns + [p for p in extra.get(intent, []) if p]) for intent, patterns in KEYWORD_RULES]
 
 
-def keyword_intent(text: str) -> str:
-    t = text.lower()
+def keyword_intent(text: str) -> Optional[str]:
+    """First keyword rule that matches, else None. (It used to default to SETTLEMENT_RECONCILE, so any question
+    the buddy didn't understand, even "cricket match kaun jeeta", got a settlement answer.)"""
+    t = spoken_digits(text).lower()
     for intent, patterns in _rules():
         if any(re.search(p, t) for p in patterns):
             return intent
-    return "SETTLEMENT_RECONCILE"  # most common merchant pain point; safest default
+    return None
 
 
 def is_hardware_fault(text: str) -> bool:
@@ -371,6 +386,13 @@ async def classify(text: str) -> Classification:
     result = await upstream.llm(classifier_prompt(), text, response_format="json")
     if isinstance(result, dict):
         intent = str(result.get("intent", "")).strip().upper()
+        if intent in (UNCLEAR, "OUT_OF_SCOPE", "UNKNOWN", "NONE"):
+            # The LLM says this isn't an actionable business question. A preset/near-exact match still wins.
+            if bank_intent and bank_score >= FUZZY_MIN:
+                return Classification(intent=bank_intent, slots=regex_slots, source="utterance_bank")
+            return Classification(intent=UNCLEAR, slots=regex_slots, source="llm")
+        if intent == INFO_QUERY:
+            return Classification(intent=INFO_QUERY, slots=regex_slots, source="llm")
         if intent in INTENTS:
             raw_slots = result.get("slots") if isinstance(result.get("slots"), dict) else result  # nested or flat
             llm_slots = slots_from_dict(raw_slots)
@@ -385,4 +407,5 @@ async def classify(text: str) -> Classification:
 
     if bank_intent and bank_score >= FUZZY_MIN:
         return Classification(intent=bank_intent, slots=regex_slots, source="utterance_bank")
-    return Classification(intent=keyword_intent(text), slots=regex_slots, source="keyword_fallback")
+    # No LLM: keywords only. No match means we don't know, so ask instead of guessing.
+    return Classification(intent=keyword_intent(text) or UNCLEAR, slots=regex_slots, source="keyword_fallback")

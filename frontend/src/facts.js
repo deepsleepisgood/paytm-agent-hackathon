@@ -21,7 +21,9 @@ export function summarize(run, reply, lang = 'hi') {
   const data = res.data && typeof res.data === 'object' ? res.data : res
   const status = res.status || data.status
   const fraud = status === 'NOT_FOUND_SUSPECTED_FAKE' || reply.tone === 'bad'
-  const [kind, chip] = tone(lang, status, fraud, run?.live ? run.escalated : run?.sc?.intent === 'ESCALATE_HUMAN' || !!res.ticket, !!reply.confirm)
+  const [kind, chip] = run?.unclear ? ['warn', t(lang, 'cUnclear')] // not "Done": the buddy asked to rephrase
+    : run?.info ? ['ok', t(lang, 'cBooks')]
+    : tone(lang, status, fraud, run?.live ? run.escalated : run?.sc?.intent === 'ESCALATE_HUMAN' || !!res.ticket, !!reply.confirm)
 
   const facts = []
   const keys = [...ORDER.filter((k) => k in data), ...Object.keys(data).filter((k) => !ORDER.includes(k))]

@@ -43,6 +43,10 @@ TIMEOUT_S = float(os.getenv("UPSTREAM_TIMEOUT_S", "6"))
 # Person 1 gives Sarvam Vision up to 25 s (SARVAM_DOC_LATENCY_BUDGET) before its own fallback,
 # so a 6 s cut-off here would discard every real extraction. Wait a little longer than that.
 DOC_TIMEOUT_S = float(os.getenv("DOC_EXTRACT_TIMEOUT_S", "30"))
+# Sarvam TTS took 4-8 s for a 30-35 word reply in live tests; must exceed 8001's SARVAM_LATENCY_BUDGET (12).
+TTS_TIMEOUT_S = float(os.getenv("TTS_TIMEOUT_S", "15"))
+# Sarvam STT on a 3-10 s voice note; the general 6 s timeout cut it off and the old code then invented a question.
+STT_TIMEOUT_S = float(os.getenv("STT_TIMEOUT_S", "20"))
 # After a host refuses a connection, skip it for this long (instant fallback instead of re-waiting).
 CIRCUIT_COOLDOWN_S = float(os.getenv("UPSTREAM_CIRCUIT_COOLDOWN_S", "10"))
 
@@ -97,16 +101,29 @@ def _label(body: dict[str, Any]) -> str:
 # ----------------------------------------------------------------------------- Sarvam (8001)
 
 
-async def stt(audio: bytes, filename: str, content_type: str) -> tuple[Optional[str], str]:
+async def stt(audio: bytes, filename: str, content_type: str,
+              language_code: str = "hi-IN") -> tuple[Optional[str], str]:
+    """What the merchant actually said, or (None, why). Never a made-up line.
+
+    8001's mock STT returns a canned demo sentence; treating it as speech made every voice query come back as
+    "settlement kam kyun aaya" (the user saw answers to questions they never asked). So mock = not heard.
+    hi-IN + saaras codemix keeps Hinglish ("UTR", "settlement") in Latin script; auto-detect misreads short clips."""
     try:
         r = await _post(
             SARVAM_URL, "/stt",
-            files={"audio": (filename or "audio.wav", audio, content_type or "audio/wav")},
+            files={"audio": (filename or "audio.webm", audio, (content_type or "audio/webm").split(";")[0])},
+            data={"language_code": language_code},
+            timeout=httpx.Timeout(STT_TIMEOUT_S, connect=min(2.0, STT_TIMEOUT_S)),
         )
         r.raise_for_status()
         body = r.json() or {}
-        if body.get("transcript"):
-            return body["transcript"], _label(body)
+        if _label(body) == "mock":
+            log.warning("STT answered from mock (no Sarvam key / Sarvam down): not using its canned transcript")
+            return None, "mock"
+        text = str(body.get("transcript") or "").strip()
+        if text:
+            return text, "live"
+        return None, "empty"
     except Exception as exc:  # noqa: BLE001 - any upstream failure falls back
         log.warning("STT failed (%s): %s", type(exc).__name__, exc)
     return None, "unavailable"
@@ -155,13 +172,41 @@ def _parse_json(reply: Any) -> Optional[dict[str, Any]]:
     return None
 
 
-async def tts(text: str, language_code: str = "hi-IN") -> tuple[Optional[str], str]:
+_sarvam_mode_cache: tuple[float, str] = (0.0, "")
+
+
+async def sarvam_mode() -> str:
+    """live | mock | down: 8001's own /health (cached 10 s). mock = no SARVAM_API_KEY, so voice can't work."""
+    global _sarvam_mode_cache
+    ts, mode = _sarvam_mode_cache
+    if mode and time.monotonic() - ts < 10:
+        return mode
     try:
-        r = await _post(SARVAM_URL, "/tts", json={"text": text, "language_code": language_code})
+        r = await client().get(f"{SARVAM_URL}/health", timeout=2.0)
+        mode = str((r.json() or {}).get("mode") or "unknown")
+    except Exception:  # noqa: BLE001
+        mode = "down"
+    _sarvam_mode_cache = (time.monotonic(), mode)
+    return mode
+
+
+async def tts(text: str, language_code: str = "hi-IN") -> tuple[Optional[str], str]:
+    """Sarvam voice for the reply. Measured live: a 30-35 word Hindi reply takes Sarvam 4-8 s, so this call
+    gets its own TTS_TIMEOUT_S (and 8001 needs SARVAM_LATENCY_BUDGET ≥ 12, set in .env).
+
+    8001's mock audio is a placeholder tone: forwarding it made the app beep instead of speak. So mock audio
+    is dropped and the frontend speaks the text with the browser's own voice instead."""
+    try:
+        r = await _post(SARVAM_URL, "/tts", json={"text": text, "language_code": language_code},
+                        timeout=httpx.Timeout(TTS_TIMEOUT_S, connect=min(2.0, TTS_TIMEOUT_S)))
         r.raise_for_status()
         body = r.json() or {}
-        if body.get("audio_base64"):
-            return body["audio_base64"], _label(body)
+        label = _label(body)
+        if body.get("audio_base64") and label != "mock":
+            return body["audio_base64"], label
+        if label == "mock":
+            log.warning("TTS answered from mock (placeholder tone): sending no audio, the browser will speak")
+            return None, "mock"
     except Exception as exc:  # noqa: BLE001
         log.warning("TTS failed (%s): %s", type(exc).__name__, exc)
     return None, "unavailable"

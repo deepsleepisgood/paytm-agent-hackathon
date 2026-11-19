@@ -257,7 +257,7 @@ def test_hardware_escalation_prefills_device(client, dir_a):
 def test_utterance_bank_routes_what_keywords_miss(client, dir_a):
     use_dataset(dir_a)
     text = "Bhaiya mera paisa atka hua hai"
-    assert router.keyword_intent(text) == "SETTLEMENT_RECONCILE"  # keywords alone get it wrong
+    assert router.keyword_intent(text) != "CHARGEBACK_RESOLVE"  # keywords alone can't route it
     body = ask(client, text).json()
     assert (body["intent"], body["intent_source"]) == ("CHARGEBACK_RESOLVE", "utterance_bank")
     assert ask(client, "bhaiya mera paisa atka hua hai na").json()["intent"] == "CHARGEBACK_RESOLVE"  # near match
@@ -269,7 +269,9 @@ def test_presets_and_mock_transcript_follow_dataset(client, dir_a):
     assert presets["source"] == "dataset" and len(presets["presets"]) == 3
     r = client.post("/merchant/query-audio", files={"audio": ("q.webm", b"x", "audio/webm")},
                     data={"mid": "PAYTM_MERCH_8821", "consent_granted": "true"}).json()
-    assert r["transcript"].startswith("Kal ₹1,00,000") and r["transcript_source"] == "mock"
+    # STT down: no invented transcript; the rephrase hint offers the dataset's preset chips instead
+    assert r["transcript"] is None and r["intent"] == "UNCLEAR"
+    assert r["pending_action"]["examples"] == [p.get("chip_label") or p["text"] for p in presets["presets"]][:4]
 
 
 def test_reset_reloads_dataset_from_disk(client, tmp_path):
@@ -344,22 +346,29 @@ def test_person1_mock_llm_is_not_trusted(client, monkeypatch):
     _fake_8001(monkeypatch, llm_source="mock", llm_intent="REFUND_MANAGE")
     body = ask(client, "settlement kam kyun aaya").json()
     assert (body["intent"], body["intent_source"]) == ("SETTLEMENT_RECONCILE", "keyword_fallback")
-    assert body["audio_source"] == "mock" and body["audio_base64"]
+    # 8001's mock audio is a placeholder tone (the app beeped): not forwarded, so the browser speaks the text
+    assert body["audio_source"] == "mock" and body["audio_base64"] is None
 
 
 def test_person1_live_llm_is_used(client, monkeypatch):
+    import pipeline
+    monkeypatch.setattr(pipeline, "REPLY_LLM", True)  # opt-in LLM phrasing
     _fake_8001(monkeypatch, llm_source="sarvam", llm_intent="REFUND_MANAGE")
     # The order id is in the sentence: an id the LLM returns that the merchant never said is now dropped.
     body = ask(client, "order chaar chaar ek do wale customer ka paisa lauta do").json()
     assert (body["intent"], body["intent_source"], body["slots"]["order_id"]) == ("REFUND_MANAGE", "llm", "4412")
-    assert (body["reply_text"], body["reply_source"]) == ("रिफंड हो गया है।", "llm")
+    # the LLM phrases the resolution; the verified business tip is appended verbatim
+    assert body["reply_source"] == "llm" and body["reply_text"].startswith("रिफंड हो गया है।")
+    assert "Refund उसी UPI app में जाता है" in body["reply_text"]
 
 
 def test_person1_mock_stt_is_labelled(client, monkeypatch):
     _fake_8001(monkeypatch)
     body = client.post("/merchant/query-audio", files={"audio": ("q.webm", b"x", "audio/webm")},
                        data={"mid": "PAYTM_MERCH_8821", "consent_granted": "true"}).json()
-    assert body["transcript_source"] == "mock" and body["intent"] == "SETTLEMENT_RECONCILE"
+    # 8001's mock STT returns a canned line: not something the merchant said, so the buddy says voice is off
+    assert body["transcript_source"] == "mock" and body["transcript"] is None and body["intent"] == "UNCLEAR"
+    assert body["pending_action"]["reason"] == "voice_off" and "टाइप" in body["reply_text"]
 
 
 # ----------------------------------------------------------------------------- 4. the real team dataset

@@ -1,4 +1,54 @@
-# Deploying: Vercel (frontend) + Railway (3 services)
+# Deploying: ONE Railway service (recommended)
+
+```
+Browser ──► https://<your-app>.up.railway.app  (one container, one port)
+              /                → the built frontend
+              /svc/merchant/…  → merchant_agent (8003) ─┬─► sarvam_service (8001) ──► api.sarvam.ai
+              /svc/paytm/…     → paytm_agent    (8002) ◄┘
+              /console         → Paytm employee console
+              /healthz         → 200 when all three services are up
+```
+
+The root `Dockerfile` builds the frontend and runs all three services behind `deploy/gateway.py`. The browser
+only talks to one origin, so there is **no Vercel, no CORS and no cross-service URLs to wire up**. The services
+reach each other on 127.0.0.1 inside the container, exactly as on your laptop. Before deploying, run the same
+thing locally with `python run.py prod` (http://localhost:8080) or `python run.py smoke`.
+
+## Steps
+1. Push the repo to GitHub. `git status` must **not** list `.env` (the root `.gitignore` ignores it).
+2. Railway → **New Project → Deploy from GitHub repo** → pick this repo. Railway finds the root `Dockerfile`.
+   Leave Root Directory empty.
+3. **Variables** (Service → Variables → Raw Editor):
+   ```
+   PORT=8080
+   SARVAM_API_KEY=<your Sarvam key>
+   SARVAM_MODE=auto
+   SARVAM_FALLBACK_TO_MOCK=true
+   # Sarvam TTS needs 4-8 s per reply; with the 5 s default the app beeps instead of speaking
+   SARVAM_LATENCY_BUDGET=12
+   # optional: Supabase Realtime badge in the frontend (public read-only key; used at BUILD time)
+   VITE_SUPABASE_URL=https://ijitntwpnqwkjrboweky.supabase.co
+   VITE_SUPABASE_ANON_KEY=<publishable key>
+   # optional: backends write to Supabase (needs the role passwords, supabase/README.md step 1)
+   # USE_SUPABASE=true
+   # PAYTM_DB_URL=postgresql://paytm_svc.<ref>:<pw>@<pooler-host>:6543/postgres
+   # MERCHANT_DB_URL=postgresql://merchant_svc.<ref>:<pw>@<pooler-host>:6543/postgres
+   ```
+4. **Settings:**
+   - **Networking → Generate Domain**, target port **8080**.
+   - **Healthcheck path:** `/healthz`.
+   - **Replicas: 1.** The demo state is in memory, so a second replica would split it.
+   - **Region:** Southeast Asia (Singapore), the closest to Sarvam's API.
+5. Open `https://<your-app>.up.railway.app`. The app switches itself to *Live services*. The console is at
+   `/console`. Before each demo run, press **Reset** in the app.
+
+Changing a `VITE_*` variable needs a redeploy, because those values are baked into the frontend at build time.
+Every push to the connected branch redeploys automatically, and a redeploy resets the demo state, so don't push
+during the demo.
+
+---
+
+# Alternative (not needed): Vercel (frontend) + three Railway services
 
 ```
 Browser ──► Vercel: frontend (Vite static build)

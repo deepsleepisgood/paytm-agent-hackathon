@@ -7,3 +7,10 @@
 # OS / editor noise
 .DS_Store
 Thumbs.db
+
+# Local environments and caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.playwright-mcp/
