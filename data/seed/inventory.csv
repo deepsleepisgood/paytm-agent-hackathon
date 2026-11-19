@@ -1,0 +1,40 @@
+sku,name,brand,category,unit,cost_price,selling_price,mrp,margin_pct,stock_qty,reorder_point,below_reorder,supplier,weekend_stockout_count_6m
+LGT-PHI-10W2,Philips 10W LED Bulb (pack of 2),Philips,Lighting,pack,210,250,290,16.0,39,20,False,Signify/Philips Lighting (via Gupta Electricals),8
+LGT-SYS-9W,Syska 9W LED Bulb,Syska,Lighting,pc,85,99,120,14.1,33,30,False,Gaffar Market accessories wholesaler,1
+LGT-HAV-BAT20,Havells 20W LED Batten 4ft,Havells,Lighting,pc,290,340,399,14.7,21,12,False,Havells (via Gupta Electricals),2
+LGT-WIP-PNL15,Wipro 15W LED Square Panel,Wipro,Lighting,pc,420,480,550,12.5,12,10,False,Gaffar Market accessories wholesaler,0
+FAN-CRO-HS12,Crompton HS Plus 1200mm Ceiling Fan,Crompton,Fans,pc,1850,2150,2600,14.0,12,6,False,Crompton Greaves Consumer (via Jain Distributors),6
+FAN-HAV-PAC12,Havells Pacer 1200mm Ceiling Fan,Havells,Fans,pc,2100,2450,2900,14.3,5,4,False,Havells (via Gupta Electricals),2
+FAN-USH-TBL40,Usha 400mm Table Fan,Usha,Fans,pc,1750,2050,2400,14.6,2,4,True,Jain Distributors,1
+FAN-BAJ-PED,Bajaj Pedestal Fan 400mm,Bajaj,Fans,pc,2300,2700,3200,14.8,7,3,False,Bajaj Electricals (via Jain Distributors),1
+FAN-BAJ-EXH15,Bajaj Exhaust Fan 150mm,Bajaj,Fans,pc,1050,1250,1500,16.0,9,4,False,Bajaj Electricals (via Jain Distributors),1
+KIT-PHI-KTL15,Philips Electric Kettle 1.5L,Philips,Kitchen Appliances,pc,1250,1500,1795,16.7,9,4,False,Signify/Philips Lighting (via Gupta Electricals),0
+KIT-PRE-KTL15,Prestige Electric Kettle 1.5L,Prestige,Kitchen Appliances,pc,950,1150,1495,17.4,11,4,False,Jain Distributors,3
+KIT-BAJ-MIX500,Bajaj Mixer Grinder 500W (3 jars),Bajaj,Kitchen Appliances,pc,2600,3000,3600,13.3,5,3,False,Bajaj Electricals (via Jain Distributors),1
+KIT-PRE-IND,Prestige Induction Cooktop 2000W,Prestige,Kitchen Appliances,pc,2300,2700,3300,14.8,3,3,False,Jain Distributors,1
+KIT-BAJ-OTG16,Bajaj OTG 16L,Bajaj,Kitchen Appliances,pc,4100,4700,5500,12.8,3,2,False,Bajaj Electricals (via Jain Distributors),2
+HOM-HAV-STIRN,Havells Steam Iron 1250W,Havells,Home Appliances,pc,1400,1650,2000,15.2,3,4,True,Havells (via Gupta Electricals),2
+HOM-BAJ-DIRN,Bajaj Dry Iron 750W,Bajaj,Home Appliances,pc,650,750,950,13.3,5,5,False,Bajaj Electricals (via Jain Distributors),0
+HOM-CRO-GYS15,Crompton 15L Storage Water Heater,Crompton,Water Heaters,pc,6800,7800,9500,12.8,3,2,False,Crompton Greaves Consumer (via Jain Distributors),0
+HOM-HAV-GYS3,Havells 3L Instant Water Heater,Havells,Water Heaters,pc,3900,4500,5400,13.3,2,2,False,Havells (via Gupta Electricals),0
+ELC-ANC-SW6A,Anchor Roma 6A Switch,Anchor,Switches & Wiring,pc,25,32,38,21.9,108,50,False,Panasonic Anchor (via Gupta Electricals),1
+ELC-ANC-SKT,Anchor Roma 6A 5-pin Socket,Anchor,Switches & Wiring,pc,60,75,90,20.0,42,30,False,Panasonic Anchor (via Gupta Electricals),2
+ELC-HAV-EXT41,Havells 4+1 Extension Board,Havells,Switches & Wiring,pc,420,499,599,15.8,25,10,False,Havells (via Gupta Electricals),7
+ELC-POL-W15,Polycab 1.5 sq mm Wire (90m coil),Polycab,Switches & Wiring,coil,1450,1700,2000,14.7,9,6,False,Polycab Wires (via Gupta Electricals),1
+ELC-ANC-MCB32,Anchor 32A MCB (single pole),Anchor,Switches & Wiring,pc,180,220,260,18.2,6,10,True,Panasonic Anchor (via Gupta Electricals),0
+MOB-MI-CHG33,Xiaomi 33W USB-C Charger,Xiaomi,Mobile Accessories,pc,620,749,999,17.2,16,10,False,Gaffar Market accessories wholesaler,10
+MOB-SAM-CHG25,Samsung 25W USB-C Charger,Samsung,Mobile Accessories,pc,900,1099,1299,18.1,7,6,False,Gaffar Market accessories wholesaler,1
+MOB-BOT-BH100,boAt Bassheads 100 Wired Earphones,boAt,Mobile Accessories,pc,330,400,999,17.5,15,15,False,boAt distributor (Imagine Marketing),9
+MOB-BOT-AD141,boAt Airdopes 141 TWS Earbuds,boAt,Mobile Accessories,pc,1150,1299,4490,11.5,17,8,False,boAt distributor (Imagine Marketing),6
+MOB-POR-CAB1M,Portronics USB-C Cable 1m,Portronics,Mobile Accessories,pc,110,150,299,26.7,30,25,False,Gaffar Market accessories wholesaler,7
+MOB-AMB-PB10K,Ambrane 10000mAh Power Bank,Ambrane,Mobile Accessories,pc,750,899,1499,16.6,17,8,False,Gaffar Market accessories wholesaler,0
+MOB-GEN-TGL,Tempered Glass Screen Guard,Generic,Mobile Accessories,pc,40,150,299,73.3,110,40,False,Gaffar Market accessories wholesaler,5
+MOB-GEN-CVR,Phone Back Cover,Generic,Mobile Accessories,pc,60,199,499,69.8,97,40,False,Gaffar Market accessories wholesaler,1
+BAT-DUR-AA4,Duracell AA Batteries (pack of 4),Duracell,Batteries,pack,120,140,160,14.3,37,20,False,Gaffar Market accessories wholesaler,4
+BAT-EVR-AAA10,Eveready AAA Batteries (pack of 10),Eveready,Batteries,pack,150,180,210,16.7,29,15,False,Gaffar Market accessories wholesaler,1
+ACC-GEN-REM,Universal TV Remote,Generic,TV Accessories,pc,150,250,399,40.0,27,10,False,Gaffar Market accessories wholesaler,2
+AUD-JBL-GO3,JBL Go 3 Bluetooth Speaker,JBL,Audio,pc,2300,2700,3999,14.8,3,3,False,Gaffar Market accessories wholesaler,2
+TV-MI-32,Xiaomi 32-inch Smart LED TV,Xiaomi,Televisions,pc,13000,14500,24999,10.3,2,2,False,Jain Distributors,0
+TV-SAM-43,Samsung 43-inch Crystal 4K TV,Samsung,Televisions,pc,26000,28500,45900,8.8,2,1,False,Jain Distributors,1
+PHN-RED-13C,Redmi 13C 5G (4GB/128GB),Redmi,Smartphones,pc,9800,10499,13999,6.7,2,2,False,Jain Distributors,2
+PHN-SAM-M15,Samsung Galaxy M15 5G (6GB/128GB),Samsung,Smartphones,pc,12500,13499,16999,7.4,1,2,True,Jain Distributors,2

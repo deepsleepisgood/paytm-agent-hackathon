@@ -1,0 +1,74 @@
+{
+  "batch_id": "STL-20261118",
+  "mid": "PAYTM_MERCH_8821",
+  "settlement_date": "2026-11-18",
+  "covers_transactions_of": "2026-11-17 (Tue) 07:00-22:00, T+1",
+  "why_gross_is_high": "Market reopened after a 3-day closure and Rao PG & Hostels paid ₹55,000 by credit card to fit out a new PG (14 ceiling fans, 20 LED panels, battens, wiring). The 6-month average is ₹32,000/day.",
+  "gross": 100000,
+  "by_rail": {
+    "credit_card_and_postpaid": {
+      "amount": 62600,
+      "mdr_rate": "2%",
+      "mdr": 1252
+    },
+    "wallet_on_upi_above_2000": {
+      "amount": 18000,
+      "mdr_rate": "1.1%",
+      "mdr": 198
+    },
+    "upi_p2m": {
+      "amount": 19400,
+      "mdr_rate": "0%",
+      "mdr": 0
+    }
+  },
+  "deductions": [
+    {
+      "type": "MDR",
+      "amount": 1450,
+      "source": "card/postpaid 2% on ₹62,600 + wallet 1.1% on ₹18,000"
+    },
+    {
+      "type": "GST_ON_MDR",
+      "amount": 261,
+      "source": "18% of ₹1,450; ITC-eligible (merchant is GST registered)"
+    },
+    {
+      "type": "REFUND",
+      "amount": 1500,
+      "source": "RFD-4412 for ORDER #4412 (processed 2026-11-17)",
+      "txn_id": "PTM26101000031"
+    },
+    {
+      "type": "SOUNDBOX_RENTAL",
+      "amount": 149,
+      "source": "Monthly rental for SB-8821-01 (billed on the 18th)"
+    },
+    {
+      "type": "CHARGEBACK_HOLD",
+      "amount": 800,
+      "source": "CB-9981 on ORDER #9981 (raised 2026-11-17 14:05)",
+      "status": "HELD",
+      "txn_id": "PTM26111400012"
+    }
+  ],
+  "net_credit": 95840,
+  "variance": 4160,
+  "contributing_txn_ids": {
+    "pg_fitout_bulk_order": "PTM26111700016",
+    "mdr_bearing": [
+      "PTM26111700005",
+      "PTM26111700011",
+      "PTM26111700016",
+      "PTM26111700020",
+      "PTM26111700023",
+      "PTM26111700026",
+      "PTM26111700038",
+      "PTM26111700040",
+      "PTM26111700042",
+      "PTM26111700046",
+      "PTM26111700047"
+    ]
+  },
+  "edi_note": "The ₹500 EDI is collected by eNACH from the bank account, not from this settlement."
+}

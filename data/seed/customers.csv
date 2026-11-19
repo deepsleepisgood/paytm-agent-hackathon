@@ -1,0 +1,152 @@
+customer_id,name,phone_masked,locality,segment,first_seen,on_khata,preferred_app
+C001,Vikram Malhotra,95XXXXXX44,Civil Lines,regular,2026-05-19,False,Paytm
+C002,Geeta Saini,97XXXXXX41,Old Gurgaon,regular,2026-05-22,False,PhonePe
+C003,Sunita Rana,98XXXXXX45,Sector 14,regular,2026-05-23,False,PhonePe
+C004,Neha Yadav,99XXXXXX66,Sector 22,regular,2026-05-19,False,Paytm
+C005,Pooja Kapoor (electrician),98XXXXXX47,Sector 14,electrician,2026-05-20,True,PhonePe
+C006,Babita Malhotra,95XXXXXX43,Sector 14,regular,2026-05-23,False,Paytm
+C007,Nitin Bhatia,91XXXXXX35,Shivaji Nagar,regular,2026-05-22,False,GPay
+C008,Neha Chauhan,90XXXXXX76,Sushant Lok 1,regular,2026-05-25,False,Paytm
+C009,Rekha Gupta,91XXXXXX86,Sector 17,regular,2026-05-21,False,GPay
+C010,Karan Gupta,98XXXXXX77,Sushant Lok 1,regular,2026-05-26,False,GPay
+C011,Sunil Verma (electrician),93XXXXXX24,Sector 22,electrician,2026-05-23,True,PhonePe
+C012,Sunil Rawat,98XXXXXX69,Sector 17,regular,2026-05-19,False,PhonePe
+C013,Pooja Chauhan,97XXXXXX95,Jacobpura,regular,2026-05-19,False,PhonePe
+C014,Swati Dahiya,99XXXXXX75,Sector 17,regular,2026-05-19,False,Paytm
+C015,Seema Bhatia,94XXXXXX45,Jacobpura,regular,2026-05-24,False,PhonePe
+C016,Ashok Sharma,92XXXXXX94,Sector 22,regular,2026-05-23,False,BHIM
+C017,Sunita Yadav,97XXXXXX89,Sector 14,regular,2026-05-22,False,Amazon Pay
+C018,Sanjay Gupta,99XXXXXX86,Jacobpura,regular,2026-05-22,False,GPay
+C019,Suresh Malhotra,96XXXXXX15,Jacobpura,regular,2026-05-22,False,PhonePe
+C020,Priya Singh,98XXXXXX72,Sector 22,regular,2026-05-30,False,Paytm
+C021,Anil Rana,94XXXXXX35,Sector 12A,regular,2026-05-30,False,Paytm
+C022,Ritu Saini,93XXXXXX37,Sector 14,regular,2026-05-19,False,GPay
+C023,Payal Yadav (electrician),92XXXXXX63,Old Gurgaon,electrician,2026-05-22,True,GPay
+C024,Pooja Gupta,92XXXXXX82,Sector 12A,regular,2026-05-22,False,Paytm
+C025,Neha Sharma,98XXXXXX69,Sector 22,regular,2026-05-20,False,GPay
+C026,Kiran Ahuja,92XXXXXX60,Civil Lines,regular,2026-05-23,False,PhonePe
+C027,Sanjay Rawat,98XXXXXX35,Shivaji Nagar,regular,2026-05-19,False,Amazon Pay
+C028,Kiran Mehta,97XXXXXX35,Old Gurgaon,regular,2026-05-22,False,PhonePe
+C029,Komal Bansal,99XXXXXX02,Sector 22,regular,2026-06-13,False,GPay
+C030,Anil Joshi,93XXXXXX15,Sector 14,regular,2026-05-26,False,PhonePe
+C031,Sanjay Malhotra,98XXXXXX45,"Palam Vihar, Gurugram",ondc,2026-07-27,False,Paytm
+C032,Naresh Rawat,97XXXXXX17,"Sector 62, Noida",ondc,2026-07-11,False,Paytm
+C033,Rekha Tiwari,93XXXXXX82,"Dwarka Sector 10, New Delhi",ondc,2026-06-20,False,PhonePe
+C034,Suresh Bhatia,96XXXXXX42,"Palam Vihar, Gurugram",ondc,2026-06-14,False,Paytm
+C035,Mukesh Malhotra,95XXXXXX85,"Sector 62, Noida",ondc,2026-07-13,False,GPay
+C036,Pankaj Yadav,98XXXXXX41,"Sector 62, Noida",ondc,2026-06-30,False,GPay
+C037,Shalini Rana (electrician),94XXXXXX41,"DLF Phase 3, Gurugram",electrician,2026-05-20,True,GPay
+C038,Shalini Khanna,90XXXXXX45,"Sohna Road, Gurugram",ondc,2026-06-28,False,GPay
+C039,Anita Joshi,91XXXXXX58,"Sector 62, Noida",ondc,2026-05-29,False,PhonePe
+C040,Rohit Dahiya,90XXXXXX42,"Lajpat Nagar, New Delhi",ondc,2026-05-19,False,PhonePe
+C041,Kavita Rawat,96XXXXXX92,"Palam Vihar, Gurugram",ondc,2026-06-17,False,GPay
+C042,Rohit Verma,94XXXXXX52,"Lajpat Nagar, New Delhi",ondc,2026-05-31,False,Paytm
+C043,Mukesh Tiwari,91XXXXXX08,"Sohna Road, Gurugram",ondc,2026-05-23,False,GPay
+C044,Nisha Dahiya,91XXXXXX66,"Palam Vihar, Gurugram",ondc,2026-06-05,False,PhonePe
+C045,Sunita Tiwari,92XXXXXX21,"Dwarka Sector 10, New Delhi",ondc,2026-06-26,False,GPay
+C046,Sunil Yadav,93XXXXXX09,"Sector 62, Noida",ondc,2026-06-04,False,Amazon Pay
+C047,Amit Saini,91XXXXXX71,"Sector 21, Faridabad",ondc,2026-08-13,False,PhonePe
+C048,Meena Kapoor,99XXXXXX71,"DLF Phase 3, Gurugram",ondc,2026-06-22,False,Paytm
+C049,Manoj Tiwari,99XXXXXX52,"Sector 62, Noida",ondc,2026-06-08,False,PhonePe
+C050,Kavita Verma,94XXXXXX23,"Dwarka Sector 10, New Delhi",ondc,2026-06-29,False,PhonePe
+C051,Mukesh Joshi,93XXXXXX06,Old Gurgaon,regular,2026-05-29,False,Amazon Pay
+C052,Seema Saini,92XXXXXX96,Old Gurgaon,regular,2026-05-22,False,GPay
+C053,Arjun Verma,93XXXXXX77,Sushant Lok 1,regular,2026-05-22,False,PhonePe
+C054,Nisha Mishra (electrician),97XXXXXX42,Civil Lines,electrician,2026-05-31,True,GPay
+C055,Mukesh Mehta,91XXXXXX96,Civil Lines,regular,2026-06-05,False,GPay
+C056,Pankaj Dahiya,92XXXXXX34,Sector 17,regular,2026-05-24,False,PhonePe
+C057,Nisha Bhatia,97XXXXXX51,Old Gurgaon,regular,2026-06-05,False,PhonePe
+C058,Anjali Joshi,94XXXXXX76,Civil Lines,regular,2026-05-24,False,GPay
+C059,Jyoti Gupta,97XXXXXX40,Shivaji Nagar,regular,2026-05-24,False,GPay
+C060,Seema Sharma,94XXXXXX77,Sushant Lok 1,regular,2026-05-23,False,GPay
+C061,Deepak Saini,91XXXXXX27,Sector 12A,regular,2026-06-05,False,Paytm
+C062,Geeta Agarwal,98XXXXXX86,Sector 17,regular,2026-05-31,False,GPay
+C063,Ravi Rao (Rao PG & Hostels),98XXXXXX25,Sector 15,bulk,2026-11-17,False,BHIM
+C064,Vijay Saini,96XXXXXX55,Civil Lines,regular,2026-05-30,False,GPay
+C065,Payal Sharma,90XXXXXX86,Sushant Lok 1,regular,2026-06-10,False,PhonePe
+C066,Seema Singh,90XXXXXX36,Sector 17,regular,2026-05-30,False,GPay
+C067,Rakesh Mishra,94XXXXXX86,Jacobpura,regular,2026-05-26,False,PhonePe
+C068,Karan Mehta,99XXXXXX84,Sector 22,regular,2026-06-06,False,GPay
+C069,Vikram Arora,92XXXXXX65,Sushant Lok 1,regular,2026-06-17,False,PhonePe
+C070,Arjun Arora,98XXXXXX70,Sector 22,regular,2026-05-26,False,Amazon Pay
+C071,Deepak Arora (electrician),91XXXXXX38,Shivaji Nagar,electrician,2026-05-25,True,PhonePe
+C072,Sunita Ahuja,91XXXXXX15,Civil Lines,regular,2026-05-23,False,PhonePe
+C073,Payal Rawat,96XXXXXX76,Sector 15,regular,2026-06-21,False,GPay
+C074,Anil Bansal,99XXXXXX33,Shivaji Nagar,regular,2026-05-23,False,Paytm
+C075,Anjali Singh,92XXXXXX49,Sector 12A,regular,2026-05-29,False,Paytm
+C076,Anita Verma,95XXXXXX42,Sushant Lok 1,regular,2026-06-28,False,PhonePe
+C077,Anjali Mehta,98XXXXXX35,Sector 15,regular,2026-05-27,False,PhonePe
+C078,Rajesh Arora,97XXXXXX15,Sushant Lok 1,regular,2026-05-31,False,GPay
+C079,Priya Malhotra,96XXXXXX40,Sushant Lok 1,regular,2026-05-24,False,BHIM
+C080,Rajesh Chauhan,93XXXXXX04,Sushant Lok 1,regular,2026-05-23,False,GPay
+C081,Sunil Mehta,93XXXXXX65,Sector 22,regular,2026-05-28,False,Paytm
+C082,Jyoti Verma,98XXXXXX96,Sector 12A,regular,2026-06-24,False,Paytm
+C083,Priya Rana,94XXXXXX71,Sector 22,regular,2026-05-23,False,PhonePe
+C084,Payal Khanna,97XXXXXX15,Sector 15,regular,2026-05-22,False,PhonePe
+C085,Shalini Mehta,99XXXXXX99,Sushant Lok 1,regular,2026-06-14,False,PhonePe
+C086,Rohit Ahuja,90XXXXXX34,Sector 12A,regular,2026-05-20,False,Paytm
+C087,Rohit Agarwal,90XXXXXX12,Sector 22,regular,2026-05-24,False,Paytm
+C088,Pooja Arora,98XXXXXX31,Sector 17,regular,2026-06-12,False,GPay
+C089,Rakesh Joshi,91XXXXXX73,Old Gurgaon,regular,2026-06-10,False,BHIM
+C090,Naresh Sharma,95XXXXXX91,Sushant Lok 1,regular,2026-05-24,False,Paytm
+C091,Deepak Mehta,97XXXXXX01,Old Gurgaon,regular,2026-05-21,False,PhonePe
+C092,Naresh Singh,96XXXXXX73,Shivaji Nagar,regular,2026-05-21,False,GPay
+C093,Karan Saini,98XXXXXX90,Old Gurgaon,regular,2026-05-25,False,Paytm
+C094,Babita Kapoor,92XXXXXX43,Sector 14,regular,2026-06-14,False,Paytm
+C095,Vikram Singh,96XXXXXX04,Shivaji Nagar,regular,2026-06-10,False,Paytm
+C096,Meena Mishra,96XXXXXX24,Civil Lines,regular,2026-05-22,False,PhonePe
+C097,Meena Khanna,92XXXXXX54,Sector 15,regular,2026-05-24,False,GPay
+C098,Sanjay Sharma,90XXXXXX09,Old Gurgaon,regular,2026-06-06,False,PhonePe
+C099,Manoj Chauhan (electrician),97XXXXXX21,Sushant Lok 1,electrician,2026-08-02,True,PhonePe
+C100,Kavita Saini,92XXXXXX52,Jacobpura,regular,2026-06-07,False,PhonePe
+C101,Pankaj Kapoor,95XXXXXX70,Sector 22,regular,2026-06-13,False,Paytm
+C102,Karan Rawat,92XXXXXX58,Sector 14,regular,2026-06-14,False,PhonePe
+C103,Anjali Malhotra,90XXXXXX40,Sector 15,regular,2026-05-23,False,BHIM
+C104,Jyoti Kapoor,94XXXXXX96,Sector 15,regular,2026-05-31,False,Paytm
+C105,Rohit Joshi,96XXXXXX80,Old Gurgaon,regular,2026-06-09,False,PhonePe
+C106,Rekha Dahiya,97XXXXXX65,Sushant Lok 1,regular,2026-05-20,False,GPay
+C107,Manoj Singh,99XXXXXX74,Civil Lines,regular,2026-05-21,False,GPay
+C108,Rekha Bansal,92XXXXXX85,Sushant Lok 1,regular,2026-05-24,False,PhonePe
+C109,Vijay Gupta,90XXXXXX34,Sector 12A,regular,2026-05-23,False,PhonePe
+C110,Jyoti Sharma,96XXXXXX90,Sector 22,regular,2026-05-24,False,GPay
+C111,Sunil Rana,94XXXXXX46,Sector 22,regular,2026-05-19,False,Paytm
+C112,Jyoti Yadav,97XXXXXX79,Shivaji Nagar,regular,2026-05-23,False,PhonePe
+C113,Manoj Bhatia,93XXXXXX58,Sector 12A,regular,2026-06-01,False,PhonePe
+C114,Vikram Gupta,90XXXXXX09,Sector 14,regular,2026-08-13,False,PhonePe
+C115,Pankaj Verma,99XXXXXX47,Sector 12A,regular,2026-06-26,False,PhonePe
+C116,Vijay Joshi,94XXXXXX11,Sector 15,regular,2026-06-13,False,Paytm
+C117,Seema Dahiya,97XXXXXX80,Sector 22,regular,2026-08-12,False,Paytm
+C118,Vijay Bhatia,90XXXXXX95,Jacobpura,regular,2026-05-25,False,Paytm
+C119,Nitin Arora,99XXXXXX11,Sector 14,regular,2026-05-19,False,Paytm
+C120,Neha Kapoor,94XXXXXX91,Sushant Lok 1,regular,2026-05-24,False,Paytm
+C121,Jyoti Mishra,94XXXXXX95,Jacobpura,regular,2026-05-24,False,Paytm
+C122,Sunita Bhatia,95XXXXXX21,Sector 15,regular,2026-06-07,False,GPay
+C123,Suresh Joshi,95XXXXXX97,Sushant Lok 1,regular,2026-05-24,False,Paytm
+C124,Nitin Malhotra,98XXXXXX54,Jacobpura,regular,2026-06-21,False,BHIM
+C125,Naresh Agarwal,90XXXXXX95,Shivaji Nagar,regular,2026-05-31,False,GPay
+C126,Deepak Tiwari,90XXXXXX40,Sector 17,regular,2026-07-05,False,BHIM
+C127,Rakesh Agarwal,95XXXXXX19,Sector 15,regular,2026-05-22,False,Paytm
+C128,Suresh Rana,98XXXXXX47,Sector 17,regular,2026-07-07,False,Paytm
+C129,Pooja Mishra,95XXXXXX22,Sushant Lok 1,regular,2026-05-22,False,GPay
+C130,Neha Mishra,91XXXXXX77,Sector 17,regular,2026-06-04,False,GPay
+C131,Suresh Sharma,90XXXXXX56,Civil Lines,regular,2026-05-30,False,Paytm
+C132,Anil Sharma,90XXXXXX43,Sushant Lok 1,regular,2026-06-23,False,GPay
+C133,Pankaj Agarwal (electrician),93XXXXXX16,Jacobpura,electrician,2026-06-01,True,PhonePe
+C134,Kiran Mishra,97XXXXXX21,Jacobpura,regular,2026-06-08,False,GPay
+C135,Nitin Singh,96XXXXXX17,Jacobpura,regular,2026-05-23,False,Paytm
+C136,Babita Yadav,94XXXXXX66,Sector 22,regular,2026-05-23,False,Paytm
+C137,Anil Kapoor,94XXXXXX88,Civil Lines,regular,2026-05-22,False,Paytm
+C138,Mukesh Agarwal,90XXXXXX98,Sector 15,regular,2026-05-23,False,Amazon Pay
+C139,Rajesh Malhotra,97XXXXXX36,Sector 22,regular,2026-06-05,False,GPay
+C140,Pooja Rawat,97XXXXXX30,Jacobpura,regular,2026-05-27,False,PhonePe
+C141,Neha Joshi,95XXXXXX51,Civil Lines,regular,2026-06-13,False,PhonePe
+C142,Karan Tiwari,90XXXXXX19,Sector 17,regular,2026-05-24,False,Paytm
+C143,Arjun Joshi,99XXXXXX93,Civil Lines,regular,2026-05-31,False,Amazon Pay
+C144,Ritu Arora,91XXXXXX19,Sector 22,regular,2026-05-29,False,GPay
+C145,Komal Singh,99XXXXXX25,Sector 15,regular,2026-06-13,False,Paytm
+C146,Deepak Sharma,95XXXXXX90,Sector 22,regular,2026-06-26,False,GPay
+C147,Babita Singh,91XXXXXX50,Sector 12A,regular,2026-05-28,False,GPay
+C148,Payal Kapoor,93XXXXXX14,Sector 15,regular,2026-06-05,False,PhonePe
+C149,Arjun Agarwal,97XXXXXX15,Old Gurgaon,regular,2026-06-24,False,GPay
+C150,Kavita Yadav,98XXXXXX34,Civil Lines,regular,2026-05-22,False,PhonePe
+WALKIN,Walk-in customer (unidentified),,,walk_in,,False,

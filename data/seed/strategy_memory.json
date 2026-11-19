@@ -1,0 +1,144 @@
+{
+  "mid": "PAYTM_MERCH_8821",
+  "learned_policies": [
+    {
+      "intent": "MANDATE_TROUBLESHOOT",
+      "policy": "For first-attempt bounces with >=95% EDI history, send a 1-tap UPI link (4/4 paid within ~3h) rather than a reminder (1/1 paid only after 24h).",
+      "evidence": [
+        "SM-002",
+        "SM-003",
+        "SM-004",
+        "SM-007",
+        "SM-001"
+      ]
+    },
+    {
+      "intent": "CHARGEBACK_RESOLVE",
+      "policy": "Submit OTP-verified Shiprocket PoD immediately; chargebacks without PoD are lost.",
+      "evidence": [
+        "SM-008",
+        "SM-005"
+      ]
+    },
+    {
+      "intent": "UTR_VERIFY",
+      "policy": "Never hand over goods on a screenshot alone; verify the UTR against the NPCI log.",
+      "evidence": [
+        "SM-006"
+      ]
+    }
+  ],
+  "memories": [
+    {
+      "memory_id": "SM-001",
+      "date": "2026-07-14",
+      "intent": "MANDATE_TROUBLESHOOT",
+      "situation": "eNACH bounce after 2 heavy-rain days (sales -35%)",
+      "options_considered": [
+        "A: reminder",
+        "B: 1-tap UPI link",
+        "C: escalate to collections"
+      ],
+      "chosen": "A",
+      "verified_outcome": "Paid next day on re-presentment",
+      "time_to_outcome": "24h",
+      "success": true
+    },
+    {
+      "memory_id": "SM-002",
+      "date": "2026-07-28",
+      "intent": "MANDATE_TROUBLESHOOT",
+      "situation": "eNACH bounce after heavy rain",
+      "options_considered": [
+        "A: reminder",
+        "B: 1-tap UPI link"
+      ],
+      "chosen": "B",
+      "verified_outcome": "UPI link after mandate bounce -> paid within 2h",
+      "time_to_outcome": "1h 50m",
+      "success": true
+    },
+    {
+      "memory_id": "SM-003",
+      "date": "2026-08-11",
+      "intent": "MANDATE_TROUBLESHOOT",
+      "situation": "eNACH bounce after heavy rain",
+      "options_considered": [
+        "B: 1-tap UPI link"
+      ],
+      "chosen": "B",
+      "verified_outcome": "Paid within 2h 10m",
+      "time_to_outcome": "2h 10m",
+      "success": true
+    },
+    {
+      "memory_id": "SM-004",
+      "date": "2026-08-19",
+      "intent": "MANDATE_TROUBLESHOOT",
+      "situation": "eNACH bounce after heavy rain",
+      "options_considered": [
+        "B: 1-tap UPI link"
+      ],
+      "chosen": "B",
+      "verified_outcome": "Paid within 1h 35m",
+      "time_to_outcome": "1h 35m",
+      "success": true
+    },
+    {
+      "memory_id": "SM-005",
+      "date": "2026-08-10",
+      "intent": "CHARGEBACK_RESOLVE",
+      "situation": "Chargeback, no PoD available (parcel lost)",
+      "options_considered": [
+        "A: accept",
+        "C: escalate"
+      ],
+      "chosen": "A",
+      "verified_outcome": "Lost ₹2949; lesson: insist on OTP delivery",
+      "time_to_outcome": "3 days",
+      "success": false
+    },
+    {
+      "memory_id": "SM-006",
+      "date": "2026-10-03",
+      "intent": "UTR_VERIFY",
+      "situation": "Screenshot shown, no Soundbox alert",
+      "options_considered": [
+        "A: trust screenshot",
+        "B: verify UTR with NPCI log"
+      ],
+      "chosen": "B",
+      "verified_outcome": "UTR not found; goods not handed over; fraud prevented",
+      "time_to_outcome": "3 min",
+      "success": true
+    },
+    {
+      "memory_id": "SM-007",
+      "date": "2026-10-13",
+      "intent": "MANDATE_TROUBLESHOOT",
+      "situation": "eNACH bounce after ₹38,000 Diwali stock payment (cash-flow timing, not sales)",
+      "options_considered": [
+        "A: reminder",
+        "B: 1-tap UPI link"
+      ],
+      "chosen": "B",
+      "verified_outcome": "Paid within 3h 05m",
+      "time_to_outcome": "3h 05m",
+      "success": true
+    },
+    {
+      "memory_id": "SM-008",
+      "date": "2026-10-23",
+      "intent": "CHARGEBACK_RESOLVE",
+      "situation": "Chargeback with OTP-verified PoD in Shiprocket",
+      "options_considered": [
+        "A: accept",
+        "B: submit PoD"
+      ],
+      "chosen": "B",
+      "verified_outcome": "Won; ₹2198 hold released",
+      "time_to_outcome": "2 days",
+      "success": true
+    }
+  ]
+}

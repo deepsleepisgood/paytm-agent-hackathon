@@ -1,0 +1,179 @@
+entry_id,customer_id,timestamp,type,amount,txn_id,balance_after,note
+KH-0001,C005,2026-05-19T14:00:00,credit_given,3500,,3500,"Wires/switches for a site job, on khata"
+KH-0002,C005,2026-05-20T19:25:25,payment_received,600,PTM26052000017,2900,Paid back via UPI
+KH-0003,C005,2026-05-24T18:12:18,payment_received,1039,PTM26052400050,1861,Paid back via UPI
+KH-0004,C005,2026-05-27T14:33:08,payment_received,173,PTM26052700012,1688,Paid back via UPI
+KH-0005,C005,2026-05-28T15:00:00,credit_given,1470,,3158,"Wires/switches for a site job, on khata"
+KH-0006,C005,2026-05-31T08:14:47,payment_received,89,PTM26053100008,3069,Paid back via UPI
+KH-0007,C005,2026-05-31T15:00:00,credit_given,1680,,4749,"Wires/switches for a site job, on khata"
+KH-0008,C005,2026-06-07T10:32:12,payment_received,81,PTM26060700022,4668,Paid back via UPI
+KH-0009,C005,2026-06-12T11:28:11,payment_received,289,PTM26061200015,4379,Paid back via UPI
+KH-0010,C005,2026-06-13T11:00:14,payment_received,104,PTM26061300011,4275,Paid back via UPI
+KH-0011,C005,2026-06-16T14:29:31,payment_received,1802,PTM26061600016,2473,Paid back via UPI
+KH-0012,C005,2026-06-19T12:00:00,credit_given,3180,,5653,"Wires/switches for a site job, on khata"
+KH-0013,C005,2026-07-05T17:00:00,credit_given,3580,,9233,"Wires/switches for a site job, on khata"
+KH-0014,C005,2026-07-16T09:48:50,payment_received,2473,PTM26071600008,6760,Paid back via UPI
+KH-0015,C005,2026-07-20T11:48:59,payment_received,139,PTM26072000013,6621,Paid back via UPI
+KH-0016,C005,2026-07-25T08:16:30,payment_received,239,PTM26072500002,6382,Paid back via UPI
+KH-0017,C005,2026-08-06T11:07:52,payment_received,120,PTM26080600013,6262,Paid back via UPI
+KH-0018,C005,2026-08-13T20:00:00,credit_given,1320,,7582,"Wires/switches for a site job, on khata"
+KH-0019,C005,2026-08-17T13:00:00,credit_given,1950,,9532,"Wires/switches for a site job, on khata"
+KH-0020,C005,2026-08-22T12:54:19,payment_received,1728,PTM26082200026,7804,Paid back via UPI
+KH-0021,C005,2026-08-23T11:10:32,payment_received,69,PTM26082300014,7735,Paid back via UPI
+KH-0022,C005,2026-08-23T13:00:00,credit_given,2310,,10045,"Wires/switches for a site job, on khata"
+KH-0023,C005,2026-08-26T15:00:00,credit_given,3040,,13085,"Wires/switches for a site job, on khata"
+KH-0024,C005,2026-08-29T20:24:14,payment_received,76,PTM26082900043,13009,Paid back via UPI
+KH-0025,C005,2026-08-31T12:00:00,credit_given,650,,13659,"Wires/switches for a site job, on khata"
+KH-0026,C005,2026-09-06T17:47:30,payment_received,235,PTM26090600030,13424,Paid back via UPI
+KH-0027,C005,2026-09-07T18:51:44,payment_received,306,PTM26090700026,13118,Paid back via UPI
+KH-0028,C005,2026-09-16T21:58:56,payment_received,91,PTM26091600038,13027,Paid back via UPI
+KH-0029,C005,2026-09-22T07:09:42,payment_received,164,PTM26092200001,12863,Paid back via UPI
+KH-0030,C005,2026-10-09T19:00:00,credit_given,2490,,15353,"Wires/switches for a site job, on khata"
+KH-0031,C005,2026-10-10T20:23:29,payment_received,306,PTM26101000063,15047,Paid back via UPI
+KH-0032,C005,2026-10-19T20:16:33,payment_received,144,PTM26101900029,14903,Paid back via UPI
+KH-0033,C005,2026-10-21T18:40:30,payment_received,86,PTM26102100014,14817,Paid back via UPI
+KH-0034,C005,2026-10-31T09:32:32,payment_received,574,PTM26103100017,14243,Paid back via UPI
+KH-0035,C005,2026-10-31T10:48:26,payment_received,1434,PTM26103100027,12809,Paid back via UPI
+KH-0036,C005,2026-11-06T10:53:49,payment_received,149,PTM26110600034,12660,Paid back via UPI
+KH-0037,C005,2026-11-08T10:00:00,credit_given,3160,,15820,"Wires/switches for a site job, on khata"
+KH-0038,C005,2026-11-09T13:00:00,credit_given,2960,,18780,"Wires/switches for a site job, on khata"
+KH-0039,C005,2026-11-12T13:00:00,credit_given,2490,,21270,"Wires/switches for a site job, on khata"
+KH-0040,C005,2026-11-14T17:58:23,payment_received,779,PTM26111400037,20491,Paid back via UPI
+KH-0041,C005,2026-11-16T08:33:31,payment_received,401,PTM26111600002,20090,Paid back via UPI
+KH-0042,C011,2026-06-20T19:00:00,credit_given,3770,,3770,"Wires/switches for a site job, on khata"
+KH-0043,C011,2026-06-23T10:00:00,credit_given,1770,,5540,"Wires/switches for a site job, on khata"
+KH-0044,C011,2026-06-25T09:00:00,credit_given,950,,6490,"Wires/switches for a site job, on khata"
+KH-0045,C011,2026-06-29T11:00:00,credit_given,2190,,8680,"Wires/switches for a site job, on khata"
+KH-0046,C011,2026-07-01T09:46:28,payment_received,149,PTM26070100012,8531,Paid back via UPI
+KH-0047,C011,2026-07-17T10:00:00,credit_given,3110,,11641,"Wires/switches for a site job, on khata"
+KH-0048,C011,2026-07-24T13:40:15,payment_received,408,PTM26072400024,11233,Paid back via UPI
+KH-0049,C011,2026-07-24T21:19:00,payment_received,1269,PTM26072400046,9964,Paid back via UPI
+KH-0050,C011,2026-07-28T20:00:00,credit_given,2860,,12824,"Wires/switches for a site job, on khata"
+KH-0051,C011,2026-08-07T08:32:13,payment_received,671,PTM26080700003,12153,Paid back via UPI
+KH-0052,C011,2026-08-23T09:00:00,credit_given,2890,,15043,"Wires/switches for a site job, on khata"
+KH-0053,C011,2026-08-26T11:00:00,credit_given,3400,,18443,"Wires/switches for a site job, on khata"
+KH-0054,C011,2026-08-30T12:00:00,credit_given,1940,,20383,"Wires/switches for a site job, on khata"
+KH-0055,C011,2026-09-09T12:00:00,credit_given,3640,,24023,"Wires/switches for a site job, on khata"
+KH-0056,C011,2026-09-12T19:37:21,payment_received,243,PTM26091200034,23780,Paid back via UPI
+KH-0057,C011,2026-09-17T17:00:00,credit_given,3280,,27060,"Wires/switches for a site job, on khata"
+KH-0058,C011,2026-09-18T12:00:00,credit_given,2370,,29430,"Wires/switches for a site job, on khata"
+KH-0059,C011,2026-09-29T18:00:07,payment_received,2407,PTM26092900018,27023,Paid back via UPI
+KH-0060,C011,2026-10-08T18:38:30,payment_received,70,PTM26100800029,26953,Paid back via UPI
+KH-0061,C011,2026-10-24T17:00:00,credit_given,1240,,28193,"Wires/switches for a site job, on khata"
+KH-0062,C011,2026-11-12T15:00:00,credit_given,3390,,31583,"Wires/switches for a site job, on khata"
+KH-0063,C023,2026-05-28T09:00:00,credit_given,2980,,2980,"Wires/switches for a site job, on khata"
+KH-0064,C023,2026-06-01T08:50:10,payment_received,61,PTM26060100009,2919,Paid back via UPI
+KH-0065,C023,2026-06-02T12:00:00,credit_given,2600,,5519,"Wires/switches for a site job, on khata"
+KH-0066,C023,2026-06-09T20:49:49,payment_received,81,PTM26060900037,5438,Paid back via UPI
+KH-0067,C023,2026-06-14T09:36:42,payment_received,140,PTM26061400013,5298,Paid back via UPI
+KH-0068,C023,2026-07-17T09:00:00,credit_given,2880,,8178,"Wires/switches for a site job, on khata"
+KH-0069,C023,2026-07-20T11:00:00,credit_given,3140,,11318,"Wires/switches for a site job, on khata"
+KH-0070,C023,2026-07-28T16:00:00,credit_given,1280,,12598,"Wires/switches for a site job, on khata"
+KH-0071,C023,2026-08-06T09:15:51,payment_received,69,PTM26080600009,12529,Paid back via UPI
+KH-0072,C023,2026-08-07T12:00:00,credit_given,3560,,16089,"Wires/switches for a site job, on khata"
+KH-0073,C023,2026-08-10T21:19:02,payment_received,2145,PTM26081000009,13944,Paid back via UPI
+KH-0074,C023,2026-08-11T20:00:00,credit_given,720,,14664,"Wires/switches for a site job, on khata"
+KH-0075,C023,2026-08-18T14:00:00,credit_given,1560,,16224,"Wires/switches for a site job, on khata"
+KH-0076,C023,2026-08-29T15:45:49,payment_received,323,PTM26082900023,15901,Paid back via UPI
+KH-0077,C023,2026-09-04T16:00:00,credit_given,2760,,18661,"Wires/switches for a site job, on khata"
+KH-0078,C023,2026-09-15T07:53:10,payment_received,191,PTM26091500003,18470,Paid back via UPI
+KH-0079,C023,2026-09-25T11:00:00,credit_given,2610,,21080,"Wires/switches for a site job, on khata"
+KH-0080,C023,2026-10-03T10:04:11,payment_received,62,PTM26100300006,21018,Paid back via UPI
+KH-0081,C023,2026-10-03T18:26:15,payment_received,2048,PTM26100300023,18970,Paid back via UPI
+KH-0082,C023,2026-10-11T09:00:00,credit_given,3440,,22410,"Wires/switches for a site job, on khata"
+KH-0083,C023,2026-10-17T10:00:00,credit_given,3620,,26030,"Wires/switches for a site job, on khata"
+KH-0084,C023,2026-10-23T14:00:00,credit_given,3320,,29350,"Wires/switches for a site job, on khata"
+KH-0085,C023,2026-11-01T18:47:35,payment_received,121,PTM26110100066,29229,Paid back via UPI
+KH-0086,C023,2026-11-02T20:00:00,credit_given,3740,,32969,"Wires/switches for a site job, on khata"
+KH-0087,C037,2026-05-28T13:00:00,credit_given,1240,,1240,"Wires/switches for a site job, on khata"
+KH-0088,C037,2026-07-21T11:00:00,credit_given,3480,,4720,"Wires/switches for a site job, on khata"
+KH-0089,C037,2026-07-22T16:00:00,credit_given,1240,,5960,"Wires/switches for a site job, on khata"
+KH-0090,C037,2026-07-31T13:00:00,credit_given,1540,,7500,"Wires/switches for a site job, on khata"
+KH-0091,C037,2026-08-01T20:33:11,payment_received,2014,PTM26080100038,5486,Paid back via UPI
+KH-0092,C037,2026-08-13T14:00:00,credit_given,910,,6396,"Wires/switches for a site job, on khata"
+KH-0093,C037,2026-08-15T11:49:36,payment_received,107,PTM26081500015,6289,Paid back via UPI
+KH-0094,C037,2026-08-20T08:00:00,credit_given,3520,,9809,"Wires/switches for a site job, on khata"
+KH-0095,C037,2026-08-21T19:05:58,payment_received,4267,PTM26082100018,5542,Paid back via UPI
+KH-0096,C037,2026-08-31T13:00:00,credit_given,2980,,8522,"Wires/switches for a site job, on khata"
+KH-0097,C037,2026-08-31T16:20:03,payment_received,2289,PTM26083100012,6233,Paid back via UPI
+KH-0098,C037,2026-09-05T16:29:44,payment_received,1299,PTM26090500026,4934,Paid back via UPI
+KH-0099,C037,2026-09-06T14:00:00,credit_given,3870,,8804,"Wires/switches for a site job, on khata"
+KH-0100,C037,2026-09-12T07:09:25,payment_received,404,PTM26091200001,8400,Paid back via UPI
+KH-0101,C037,2026-09-13T09:48:14,payment_received,480,PTM26091300005,7920,Paid back via UPI
+KH-0102,C037,2026-09-20T15:29:16,payment_received,134,PTM26092000044,7786,Paid back via UPI
+KH-0103,C037,2026-10-07T08:00:00,credit_given,1070,,8856,"Wires/switches for a site job, on khata"
+KH-0104,C037,2026-10-12T18:00:00,credit_given,1010,,9866,"Wires/switches for a site job, on khata"
+KH-0105,C037,2026-10-16T16:06:37,payment_received,387,PTM26101600037,9479,Paid back via UPI
+KH-0106,C037,2026-10-28T13:00:00,credit_given,1460,,10939,"Wires/switches for a site job, on khata"
+KH-0107,C037,2026-11-03T09:00:00,credit_given,1890,,12829,"Wires/switches for a site job, on khata"
+KH-0108,C037,2026-11-05T11:00:00,credit_given,3760,,16589,"Wires/switches for a site job, on khata"
+KH-0109,C037,2026-11-08T17:00:00,credit_given,3800,,20389,"Wires/switches for a site job, on khata"
+KH-0110,C037,2026-11-14T12:34:44,payment_received,41,PTM26111400019,20348,Paid back via UPI
+KH-0111,C054,2026-06-15T08:00:00,credit_given,2290,,2290,"Wires/switches for a site job, on khata"
+KH-0112,C054,2026-06-25T17:27:37,payment_received,122,PTM26062500027,2168,Paid back via UPI
+KH-0113,C054,2026-06-26T10:00:00,credit_given,3310,,5478,"Wires/switches for a site job, on khata"
+KH-0114,C054,2026-06-30T12:00:00,credit_given,2780,,8258,"Wires/switches for a site job, on khata"
+KH-0115,C054,2026-07-06T12:00:00,credit_given,1700,,9958,"Wires/switches for a site job, on khata"
+KH-0116,C054,2026-07-14T12:00:00,credit_given,3530,,13488,"Wires/switches for a site job, on khata"
+KH-0117,C054,2026-08-11T14:00:00,credit_given,2720,,16208,"Wires/switches for a site job, on khata"
+KH-0118,C054,2026-08-16T10:00:00,credit_given,1510,,17718,"Wires/switches for a site job, on khata"
+KH-0119,C054,2026-09-01T16:00:00,credit_given,2670,,20388,"Wires/switches for a site job, on khata"
+KH-0120,C054,2026-09-10T13:00:00,credit_given,2060,,22448,"Wires/switches for a site job, on khata"
+KH-0121,C054,2026-09-20T09:16:58,payment_received,1241,PTM26092000012,21207,Paid back via UPI
+KH-0122,C054,2026-09-21T13:00:00,credit_given,1520,,22727,"Wires/switches for a site job, on khata"
+KH-0123,C054,2026-09-30T18:00:00,credit_given,1260,,23987,"Wires/switches for a site job, on khata"
+KH-0124,C054,2026-10-09T08:29:21,payment_received,153,PTM26100900008,23834,Paid back via UPI
+KH-0125,C054,2026-10-13T20:00:00,credit_given,2640,,26474,"Wires/switches for a site job, on khata"
+KH-0126,C054,2026-10-24T20:34:22,payment_received,51,PTM26102400049,26423,Paid back via UPI
+KH-0127,C054,2026-11-01T13:00:00,credit_given,1610,,28033,"Wires/switches for a site job, on khata"
+KH-0128,C054,2026-11-06T17:00:00,credit_given,550,,28583,"Wires/switches for a site job, on khata"
+KH-0129,C054,2026-11-17T07:13:01,payment_received,384,PTM26111700002,28199,Paid back via UPI
+KH-0130,C071,2026-06-12T14:00:00,credit_given,500,,500,"Wires/switches for a site job, on khata"
+KH-0131,C071,2026-06-19T17:00:00,credit_given,680,,1180,"Wires/switches for a site job, on khata"
+KH-0132,C071,2026-07-15T10:00:00,credit_given,2500,,3680,"Wires/switches for a site job, on khata"
+KH-0133,C071,2026-07-30T11:00:00,credit_given,3010,,6690,"Wires/switches for a site job, on khata"
+KH-0134,C071,2026-08-01T17:00:00,credit_given,2850,,9540,"Wires/switches for a site job, on khata"
+KH-0135,C071,2026-08-06T14:51:51,payment_received,127,PTM26080600019,9413,Paid back via UPI
+KH-0136,C071,2026-08-07T14:00:00,credit_given,2830,,12243,"Wires/switches for a site job, on khata"
+KH-0137,C071,2026-08-08T16:00:00,credit_given,3440,,15683,"Wires/switches for a site job, on khata"
+KH-0138,C071,2026-08-16T17:00:00,credit_given,750,,16433,"Wires/switches for a site job, on khata"
+KH-0139,C071,2026-09-10T17:00:00,credit_given,1990,,18423,"Wires/switches for a site job, on khata"
+KH-0140,C071,2026-09-15T07:20:52,payment_received,97,PTM26091500001,18326,Paid back via UPI
+KH-0141,C071,2026-09-15T18:16:38,payment_received,109,PTM26091500026,18217,Paid back via UPI
+KH-0142,C071,2026-10-08T14:00:00,credit_given,510,,18727,"Wires/switches for a site job, on khata"
+KH-0143,C071,2026-10-10T12:00:00,credit_given,2450,,21177,"Wires/switches for a site job, on khata"
+KH-0144,C071,2026-10-17T17:00:00,credit_given,3690,,24867,"Wires/switches for a site job, on khata"
+KH-0145,C071,2026-10-30T19:23:54,payment_received,449,PTM26103000028,24418,Paid back via UPI
+KH-0146,C071,2026-11-03T19:00:00,credit_given,1830,,26248,"Wires/switches for a site job, on khata"
+KH-0147,C071,2026-11-10T17:00:00,credit_given,1700,,27948,"Wires/switches for a site job, on khata"
+KH-0148,C099,2026-05-22T11:00:00,credit_given,2280,,2280,"Wires/switches for a site job, on khata"
+KH-0149,C099,2026-05-23T08:00:00,credit_given,1380,,3660,"Wires/switches for a site job, on khata"
+KH-0150,C099,2026-06-23T11:00:00,credit_given,2180,,5840,"Wires/switches for a site job, on khata"
+KH-0151,C099,2026-07-06T18:00:00,credit_given,3170,,9010,"Wires/switches for a site job, on khata"
+KH-0152,C099,2026-08-01T12:00:00,credit_given,2100,,11110,"Wires/switches for a site job, on khata"
+KH-0153,C099,2026-08-02T16:00:00,credit_given,2270,,13380,"Wires/switches for a site job, on khata"
+KH-0154,C099,2026-08-12T10:00:00,credit_given,1810,,15190,"Wires/switches for a site job, on khata"
+KH-0155,C099,2026-08-15T20:00:00,credit_given,3190,,18380,"Wires/switches for a site job, on khata"
+KH-0156,C099,2026-08-17T10:00:00,credit_given,2700,,21080,"Wires/switches for a site job, on khata"
+KH-0157,C099,2026-08-25T12:00:00,credit_given,3760,,24840,"Wires/switches for a site job, on khata"
+KH-0158,C099,2026-09-14T12:00:00,credit_given,3640,,28480,"Wires/switches for a site job, on khata"
+KH-0159,C099,2026-09-18T09:00:00,credit_given,1160,,29640,"Wires/switches for a site job, on khata"
+KH-0160,C099,2026-10-26T16:00:00,credit_given,1990,,31630,"Wires/switches for a site job, on khata"
+KH-0161,C099,2026-10-31T15:00:00,credit_given,1300,,32930,"Wires/switches for a site job, on khata"
+KH-0162,C133,2026-05-26T17:00:00,credit_given,2550,,2550,"Wires/switches for a site job, on khata"
+KH-0163,C133,2026-05-28T08:00:00,credit_given,2190,,4740,"Wires/switches for a site job, on khata"
+KH-0164,C133,2026-06-10T12:00:00,credit_given,500,,5240,"Wires/switches for a site job, on khata"
+KH-0165,C133,2026-06-18T16:47:58,payment_received,270,PTM26061800028,4970,Paid back via UPI
+KH-0166,C133,2026-06-20T12:00:00,credit_given,590,,5560,"Wires/switches for a site job, on khata"
+KH-0167,C133,2026-06-23T15:00:00,credit_given,2820,,8380,"Wires/switches for a site job, on khata"
+KH-0168,C133,2026-06-30T14:00:00,credit_given,3840,,12220,"Wires/switches for a site job, on khata"
+KH-0169,C133,2026-07-07T17:52:15,payment_received,127,PTM26070700019,12093,Paid back via UPI
+KH-0170,C133,2026-07-10T11:00:00,credit_given,3730,,15823,"Wires/switches for a site job, on khata"
+KH-0171,C133,2026-07-25T12:00:00,credit_given,1040,,16863,"Wires/switches for a site job, on khata"
+KH-0172,C133,2026-08-14T15:00:00,credit_given,3680,,20543,"Wires/switches for a site job, on khata"
+KH-0173,C133,2026-08-28T16:00:00,credit_given,3830,,24373,"Wires/switches for a site job, on khata"
+KH-0174,C133,2026-09-18T16:00:00,credit_given,3560,,27933,"Wires/switches for a site job, on khata"
+KH-0175,C133,2026-09-27T11:00:00,credit_given,2920,,30853,"Wires/switches for a site job, on khata"
+KH-0176,C133,2026-10-15T20:00:00,credit_given,2580,,33433,"Wires/switches for a site job, on khata"
+KH-0177,C133,2026-11-05T15:00:00,credit_given,660,,34093,"Wires/switches for a site job, on khata"
+KH-0178,C133,2026-11-07T18:46:44,payment_received,213,PTM26110700072,33880,Paid back via UPI
