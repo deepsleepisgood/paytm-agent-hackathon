@@ -377,6 +377,50 @@ only, at the repo root and in `deploy/`. No teammate's code was edited.
 
 ---
 
+## Phase 7: Full-stack check — frontend + 8001 (live Sarvam) + 8002 + 8003 (2026-11-19, main @ d198e53)
+The frontend's own `callLive` → `responseToRun` → `applyEffects` code was run in Node through Vite SSR against
+the live stack, for all 16 UI scenarios, plus a real voice round trip (Sarvam TTS → `queryAudio` → Sarvam STT).
+Then the production build was served on :3000 and driven in Chromium (Playwright). Bugs found and fixed in 8003:
+
+- **D82 — `paytm_response.status` is the specific outcome again.**
+  - Phase 5 had made it 8002's generic `RESOLVED`, with the detail only in `status_detail`, so live mode never fired the frontend's effects (`status === 'RELEASED'`, `'PENDING'`, …).
+  - The chargeback release and the UTR check didn't show in the UI.
+  - Now `status` holds the specific outcome, as in D1 and mock mode. 8002's status is in `mesh_status`, and `data` stays raw (the frontend reads `order_amount_inr` and `duplicates_found`).
+- **D83 — No invented numbers in LLM replies.**
+  - Live, the reply LLM said "₹4,160 का UTR" and "₹4,160 पुराने account में settle होगा"; neither amount was in its facts.
+  - `ungrounded_numbers()` now checks every ₹ amount and every number of 3+ digits against the facts sent to the LLM, the template and the merchant's words. If any is missing, the template is used. It fired live once, on the bank reply.
+- **D84 — Consent moments are never paraphrased.** While `awaiting_confirmation` is set (EDI pause offer, dispute sign-off), the template is always used. Live, the LLM turned "EDI 2 दिन रोक दूँ?" into "Paytm ने EDI pause किया है" before the merchant tapped yes.
+- **D85 — Spoken UTRs.**
+  - Sarvam STT writes digits as words ("छह तीन दो …"). `router.spoken_digits()` joins runs of 4+ digit words or single digits; "do baar" and "₹1,180" are left alone.
+  - The LLM classifier invented a 12th digit for an 11-digit transcript, so a genuine payment got a HIGH fraud alert. A UTR or order id from the LLM is now kept only if its digits are in what the merchant said. Otherwise 8003 asks for the UTR or a screenshot (`PROVIDE_UTR`) with no fraud alert.
+- **D86 — Refunds.**
+  - 8002 now implements `REFUND_MANAGE` (05d32c8) and reads `order_id`, `action` (STATUS or INITIATE) and `amount_inr`, so 8003 sends them. INITIATE is chosen from the wording ("wapas karna hai", "refund kar do").
+  - The mock answered "₹6,500 wapas karna hai" (no order) with the old ₹1,500 refund for order 4412, "PROCESSED". Now a new request over ₹5,000 escalates to a person (8002's rule and the frontend's story), and one under ₹5,000 asks for the order number.
+- **D87 — 8002's new growth body.** It has no `credit_offer` but has `sales`, `existing_loan` and `new_facility_offered: false`, which maps to `ADVICE_READY`. The template says "restock by Thursday" and gives the EDI as a share of daily sales. It never says "pre-approved".
+
+### Verification
+- `pytest -q`: **111 passed, 3 skipped** (the teammate's Supabase tests, which skip by default). There are 8 new regression tests, one per bug above.
+- Frontend harness, live stack: every scenario answered with the right intent.
+  - Live 8002: settle, utr, dup, edi, growth, soundbox, fake, cb, shield_edi/confirm_edi and shield_cb/confirm_cb. The 8003 mock answered the 4 new intents and refund-without-order.
+  - Effects now fire: CB_RELEASE, UTR_CHECK, REFUND_AUTO, TICKET, FRAUD, LOAN:PAUSED.
+- Browser, guided demo plus a tap on the confirm button:
+  - chargeback RELEASED, EDI PAUSED, and impact counters of 4 solved, 4 learned, 3 tickets avoided, 1 fraud blocked;
+  - Khata shows ITC ₹261, reconciled;
+  - 8002's own ledger shows `PAUSED_2_DAYS`, resume 2026-11-21;
+  - the only console error is a missing `/favicon.ico`.
+- Ports 3000 and 8001–8003 were freed.
+
+### Left for teammates (not 8003's to change)
+- **Person 4 (frontend):**
+  - `DUP_AMT` says ₹3,200, but 8002 and the dataset now say order 4489, ₹1,180.
+  - `HOLD_AMT` ₹18,500 matches nothing in the dataset.
+  - There's no effect for `REMEDIES_OFFERED`. The old `ACTION_REQUIRED` branch claimed "UPI link sent · penalty waived", which 8002 doesn't do.
+  - `/favicon.ico` returns 404.
+  - Guided-demo order: settle → cb → fake → shield_edi releases the chargeback first, so the cashflow line shows payout ₹2,000 and gap ₹2,500, not ₹1,200 and ₹3,300. The numbers are consistent, but they differ from the pitch script.
+- **Person 2:** the 4 new intents (SOUNDBOX_RETURN, LOAN_CLOSURE_NOC, BANK_KYC_UPDATE, SETTLEMENT_HOLD_BANK) still return `UNKNOWN_INTENT`, so 8003's mock answers them. A refund without an `order_id` is a 400 (8003 handles it).
+
+---
+
 ## Open items for integration (6:30 PM)
 1. **Person 4:** share the response shape and event types (README + D1–D5). There is no frontend contract for these yet.
 2. **Person 2:** confirm two things:

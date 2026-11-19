@@ -349,7 +349,8 @@ def test_person1_mock_llm_is_not_trusted(client, monkeypatch):
 
 def test_person1_live_llm_is_used(client, monkeypatch):
     _fake_8001(monkeypatch, llm_source="sarvam", llm_intent="REFUND_MANAGE")
-    body = ask(client, "us customer ka paisa lauta do").json()
+    # The order id is in the sentence: an id the LLM returns that the merchant never said is now dropped.
+    body = ask(client, "order chaar chaar ek do wale customer ka paisa lauta do").json()
     assert (body["intent"], body["intent_source"], body["slots"]["order_id"]) == ("REFUND_MANAGE", "llm", "4412")
     assert (body["reply_text"], body["reply_source"]) == ("रिफंड हो गया है।", "llm")
 

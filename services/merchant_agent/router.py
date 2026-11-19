@@ -253,8 +253,62 @@ _ISO_DATE_RE = re.compile(r"\b(20\d{2})-(\d{2})-(\d{2})\b")
 _DMY_RE = re.compile(r"\b(\d{1,2})[/.-](\d{1,2})[/.-](20\d{2})\b")
 
 
+# Sarvam STT writes spoken numbers as words ("छह तीन दो …"). Only runs of 4+ digit tokens are joined, so
+# everyday words like "do baar" (twice) are left alone.
+_DIGIT_WORDS = {
+    "0": ("शून्य", "शुन्य", "ज़ीरो", "जीरो", "zero", "shunya", "shoonya"),
+    "1": ("एक", "ek", "one"), "2": ("दो", "do", "two"), "3": ("तीन", "teen", "three"),
+    "4": ("चार", "char", "chaar", "four"), "5": ("पांच", "पाँच", "paanch", "panch", "five"),
+    "6": ("छह", "छः", "छे", "छै", "chhe", "chhah", "che", "six"), "7": ("सात", "saat", "seven"),
+    "8": ("आठ", "aath", "eight"), "9": ("नौ", "nau", "nine"),
+}
+_WORD_TO_DIGIT = {w: d for d, ws in _DIGIT_WORDS.items() for w in ws}
+_DEVANAGARI_DIGITS = str.maketrans("०१२३४५६७८९", "0123456789")
+_TOKEN_RE = re.compile(r"[^\s,।.?!-]+|[\s,।.?!-]+")
+
+
+def spoken_digits(text: str) -> str:
+    """'UTR छह तीन दो एक …' -> 'UTR 6321…'. Devanagari digits become ASCII. A run of 4+ single digits / digit
+    words is joined; shorter runs and multi-digit numbers ("₹1,180") are left exactly as written."""
+    out: list[str] = []
+    digits: list[str] = []
+    raw: list[str] = []
+    last = 0
+
+    def flush() -> None:
+        nonlocal last
+        if len(digits) >= 4:
+            out.append("".join(digits))
+            out.extend(raw[last:])  # separators after the last digit
+        else:
+            out.extend(raw)
+        digits.clear()
+        raw.clear()
+        last = 0
+
+    for t in _TOKEN_RE.findall(text.translate(_DEVANAGARI_DIGITS)):
+        d = _WORD_TO_DIGIT.get(t.lower()) or (t if len(t) == 1 and t.isdigit() else None)
+        if d is not None:
+            digits.append(d)
+            raw.append(t)
+            last = len(raw)
+        elif digits and (t.isspace() or t.strip() in {",", "-"}):
+            raw.append(t)
+        else:
+            flush()
+            out.append(t)
+    flush()
+    return "".join(out)
+
+
+def _seen_digits(value: Optional[str], text: str) -> bool:
+    """True when an id the LLM returned is literally in what the merchant said (after spoken-digit normalising)."""
+    return bool(value) and value in re.sub(r"[\s,-]", "", spoken_digits(text))
+
+
 def extract_slots(text: str, today: Optional[date] = None) -> Slots:
     today = today or date.today()
+    text = spoken_digits(text)
     utr = _UTR_RE.search(text)
     m = _ORDER_RE.search(text) or _HASH_RE.search(text)
     order_id = m.group(1) if m else None
@@ -319,8 +373,15 @@ async def classify(text: str) -> Classification:
         intent = str(result.get("intent", "")).strip().upper()
         if intent in INTENTS:
             raw_slots = result.get("slots") if isinstance(result.get("slots"), dict) else result  # nested or flat
+            llm_slots = slots_from_dict(raw_slots)
+            # The LLM can invent a digit (live: 11 spoken digits came back as a 12-digit UTR, which then
+            # looked fake). Keep its UTR / order id only if those digits are really in the merchant's words.
+            llm_slots = llm_slots.model_copy(update={
+                "utr_number": llm_slots.utr_number if _seen_digits(llm_slots.utr_number, text) else None,
+                "order_id": llm_slots.order_id if _seen_digits(llm_slots.order_id, text) else None,
+            })
             # Regex wins: it is exact for UTRs/order ids; LLM fills what regex missed.
-            return Classification(intent=intent, slots=merge_slots(regex_slots, slots_from_dict(raw_slots)), source="llm")
+            return Classification(intent=intent, slots=merge_slots(regex_slots, llm_slots), source="llm")
 
     if bank_intent and bank_score >= FUZZY_MIN:
         return Classification(intent=bank_intent, slots=regex_slots, source="utterance_bank")
