@@ -281,7 +281,7 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
   return (
     <div className="af">
       <div className="af-h">
-        <div><b>Agent tree</b><span>Each side has a parent and its helpers. Only the needed ones work</span></div>
+        <div><b>Agent mesh</b><span>Every agent and hand-off. Only the working ones are lit</span></div>
         <div className="af-chips">
           <i>{P.usedCount} of 9 agents used</i>
           <i className={escalated ? 'esc' : 'auto'}>{escalated ? '1 human handoff' : '0 humans in the loop'}</i>
@@ -289,42 +289,56 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
         </div>
       </div>
 
-      {/* two teams: each has a parent agent (centred) with its own child agents (centred) below */}
-      <div className="tr">
-        <div className="tr-team">
-          <div className="tr-lab">Merchant side</div>
-          <div className={`tr-root ${mSt} t-blue`}>
-            <Avatar n={TEAM.find((a) => a.id === 'buddy')} size={46} />
-            <b>Merchant Buddy</b><em>Parent agent</em>
-            <span className="tr-st">{mSt === 'idle' ? 'Off' : lbl[mSt]}</span>
-          </div>
-          <div className="tr-stem" />
-          <div className="tr-kids c3">
-            {MKIDS.map((n) => <Kid key={n.id} n={n} sub={n.id === 'consent' ? 'Asks permission' : n.id === 'memory' ? 'Recalls history' : 'Understands & decides'} />)}
-          </div>
-        </div>
-
-        <div className={`tr-link ${P.byId.consent === 'done' ? 'done' : P.byId.consent === 'work' ? 'work' : ''}`}>
-          <i className="tr-wire" /><span>Signed request goes to Paytm · answer comes back</span><i className="tr-wire" />
-        </div>
-
-        <div className="tr-team pt">
-          <div className="tr-lab">Paytm side</div>
-          <div className={`tr-root pt ${pSt} t-sky`}>
-            <Avatar n={FLOW.find((n) => n.id === 'paytm')} size={46} />
-            <b>Paytm AI Agent</b><em>Parent agent</em>
-            <span className="tr-st">{pSt === 'work' ? 'Choosing specialist' : pSt === 'idle' ? 'Off' : lbl[pSt]}</span>
-          </div>
-          <div className="tr-stem" />
-          <div className="tr-kids c4">
-            {KIDS.map((id) => {
-              const n = TEAM.find((a) => a.id === id)
-              const r = P.role(id)
-              return <Kid key={id} n={n} sub={r === 'lead' ? 'Chosen specialist' : r === 'support' ? 'Called in to help' : 'Writes the books'} />
+      {/* mesh graph: every agent is a node, every hand-off is a line; only the working agent and its live lines light up */}
+      {(() => {
+        const nst = (id) => (id === 'buddy' ? mSt : id === 'paytm' ? pSt : stateOfId(id))
+        const POS = { buddy: [50, 11], memory: [16, 36], intent: [50, 36], consent: [84, 36], paytm: [50, 62], intelligence: [14, 89], risk: [38, 89], resolution: [62, 89], ledger: [86, 89] }
+        const EDGES = [
+          ['buddy', 'memory'], ['buddy', 'intent'], ['buddy', 'consent'], ['memory', 'intent'], ['intent', 'consent'],
+          ['consent', 'paytm'], ['paytm', 'intelligence'], ['paytm', 'risk'], ['paytm', 'resolution'], ['paytm', 'ledger'],
+          ['intelligence', 'risk'], ['risk', 'resolution'], ['resolution', 'ledger'], ['memory', 'intelligence'],
+        ]
+        const eCls = (f, t) => {
+          const a = nst(f), b = nst(t)
+          if (a === 'standby' || b === 'standby') return 'off'
+          if (a === 'work' || b === 'work') return 'go'
+          if ((a === 'done' || a === 'wait') && (b === 'done' || b === 'wait')) return 'done'
+          return 'off'
+        }
+        const backCls = P.byId.buddy2 === 'work' ? 'go' : P.byId.buddy2 === 'done' ? 'done' : 'off'
+        const info = {
+          buddy: [MPARENT, 'Parent'], memory: [MKIDS[0], 'Recalls history'], intent: [MKIDS[1], 'Understands & decides'], consent: [MKIDS[2], 'Asks permission'],
+          paytm: [PAYTM, 'Parent'], intelligence: [TEAM.find((x) => x.id === 'intelligence'), 'Reads the data'], risk: [TEAM.find((x) => x.id === 'risk'), 'Checks safety'],
+          resolution: [TEAM.find((x) => x.id === 'resolution'), 'Applies the fix'], ledger: [TEAM.find((x) => x.id === 'ledger'), 'Writes the books'],
+        }
+        const label = (id, st) => (st === 'work' ? 'Working' : st === 'done' ? 'Finished' : st === 'wait' ? 'Waiting for helpers' : st === 'standby' ? 'Off · not needed' : 'Off · waiting')
+        return (
+          <div className="mesh">
+            <div className="mesh-band m"><span>Merchant side</span></div>
+            <div className="mesh-band p"><span>Paytm side</span></div>
+            <svg className="mesh-e" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              {EDGES.map(([f, t]) => (
+                <line key={f + t} className={`e ${eCls(f, t)}`} x1={POS[f][0]} y1={POS[f][1]} x2={POS[t][0]} y2={POS[t][1]} vectorEffect="non-scaling-stroke" />
+              ))}
+              <path className={`e back ${backCls}`} d="M 36 11 C 2 11, 2 62, 36 62" vectorEffect="non-scaling-stroke" fill="none" />
+            </svg>
+            {Object.keys(POS).map((id) => {
+              const st = nst(id)
+              const [n, sub] = info[id]
+              const parent = id === 'buddy' || id === 'paytm'
+              const nm = id === 'buddy' ? 'Merchant Buddy' : id === 'paytm' ? 'Paytm AI Agent' : n.short === 'Intel' ? 'Intelligence' : n.short === 'Fix' ? 'Resolution' : n.short
+              return (
+                <div key={id} className={`mn ${parent ? 'par' : ''} ${st} t-${n.tone}`} style={{ left: POS[id][0] + '%', top: POS[id][1] + '%' }}>
+                  <Avatar n={id === 'paytm' ? { pt: true } : n} size={parent ? 46 : 38} />
+                  <b>{nm}</b>
+                  <em>{st === 'work' ? sub : label(id, st)}</em>
+                  <span className="mn-tick"><I.Check size={9} /></span>
+                </div>
+              )
             })}
           </div>
-        </div>
-      </div>
+        )
+      })()}
 
       {/* spotlight: the one agent that is working right now */}
       {spot >= 0 && (() => {
