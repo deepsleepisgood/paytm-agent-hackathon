@@ -171,4 +171,4 @@ def test_reasoning_effort_override(live_client):
 def test_health_reports_v2_models(mock_client):
     models = mock_client.get("/health").json()["models"]
     assert models["stt_mode"] == "codemix"
-    assert models["tts"].startswith("bulbul:v4-flash")
+    assert models["tts"].startswith("bulbul:v3 (priya)")

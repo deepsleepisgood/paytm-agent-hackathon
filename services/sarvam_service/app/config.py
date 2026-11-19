@@ -39,9 +39,11 @@ class Settings:
     # codemix keeps English words ("settlement", "UPI") in Latin script inside Hindi text,
     # which is how merchants actually talk (plan.md: Saaras v3 codemix).
     stt_mode: str = field(default_factory=lambda: os.getenv("SARVAM_STT_MODE", "codemix"))
-    # plan.md: Bulbul v4 Flash. v4 voices are named <name>_<lang>_<style>; empty = model default.
-    tts_model: str = field(default_factory=lambda: os.getenv("SARVAM_TTS_MODEL", "bulbul:v4-flash"))
-    tts_speaker: str = field(default_factory=lambda: os.getenv("SARVAM_TTS_SPEAKER", "").strip())
+    # Bulbul v3 + "priya": picked by ear in testing. v4-flash's default voice
+    # (shubh_enhi_ads) is an advertising style that sounded wrong for a support assistant.
+    # v4 voices are named <name>_<lang>_<style> if you want to try one again.
+    tts_model: str = field(default_factory=lambda: os.getenv("SARVAM_TTS_MODEL", "bulbul:v3"))
+    tts_speaker: str = field(default_factory=lambda: os.getenv("SARVAM_TTS_SPEAKER", "priya").strip())
     # If the primary voice model is rejected, retry once with this known-good pair.
     tts_fallback_model: str = field(default_factory=lambda: os.getenv("SARVAM_TTS_FALLBACK_MODEL", "bulbul:v3"))
     tts_fallback_speaker: str = field(default_factory=lambda: os.getenv("SARVAM_TTS_FALLBACK_SPEAKER", "priya"))

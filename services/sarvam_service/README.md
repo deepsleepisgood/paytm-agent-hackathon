@@ -6,7 +6,7 @@ all on Sarvam AI's Indic models. Implements the Person 1 section of `contract.md
 | Endpoint | Sarvam API used | Model |
 |---|---|---|
 | `POST /stt` | Speech-to-Text (`/speech-to-text`) | Saaras v3, `codemix` mode, auto language detect |
-| `POST /tts` | Text-to-Speech (`/text-to-speech`) | Bulbul v4-flash (default voice); automatic fallback to Bulbul v3 `priya` |
+| `POST /tts` | Text-to-Speech (`/text-to-speech`) | Bulbul v3, voice `priya` (picked by ear over v4-flash's ad-style default) |
 | `POST /doc-extract` | Document AI Extract (`/doc-ai/v1/job/extract`) | Sarvam Vision |
 | `POST /llm` | Chat Completions (`/v1/chat/completions`) | Sarvam-105B |
 | `GET /health` | — | shows live/mock mode |
@@ -41,7 +41,7 @@ pytest -q                         # 76 tests, no key or network needed
 |---|---|
 | 8 scenarios (`MANDATE_TROUBLESHOOT` … `ESCALATE_HUMAN`) | Live: whatever intents your prompt lists. Mock: all 8, keyword-routed, plus slots. |
 | Intent names differ across team docs | Mock reads the intent names **from your system prompt** and answers with yours, e.g. `DUPLICATE_PAYMENT_RECONCILE` vs `DUPLICATE_RECONCILE`, `WORKING_CAPITAL_ADVISORY` vs `GROWTH_ADVISORY`, contract v1's `FEE_GST_LOAN`. |
-| Option A/B/C intervention evaluation | `/llm` with `response_format:"json"`. Optional `"reasoning_effort": "low"` for multi-step prompts (default `none` = fastest). Mock returns `root_cause`, `diagnosis`, `evidence`, `options[A,B,C]` with scores, `selected_option`, `selected_intervention`, `reason` and `reply_text`. |
+| Option A/B/C intervention evaluation | `/llm` with `response_format:"json"`. Tested live: correct diagnosis + choice in **~0.9 s** with reasoning off (the default). **Don't send `reasoning_effort`**: in live testing `"low"` returned JSON without the requested fields. Mock returns `root_cause`, `diagnosis`, `evidence`, `options[A,B,C]` with scores, `selected_option`, `selected_intervention`, `reason` and `reply_text`. |
 | Proactive Chargeback Shield (Shiprocket PoD for #9981) | `/doc-extract` with `use_sample_connector=true` and **no file**: reads the bundled demo PoD `app/samples/pod_9981.png` through Sarvam Vision. Pre-warmed at startup, so it's instant on stage. Response has `connector: {name: "SHIPROCKET_SYNC", sample: true, consent: "GRANTED"}`. |
 | Hindi replies for proactive flows | Mock text replies for: dispute sign-off prompt, chargeback `RELEASED`, cashflow EDI-pause offer, `EDI_PAUSED`, mandate friction, growth advice, duplicate payment. |
 | `MOCK_MODE=true` | Same as `SARVAM_MODE=mock`. |

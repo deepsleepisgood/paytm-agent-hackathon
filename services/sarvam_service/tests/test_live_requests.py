@@ -26,19 +26,40 @@ def test_stt_sends_key_model_and_autodetect(live_client, wav_bytes):
 
 
 @respx.mock
-def test_tts_uses_v4_flash_with_language_code_first(live_client):
+def test_tts_uses_v3_priya_with_language_code_first(live_client):
     clip = tone_wav_base64(0.1)
     route = respx.post(f"{BASE}/text-to-speech").mock(return_value=httpx.Response(200, json={"audios": [clip]}))
     r = live_client.post("/tts", json={"text": "नमस्ते", "language_code": "hi-IN"})
     assert r.status_code == 200 and r.json()["audio_base64"] == clip
     sent = json.loads(route.calls.last.request.content)
     assert len(route.calls) == 1  # no wasted round trip
-    assert sent["model"] == "bulbul:v4-flash" and sent["language_code"] == "hi-IN"
-    assert "speaker" not in sent  # v4 default voice; a v3 name like 'priya' would be a 400
+    assert sent["model"] == "bulbul:v3" and sent["language_code"] == "hi-IN"
+    assert sent["speaker"] == "priya"
 
 
 @respx.mock
-def test_tts_falls_back_to_v3_then_old_field_and_remembers(live_client):
+def test_v4_model_drops_v3_voice_name(monkeypatch):
+    from conftest import _use_settings
+    from fastapi.testclient import TestClient
+    from app import main
+
+    _use_settings(monkeypatch, SARVAM_MODE="live", SARVAM_API_KEY="sk_test", SARVAM_FALLBACK_TO_MOCK="false",
+                  SARVAM_TTS_MODEL="bulbul:v4-flash", SARVAM_TTS_SPEAKER="priya")
+    route = respx.post(f"{BASE}/text-to-speech").mock(return_value=httpx.Response(200, json={"audios": [tone_wav_base64(0.1)]}))
+    TestClient(main.app).post("/tts", json={"text": "नमस्ते", "language_code": "hi-IN"})
+    sent = json.loads(route.calls.last.request.content)
+    assert sent["model"] == "bulbul:v4-flash" and "speaker" not in sent  # 'priya' would be a 400 on v4
+
+
+@respx.mock
+def test_tts_falls_back_to_v3_then_old_field_and_remembers(monkeypatch):
+    from conftest import _use_settings
+    from fastapi.testclient import TestClient
+    from app import main
+
+    _use_settings(monkeypatch, SARVAM_MODE="live", SARVAM_API_KEY="sk_test", SARVAM_FALLBACK_TO_MOCK="false",
+                  SARVAM_TTS_MODEL="bulbul:v4-flash")
+    live_client = TestClient(main.app)
     clip = tone_wav_base64(0.1)
     route = respx.post(f"{BASE}/text-to-speech").mock(side_effect=[
         httpx.Response(400, json={"error": {"message": "model not available"}}),   # v4 rejected
