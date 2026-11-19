@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from . import clock, seed
+from . import clock, repository, seed
 from .seed import Ledger
 
 
@@ -95,6 +95,8 @@ def reset(chargeback_hours_left: float = seed.CHARGEBACK_DEFAULT_HOURS,
     # The V2 delta asks for this explicitly: a reset puts the EDI back to ACTIVE, so a
     # rehearsed demo can run the pause again.
     ledger.loan.status = "ACTIVE"
+    # Restore the Supabase tables to their seeded snapshot too (no-op unless USE_SUPABASE=true).
+    repository.reset(chargeback_hours_left)
 
 
 # --- derived counters the ledger view reports -------------------------------------------
