@@ -104,15 +104,18 @@ def orchestrate(case: Case, module) -> tuple[IntentResult, list[dict]]:
         fn: Callable[[Case], str] | None = getattr(module, stage, None)
         started = time.perf_counter()
 
-        if fn is None:
+        # A PayloadError from any stage propagates to dispatch, which turns it into
+        # BAD_PAYLOAD. The trace is dropped with it: a request we could not parse has
+        # no story worth telling.
+        note = fn(case) if fn is not None else None
+
+        # A stage reports idleness by returning None, either because the module has no
+        # such stage or because this particular case gave it nothing to do. That
+        # distinction matters: "LedgerOpsAgent did not act" is the claim being made, so
+        # it must not be true merely because a function existed and ran.
+        acted = note is not None
+        if not acted:
             note = IDLE_NOTES[agent]
-            acted = False
-        else:
-            # A PayloadError here propagates to dispatch, which turns it into
-            # BAD_PAYLOAD. The trace is dropped with it: a request we could not parse
-            # has no story worth telling.
-            note = fn(case) or IDLE_NOTES[agent]
-            acted = True
 
         trace.append({
             "step": step,

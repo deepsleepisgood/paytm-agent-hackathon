@@ -273,11 +273,15 @@ class Ledger:
     def projected_net_payout_inr(self) -> int:
         """What tomorrow's payout looks like once the pending refund and EDI come out.
 
-        Derived rather than seeded, so pausing the EDI visibly moves it.
+        Derived rather than seeded, so both remedies visibly move it: pausing the EDI
+        keeps the daily instalment, and winning a dispute returns the held amount.
         """
+        released = (self.chargeback.amount_held_inr
+                    if self.chargeback.hold_status == "RELEASED" else 0)
         return (self.projected_gross_tomorrow_inr
                 - self.pending_refund_inr
-                - self.loan.edi_due_tomorrow_inr)
+                - self.loan.edi_due_tomorrow_inr
+                + released)
 
     def settlement_as_dict(self) -> dict:
         return {

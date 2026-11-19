@@ -142,10 +142,42 @@ def _utr_verify(data: dict[str, Any], status: str) -> str:
     )
 
 
+def _chargeback_resolve(data: dict[str, Any], status: str) -> str:
+    held = rupees(data["amount_held_inr"])
+    order = data["order_id"]
+    hours = data.get("hours_left")
+
+    if status == "ACTION_REQUIRED":
+        return (
+            f"A customer has disputed the payment on order {order}, so {held} of your "
+            f"settlement is being held while it is looked into. If you send me the "
+            f"delivery proof for that order in the next {int(hours)} hours, I will "
+            "submit it for you and the money should come back."
+        )
+
+    if status == "ESCALATED":
+        # Says what is wrong and what happens next, without blaming the merchant for a
+        # blurry photo or a passed deadline.
+        return (
+            f"I have your document, but I am not able to submit it myself for order "
+            f"{order}. I have passed it to a Paytm colleague with everything you sent, "
+            f"and they will take it forward before the deadline. The {held} stays held "
+            "until the dispute is decided."
+        )
+
+    return (
+        f"Your delivery proof for order {order} has been submitted as evidence, and the "
+        f"{held} that was being held has been released back to you. It will come through "
+        "in your next settlement. The bank still makes the final decision on the dispute, "
+        "so I will let you know if anything changes."
+    )
+
+
 RENDERERS = {
     "ESCALATE_HUMAN": _escalate_human,
     "SETTLEMENT_RECONCILE": _settlement_reconcile,
     "UTR_VERIFY": _utr_verify,
+    "CHARGEBACK_RESOLVE": _chargeback_resolve,
 }
 
 

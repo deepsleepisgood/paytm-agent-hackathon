@@ -13,10 +13,11 @@ A stage a module leaves out is reported as idle rather than skipped quietly, so
 """
 from __future__ import annotations
 
-from . import escalate, settlement, utr
+from . import chargeback, escalate, settlement, utr
 
 MODULES = {
     "SETTLEMENT_RECONCILE": settlement,
     "UTR_VERIFY": utr,
+    "CHARGEBACK_RESOLVE": chargeback,
     "ESCALATE_HUMAN": escalate,
 }
