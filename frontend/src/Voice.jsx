@@ -214,7 +214,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
       </div>
 
       <div className="v-cap">
-        {state === 'listening' && <div className="cap live">{live || <span className="ph">{T('ph')}</span>}</div>}
+        {state === 'listening' && <div className="cap speech">{live || <span className="ph">{T('ph')}</span>}</div>}
         {state === 'thinking' && lastMe && <div className="cap me">“{lastMe.text}”</div>}
         {(state === 'speaking' || state === 'idle') && reply && info && (
           <div className="answer">
