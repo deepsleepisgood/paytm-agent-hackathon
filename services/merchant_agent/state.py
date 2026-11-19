@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import time
+import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
 
@@ -37,6 +38,7 @@ class MerchantState:
         self.dispute_packets: dict[str, dict[str, Any]] = {}
         self.edi_offers: dict[str, dict[str, Any]] = {}
         self.loan_edi_status = "ACTIVE"  # last EDI status Paytm reported (EDI_PAUSED flips it)
+        self.session_id = f"SESS_{uuid.uuid4().hex[:8].upper()}"  # one per demo run; /reset starts a new one
         self._seq = 0
 
     def reset(self) -> None:

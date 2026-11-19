@@ -9,7 +9,8 @@ import os
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-REAL_DATASET = Path(os.environ.get("DATASET_DIR") or HERE.parents[1] / "dataset")
+REAL_DATASET = Path(os.environ.get("DATASET_DIR") or next(
+    (p for p in (HERE.parents[1] / "data", HERE.parents[1] / "dataset") if p.is_dir()), HERE.parents[1] / "data"))
 NO_DATASET = HERE / "_no_dataset_"  # never created -> every file falls back to built-in
 
 for _k in ("SARVAM_URL", "SARVAM_SERVICE_URL", "PAYTM_URL", "PAYTM_AGENT_URL"):

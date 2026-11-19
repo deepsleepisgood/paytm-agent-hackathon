@@ -77,7 +77,7 @@ def test_response_carries_the_full_loop(client):
     body = ask(client, "Mera ₹500 ka loan EDI mandate fail ho gaya").json()
     assert body["hindi_reply"] == body["reply_text"]
     ins = body["historical_insight"]
-    assert ins["classification"] == "PAYMENT_FRICTION" and ins["metrics"]["sales_dip_pct"] == 40
+    assert ins["classification"] == "PAYMENT_FRICTION" and ins["metrics"]["sales_dip_pct"] == 37
     assert ins["profile"]["daily_avg_sales"] == 32000 and ins["profile"]["weekend_multiplier"] == 2.3
     ev = body["intervention_evaluation"]
     assert [o["id"] for o in ev["options"]] == ["A", "B", "C"] and ev["selected"] == "B"
@@ -99,7 +99,7 @@ def test_willful_default_history_escalates_instead(client, tmp_path):
     (tmp_path / "seed").mkdir()
     (tmp_path / "seed/merchant_history.json").write_text(json.dumps({
         "daily_avg_sales": 32000, "past_edi_success_rate": "70%",
-        "recent_daily_sales": [{"date": "2026-11-15", "sales": 33000}, {"date": "2026-11-16", "sales": 31000}],
+        "recent_daily_sales": [{"date": "2026-11-17", "sales": 21000}, {"date": "2026-11-18", "sales": 20500}],  # normal weekdays
     }), encoding="utf-8")
     use_dataset(tmp_path)
     body = ask(client, "mera EDI mandate fail ho gaya").json()
@@ -142,8 +142,8 @@ def test_policy_blocks_are_respected(client):
 @pytest.mark.parametrize(
     "text,status,needle",
     [
-        ("Customer ne order 7310 ke liye do baar payment kar diya", "REFUND_INITIATED", "Vikas Gupta"),
-        ("Mere pichle 6 mahine ke data se business badhane ka suggestion do", "OFFER_PREAPPROVED", "₹50,000"),
+        ("Customer ne order 4489 ke liye do baar payment kar diya", "REFUND_INITIATED", "Sunita Yadav"),
+        ("Mere pichle 6 mahine ke data se business badhane ka suggestion do", "OFFER_PREAPPROVED", "₹1,50,000"),
         ("Soundbox wapas karna hai, uska bill abhi bhi kat raha hai", "RETURN_INITIATED", "PICKUP-"),
         ("Loan poora settle karna hai, NOC kab milega?", "FORECLOSURE_QUOTE_READY", "NOC"),
         ("Mujhe settlement ka bank account aur KYC change karna hai", "KYC_UPDATE_LINK_SENT", "Penny-drop"),
@@ -265,13 +265,13 @@ def test_khata_json_reconciles_and_tracks_actions(client):
         100000, 1450, 261, 1500, 95840)
     assert s["reconciled"] and s["gst_itc_logged"] == 0 and s["gst_itc_claimable"] == 261
     ask(client, "settlement kam kyun aaya")  # logs the ITC
-    ask(client, "Customer ne order 7310 ke liye do baar payment kar diya")
+    ask(client, "Customer ne order 4489 ke liye do baar payment kar diya")
     k = client.get("/merchant/khata-export").json()
     assert k["summary"]["gst_itc_logged"] == 261
     gst = next(v for v in k["vouchers"] if v["debit_ledger"] == "Input GST on MDR (ITC)")
     assert gst["status"] == "ITC LOGGED" and gst["gst_itc_eligible"]
     dup = next(v for v in k["vouchers"] if v["status"] == "DUPLICATE_REFUND")
-    assert dup["amount"] == 1850 and "7310" in dup["reference"]
+    assert dup["amount"] == 1180 and "4489" in dup["reference"]
     assert "KHATA_UPDATED" in [e["type"] for e in events(client)]
 
 
