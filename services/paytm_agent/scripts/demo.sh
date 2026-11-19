@@ -192,5 +192,46 @@ check "same read, different verdict" \
           && echo yes || echo no )" "yes"
 curl -s -XPOST "$BASE/ledger/reset" > /dev/null
 
+say "Stage 7 — \"did this payment actually arrive?\""
+curl -s -XPOST "$BASE/ledger/reset" > /dev/null
+utr () { # utr <request_id> <session_id> <utr>
+  curl -s -XPOST "$BASE/a2a/dispatch" -H 'content-type: application/json' \
+    -d "{\"request_id\":\"$1\",\"session_id\":\"$2\",\"mid\":\"$MID\",\"intent\":\"UTR_VERIFY\",
+         \"language_code\":\"hi-IN\",\"merchant_said\":\"payment aaya kya?\",
+         \"payload\":{\"utr\":\"$3\"},\"consent_token\":\"ct\"}"
+}
+
+OK=$(utr q1 shop-1 632184920111)
+PN=$(utr q2 shop-2 632184920999)
+NF=$(utr q3 shop-3 111111111111)
+check "settled -> release goods"     "$(echo "$OK" | jq -r '.data.advice')" "RELEASE_GOODS"
+check "pending -> wait"              "$(echo "$PN" | jq -r '.data.advice')" "WAIT"
+check "unknown -> hold the goods"    "$(echo "$NF" | jq -r '.data.advice')" "DO_NOT_RELEASE_YET"
+check "unknown is flagged internally" "$(echo "$NF" | jq -r '.data.internal_flag')" "POSSIBLE_FAKE"
+check "but the flag is never spoken"  "$(echo "$NF" | jq -r '.template_text' | grep -ci 'POSSIBLE_FAKE')" "0"
+for v in OK PN NF; do
+  eval "R=\$$v"
+  check "nothing accusatory ($v)" \
+        "$(echo "$R" | jq -r '.template_text' | grep -ciE 'fake|fraud|scam|suspicious')" "0"
+done
+printf '\n  \033[2mwhat the shopkeeper hears when it is not there:\033[0m\n'
+echo "$NF" | jq -r '.template_text' | fold -s -w 72 | sed 's/^/    /'
+
+utr p1 shop-x 111111111111 > /dev/null
+utr p2 shop-x 222222222222 > /dev/null
+TH=$(utr p3 shop-x 333333333333)
+check "three unknowns in one chat escalates" "$(echo "$TH" | jq -r '.status')" "ESCALATED"
+check "for the right reason" "$(echo "$TH" | jq -r '.escalation_ticket.reason_code')" "REPEATED_UNKNOWN_UTR"
+check "fraud flags counted"  "$(curl -s "$BASE/metrics" | jq '.fraud_flags')" "4"
+
+say "Stage 7 — the team's two names for one scenario"
+for pair in 'DUPLICATE_RECONCILE:501' 'GROWTH_ADVISORY:501' 'MANDATE_TROUBLESHOOT:501' 'MAKE_TEA:400'; do
+  name="${pair%%:*}"; want="${pair#*:}"
+  got=$(curl -s -o /dev/null -w '%{http_code}' -XPOST "$BASE/a2a/dispatch" \
+        -H 'content-type: application/json' \
+        -d "{\"request_id\":\"n-$name\",\"mid\":\"$MID\",\"intent\":\"$name\",\"consent_token\":\"ct\",\"payload\":{}}")
+  check "$name" "$got" "$want"
+done
+
 printf '\n\033[1m%d passed, %d failed\033[0m\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

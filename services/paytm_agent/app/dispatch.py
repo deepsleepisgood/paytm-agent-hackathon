@@ -29,7 +29,13 @@ from .errors import PayloadError, error_body
 from .escalation import create_ticket
 from .intents import MODULES
 from .mesh import Case
-from .models import INTENTS, OUTCOME_BY_STATUS, DispatchRequest, IntentResult
+from .models import (
+    INTENTS,
+    OUTCOME_BY_STATUS,
+    DispatchRequest,
+    IntentResult,
+    canonical_intent,
+)
 
 log = logging.getLogger("paytm_agent.dispatch")
 
@@ -58,17 +64,19 @@ def dispatch(req: DispatchRequest) -> tuple[dict, int]:
         return error_body("UNKNOWN_MID", f"No merchant {req.mid!r} in this service"), 404
 
     # --- 4. the intent ------------------------------------------------------------------
-    if req.intent not in INTENTS:
+    # Normalised, because the same scenario has two names across the team.
+    intent = canonical_intent(req.intent)
+    if intent is None:
         return error_body(
             "UNKNOWN_INTENT",
             f"{req.intent!r} is not one of {list(INTENTS)}",
         ), 400
 
-    module = MODULES.get(req.intent)
+    module = MODULES.get(intent)
     if module is None:
         # Scaffolding while the intents are built one stage at a time. A test at stage 7
         # asserts every contract intent has a handler, so this cannot survive to the demo.
-        return error_body("INTERNAL", f"{req.intent} is not implemented yet"), 501
+        return error_body("INTERNAL", f"{intent} is recognised but not implemented yet"), 501
 
     # --- 5. the session -----------------------------------------------------------------
     # Falls back to the request id so an agent that forgets session_id still works; it
@@ -85,7 +93,7 @@ def dispatch(req: DispatchRequest) -> tuple[dict, int]:
         # the partial trace is dropped with the error.
         return error_body("BAD_PAYLOAD", str(exc)), 400
 
-    session.intents_seen.append(req.intent)
+    session.intents_seen.append(intent)
 
     # --- 7. side effects, in order ------------------------------------------------------
     if result.fraud_event:
@@ -112,7 +120,9 @@ def dispatch(req: DispatchRequest) -> tuple[dict, int]:
         "merchant_name": store.ledger.merchant_name,  # CONTRACT
         "language_code": req.language_code,  # CONTRACT
         "merchant_said": req.merchant_said,  # CONTRACT
-        "intent": req.intent,  # CONTRACT
+        # Canonical, so the console groups the same scenario under one name however
+        # the caller spelled it.
+        "intent": intent,  # CONTRACT
         "found": result.found,  # CONTRACT
         "action_taken": result.action_taken,  # CONTRACT
         "outcome": OUTCOME_BY_STATUS[result.status],  # CONTRACT
@@ -125,13 +135,17 @@ def dispatch(req: DispatchRequest) -> tuple[dict, int]:
     body = {
         "request_id": req.request_id,  # CONTRACT
         "status": result.status,  # CONTRACT
+        # Echoed exactly as the caller sent it, so Person 3's own validation passes
+        # whichever of the two names they chose.
         "intent": req.intent,  # CONTRACT
+        # Additive: the name this service worked with, when it differed.
+        **({"intent_canonical": intent} if intent != req.intent else {}),
         "data": result.data,  # CONTRACT
         # Composed by ResolutionAgent; the fallback covers an intent whose module does
         # not write one yet.
         "template_text": (
             result.template_text
-            or templates.render(req.intent, result.data, result.status)
+            or templates.render(intent, result.data, result.status)
         ),  # CONTRACT
         # Which sub-agents collaborated on this request, and what each concluded.
         "agent_trace": agent_trace,

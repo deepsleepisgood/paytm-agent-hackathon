@@ -98,9 +98,54 @@ def _settlement_reconcile(data: dict[str, Any], status: str) -> str:
     return text
 
 
+def _utr_verify(data: dict[str, Any], status: str) -> str:
+    """What the shopkeeper hears while the customer is still standing there.
+
+    Every branch avoids the word the merchant must not repeat to their customer. The
+    strongest thing said about a missing payment is that it is not in the account.
+    """
+    utr = data["utr"]
+    lookup = data["lookup_status"]
+
+    if status == "ESCALATED":
+        return (
+            "Several of the payment references you have given me are not in your "
+            "account. Please do not hand over any goods for them. I am asking a Paytm "
+            "colleague to call you about this straight away."
+        )
+
+    if lookup == "SUCCESS_SETTLED":
+        text = (
+            f"Yes, {rupees(data['amount_inr'])} came in from {data['payer_app']} "
+            f"on reference {utr} and it has been settled to you. You can hand over the goods."
+        )
+        if data.get("amount_matches_claim") is False:
+            text += (
+                f" One thing to check: the amount that arrived is "
+                f"{rupees(data['amount_inr'])}, which is not what you were told."
+            )
+        return text
+
+    if lookup == "PENDING":
+        return (
+            f"Reference {utr} for {rupees(data['amount_inr'])} from {data['payer_app']} "
+            "is still being processed. It is not in your account yet. If it does not go "
+            "through, it reverses to the customer by the next working day on its own, so "
+            "please wait before handing over the goods."
+        )
+
+    # NOT_FOUND. The one sentence this whole module exists to get right.
+    return (
+        f"I cannot find reference {utr} in your account, so please do not hand over the "
+        "goods yet. It may have been typed differently, or paid into another account. "
+        "I can open a ticket so someone checks it properly for you."
+    )
+
+
 RENDERERS = {
     "ESCALATE_HUMAN": _escalate_human,
     "SETTLEMENT_RECONCILE": _settlement_reconcile,
+    "UTR_VERIFY": _utr_verify,
 }
 
 

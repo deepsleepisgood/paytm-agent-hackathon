@@ -11,16 +11,39 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-# The six intents this service answers. Anything else is the UNKNOWN_INTENT error,
-# not an OUT_OF_SCOPE escalation: we cannot summarise a case we did not understand.
+# The intents this service answers. Anything else is the UNKNOWN_INTENT error, not an
+# OUT_OF_SCOPE escalation: we cannot summarise a case we did not understand.
+#
+# The first eight are the scenario table. The last two are contract.md v1 intents that
+# Person 1 and Person 3 still emit, so rejecting them would break a working integration
+# for no gain.
 INTENTS = (
+    "MANDATE_TROUBLESHOOT",
     "SETTLEMENT_RECONCILE",
-    "UTR_VERIFY",
     "CHARGEBACK_RESOLVE",
-    "REFUND_MANAGE",
-    "FEE_GST_LOAN",
+    "UTR_VERIFY",
+    "DUPLICATE_PAYMENT_RECONCILE",
+    "WORKING_CAPITAL_ADVISORY",
+    "CASHFLOW_EDI_SWITCH",
     "ESCALATE_HUMAN",
+    "FEE_GST_LOAN",
+    "REFUND_MANAGE",
 )
+
+# The same scenario goes by two names across the team: Person 1's sarvam_service calls
+# these two its canonical names and treats ours as the alternatives, and its mock will
+# emit whichever name the caller listed in its own prompt. Rather than make anyone
+# rename anything mid-hackathon, both are accepted and normalised here.
+INTENT_ALIASES = {
+    "DUPLICATE_RECONCILE": "DUPLICATE_PAYMENT_RECONCILE",
+    "GROWTH_ADVISORY": "WORKING_CAPITAL_ADVISORY",
+}
+
+
+def canonical_intent(name: str) -> str | None:
+    """The name this service works with, or None if we do not recognise it at all."""
+    resolved = INTENT_ALIASES.get(name, name)
+    return resolved if resolved in INTENTS else None
 
 Status = Literal["RESOLVED", "ACTION_REQUIRED", "ESCALATED", "ERROR"]
 
