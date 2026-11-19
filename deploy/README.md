@@ -74,6 +74,21 @@ UTTERANCE_FAST_PATH=1
 `RAILWAY_PUBLIC_DOMAIN` is a bare hostname, so the `https://` prefix is required. Do not set `DATASET_DIR`:
 the image keeps the repo layout, so 8003 finds `/app/data/seed` by itself.
 
+**Supabase (optional; persistence + the frontend's Realtime feed, see `supabase/README.md`).** Both images
+already include `psycopg`. Add these only once you have the two role passwords from `supabase/README.md`
+step 1. Without them, leave `USE_SUPABASE` unset and the services run in memory.
+```
+# paytm-agent
+USE_SUPABASE=true
+PAYTM_DB_URL=postgresql://paytm_svc.ijitntwpnqwkjrboweky:<paytm_svc-password>@aws-0-ap-south-1.pooler.supabase.com:6543/postgres
+# merchant-agent
+USE_SUPABASE=true
+MERCHANT_DB_URL=postgresql://merchant_svc.ijitntwpnqwkjrboweky:<merchant_svc-password>@aws-0-ap-south-1.pooler.supabase.com:6543/postgres
+```
+Use the transaction pooler (port 6543), as above, and copy the exact host from Supabase → Connect. The direct
+`db.<ref>.supabase.co` host is IPv6-only. Each service gets only its own role. Never put the service-role key
+or the `postgres` owner URL on Railway.
+
 ### 1c. Check
 ```
 curl https://<sarvam-service>.up.railway.app/health    # "mode":"live","api_key_configured":true
@@ -94,6 +109,9 @@ The 8002 employee console is served by 8002 itself: `https://<paytm-agent>.up.ra
   VITE_PAYTM_URL=https://<paytm-agent>.up.railway.app
   VITE_SARVAM_URL=https://<sarvam-service>.up.railway.app
   VITE_MID=PAYTM_MERCH_8821
+  # Supabase Realtime (public read-only anon/publishable key; RLS allows SELECT on 8 demo tables only)
+  VITE_SUPABASE_URL=https://ijitntwpnqwkjrboweky.supabase.co
+  VITE_SUPABASE_ANON_KEY=<publishable key, Supabase → Project Settings → API>
   ```
   These are baked in at **build** time. After changing one, **Redeploy** for it to take effect.
 - No `vercel.json` is needed: the app has no client-side routes.
@@ -113,6 +131,8 @@ The 8002 employee console is served by 8002 itself: `https://<paytm-agent>.up.ra
 - **Secrets:** the Sarvam key belongs only in Railway's `sarvam-service` variables and your local root `.env`.
   `VITE_*` values are public: they end up in the browser bundle.
 - **Sarvam credits:** set `SARVAM_MODE=mock` on `sarvam-service` while rehearsing, then switch back to `auto`.
+- **Supabase free tier pauses after a week without traffic.** Open the dashboard and restore the project
+  before the demo. If it's down, the services fall back to memory after one log line (30 s circuit breaker).
 
 ## Local run (one shared root `.env`)
 Copy `.env.example` to `.env` at the repo root and add the key. 8001 and 8002 find it through `load_dotenv()`,
