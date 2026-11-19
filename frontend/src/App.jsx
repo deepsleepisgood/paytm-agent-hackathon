@@ -1,12 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { I, PaytmLogo } from './icons.jsx'
-import { SEED, inr } from './data.js'
+import { inr } from './data.js'
+import { MERCHANTS, MERCHANT_LIST, DEFAULT_MERCHANT } from './merchants.js'
+import { SCENARIOS, runScenario, routeText, initLedger, applyEffects } from './engine.js'
+import Buddy from './Buddy.jsx'
+import Center from './Center.jsx'
+import Right from './Right.jsx'
 import { getLedger } from './api.js'
 
 const TABS = [
   { id: 'home', label: 'Home', icon: I.Home },
   { id: 'settlements', label: 'Settlements', icon: I.Bank },
-  { id: 'qr', label: 'QR', icon: I.QR, center: true },
+  { id: 'buddy', label: 'AI Buddy', icon: I.Spark, center: true },
   { id: 'loans', label: 'Loan', icon: I.Loan },
   { id: 'account', label: 'Account', icon: I.User },
 ]
@@ -50,7 +55,7 @@ function Home({ d, go }) {
       <div className="topbar">
         <PaytmLogo size={22} />
         <div className="tb-r">
-          <button className="ai-badge" onClick={() => go('ai')} aria-label="AI Teammate"><I.Spark size={14} /><b>AI</b></button>
+          <button className="ai-badge" onClick={() => go('buddy')} aria-label="AI Teammate"><I.Spark size={14} /><b>AI</b></button>
           <span className="dotwrap"><I.Bell size={22} /><em /></span>
         </div>
       </div>
@@ -218,7 +223,7 @@ function Soundbox({ back }) {
 /* ---------------- Loans ---------------- */
 function Loans({ d }) {
   const l = d.loan
-  const pct = Math.round(((100000 - l.balance) / 100000) * 100)
+  const pct = Math.round(((l.principal - l.balance) / l.principal) * 100)
   return (
     <div className="screen">
       <Header title="Business Loan" />
@@ -226,7 +231,7 @@ function Loans({ d }) {
         <div className="muted">Outstanding balance</div>
         <div className="big">{inr(l.balance)}</div>
         <div className="bar"><i style={{ width: pct + '%' }} /></div>
-        <div className="muted sm">{pct}% repaid of ₹1,00,000</div>
+        <div className="muted sm">{pct}% repaid of {inr(l.principal)}</div>
       </div>
       <div className="card">
         <div className="row between line"><span>Daily EDI</span><b>{inr(l.edi)}/day</b></div>
@@ -292,19 +297,6 @@ function Offers({ back }) {
   )
 }
 
-function AI({ back }) {
-  return (
-    <div className="screen">
-      <Header title="AI Teammate" back={back} />
-      <div className="card center-card">
-        <div className="sb-device"><I.Spark size={44} /></div>
-        <b>Your autonomous AI Teammate</b>
-        <div className="muted sm">Ask in Hindi or English. Reconcile settlements, verify UTRs, resolve chargebacks. Connects to the agent team on ports 8002/8003.</div>
-      </div>
-    </div>
-  )
-}
-
 function Header({ title, back }) {
   return (
     <div className="hdr">
@@ -315,62 +307,135 @@ function Header({ title, back }) {
   )
 }
 
-/* ---------------- Shell ---------------- */
+/* ---------------- Shell: 3-column command center ---------------- */
+const STEP_MS = 700
+const welcome = (m) => [{ who: 'ai', text: `Namaste ${m.profile.owner.split(' ')[0]} ji! Main ${m.profile.name} ka AI Buddy hoon. Settlement, UTR, chargeback, refund, loan EDI — kuch bhi poochiye.` }]
+
 export default function App() {
-  const [tab, setTab] = useState('home')
+  const [mkey, setMkey] = useState(DEFAULT_MERCHANT)
+  const m = MERCHANTS[mkey]
+  const [tab, setTab] = useState('buddy')
   const [sub, setSub] = useState(null)
-  const [d] = useState(SEED)
   const [live, setLive] = useState(false)
+  const [ledger, setLedger] = useState(() => initLedger(m))
+  const [chat, setChat] = useState(() => welcome(m))
+  const [run, setRun] = useState(null)
+  const [reveal, setReveal] = useState(0)
+  const [busy, setBusy] = useState(false)
+  const [speak, setSpeak] = useState(false)
+  const timers = useRef([])
   const scroller = useRef(null)
 
   useEffect(() => { scroller.current?.scrollTo(0, 0) }, [tab, sub])
-  // Pull live state from the Paytm agent (8002) when it's running; fall back to seed data.
+  // Pull live state from the Paytm agent (8002) when it's running; the demo itself runs on the local engine.
   useEffect(() => {
     let off = false
-    getLedger().then((l) => { if (!off && l) setLive(true) })
+    getLedger(m.mid).then((l) => { if (!off) setLive(!!l) })
     return () => { off = true }
-  }, [])
+  }, [m.mid])
 
+  const clear = () => { timers.current.forEach(clearTimeout); timers.current = [] }
+  useEffect(() => clear, [])
+
+  const reset = (key = mkey) => {
+    clear()
+    const nm = MERCHANTS[key]
+    setLedger(initLedger(nm)); setChat(welcome(nm)); setRun(null); setReveal(0); setBusy(false); setTab('buddy'); setSub(null)
+  }
+  const pickMerchant = (key) => { setMkey(key); reset(key) }
+
+  const start = (sc, ctx = {}) => {
+    if (busy) return
+    const r = runScenario(sc, m, ctx)
+    setTab('buddy'); setSub(null)
+    setRun(r); setReveal(0); setBusy(true)
+    setChat((c) => [...c, { who: 'me', text: r.utterance }])
+    r.steps.forEach((s, i) => {
+      timers.current.push(setTimeout(() => {
+        setReveal(i + 1)
+        if (s.effects) setLedger((L) => applyEffects(L, s.effects))
+        if (s.key === 'reply') {
+          setChat((c) => [...c, { who: 'ai', text: s.reply, tone: s.tone }])
+          setBusy(false)
+          if (speak && 'speechSynthesis' in window) {
+            const u = new SpeechSynthesisUtterance(s.reply); u.lang = 'hi-IN'; window.speechSynthesis.speak(u)
+          }
+        }
+      }, STEP_MS * (i + 1)))
+    })
+  }
+
+  const onPreset = (id) => start(SCENARIOS.find((s) => s.id === id))
+  const onText = (text) => {
+    const id = routeText(text)
+    const sc = SCENARIOS.find((s) => s.id === id)
+    if (!sc || (sc.available && !sc.available(m))) {
+      setChat((c) => [...c, { who: 'me', text }, { who: 'ai', text: 'Maaf kijiye, samajh nahi aaya. Neeche ke quick scenarios try kijiye.' }])
+      return
+    }
+    start(sc, { utterance: text })
+  }
+  const onUpload = (kind, file) => {
+    const sc = SCENARIOS.find((s) => s.id === (kind === 'pod' ? 'cb' : 'fake'))
+    if (sc.available && !sc.available(m)) {
+      setChat((c) => [...c, { who: 'ai', text: 'Is merchant ka koi chargeback hold nahi hai, PoD ki zaroorat nahi.' }])
+      return
+    }
+    start(sc, { file, utterance: kind === 'pod' ? `📄 ${file} (Proof of Delivery)` : `📱 ${file} (UPI screenshot)` })
+  }
+
+  const d = m.d
   const go = (to) => { if (TOPS.includes(to)) { setTab(to); setSub(null) } else setSub(to) }
   const back = () => setSub(null)
-
   const subs = {
     history: <History d={d} back={back} />,
     soundbox: <Soundbox back={back} />,
     refunds: <Refunds d={d} back={back} />,
     offers: <Offers back={back} />,
-    ai: <AI back={back} />,
+    qr: <QR d={d} back={back} />,
   }
   const tabs = {
     home: <Home d={d} go={go} />,
     settlements: <Settlement d={d} />,
-    qr: <QR d={d} />,
     loans: <Loans d={d} />,
     account: <Account d={d} />,
+    buddy: <Buddy m={m} chat={chat} busy={busy} onPreset={onPreset} onText={onText} onUpload={onUpload} speak={speak} setSpeak={setSpeak} />,
   }
   const body = (sub && subs[sub]) || tabs[tab]
 
   return (
-    <div className="stage">
-      <div className="side">
-        <PaytmLogo size={34} />
-        <p>Mobile clone · Person 4 frontend</p>
-        <div className={`conn ${live ? 'on' : ''}`}>{live ? 'Live: Paytm agent connected' : 'Offline: using seed data'}</div>
-      </div>
-      <div className="phone">
-        <div className="notch" />
-        <StatusBar />
-        <div className="content" ref={scroller}>{body}</div>
-        <nav className="tabs">
-          {TABS.map((t) => (
-            <button key={t.id} className={`${tab === t.id && !sub ? 'on' : ''} ${t.center ? 'ctr' : ''}`} onClick={() => go(t.id)}>
-              {t.center ? <span className="qr-fab"><t.icon size={26} /></span> : <t.icon size={22} />}
-              <span>{t.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="home-ind" />
-      </div>
+    <div className="cc">
+      <header className="cc-top">
+        <PaytmLogo size={20} />
+        <div className="cc-title"><b>A2A Merchant–Paytm Resolution Network</b><span className="muted xs">Track 3 · Autonomous AI Teammates</span></div>
+        <div className="cc-r">
+          <select value={mkey} onChange={(e) => pickMerchant(e.target.value)} aria-label="Merchant">
+            {MERCHANT_LIST.map((x) => <option key={x.slug} value={x.slug}>{x.name}</option>)}
+          </select>
+          <span className={`conn ${live ? 'on' : ''}`}>{live ? 'Paytm agent live' : 'Local demo engine'}</span>
+          <button className="reset" onClick={() => reset()}>Reset Demo</button>
+        </div>
+      </header>
+      <main className="cc-grid">
+        <section className="col left">
+          <div className="phone">
+            <div className="notch" />
+            <StatusBar />
+            <div className={`content ${tab === 'buddy' && !sub ? 'flex' : ''}`} ref={scroller}>{body}</div>
+            <nav className="tabs">
+              {TABS.map((t) => (
+                <button key={t.id} className={`${tab === t.id && !sub ? 'on' : ''} ${t.center ? 'ctr' : ''}`} onClick={() => go(t.id)}>
+                  {t.center ? <span className="qr-fab"><t.icon size={24} /></span> : <t.icon size={22} />}
+                  <span>{t.label}</span>
+                </button>
+              ))}
+            </nav>
+            <div className="home-ind" />
+          </div>
+        </section>
+        <Center run={run} reveal={reveal} />
+        <Right m={m} L={ledger} />
+      </main>
     </div>
   )
 }

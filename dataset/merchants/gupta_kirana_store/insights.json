@@ -1,0 +1,63 @@
+{
+  "period": "Jun–Nov 2026",
+  "months": [
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov"
+  ],
+  "monthly_sales": [
+    980000,
+    1010000,
+    1040000,
+    1075000,
+    1140000,
+    1160000
+  ],
+  "weekdays": [
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
+    "Sun"
+  ],
+  "weekday_avg_sales": [
+    34000,
+    33000,
+    35000,
+    36000,
+    39000,
+    46000,
+    41000
+  ],
+  "peak_note": "Saturday evening peak; Sunday second best",
+  "cashflow_health": {
+    "score": 81,
+    "label": "Healthy",
+    "note": "Daily EDI ₹250 is 0.7% of average sales"
+  },
+  "growth_suggestions": [
+    {
+      "id": "g1",
+      "title": "Saturday bulk-basket offer",
+      "hinglish": "Shanivar shaam ko monthly ration basket par ₹100 ki chhoot do.",
+      "impact": "+6% Saturday sales"
+    },
+    {
+      "id": "g2",
+      "title": "Free home delivery above ₹500",
+      "hinglish": "₹500 se upar free home delivery karo, repeat orders badhenge.",
+      "impact": "+12% repeat orders"
+    },
+    {
+      "id": "g3",
+      "title": "Move stock cycle to Thu",
+      "hinglish": "Guruvar ko stock mangwao taaki weekend par shelf full rahe.",
+      "impact": "Fewer stock-outs"
+    }
+  ]
+}
