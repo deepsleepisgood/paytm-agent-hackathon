@@ -12,6 +12,7 @@ from fastapi import HTTPException
 import advisor
 import dataset_loader as dl
 import khata
+import repository
 import upstream
 from schemas import Slots
 from state import STATE, order_sheet
@@ -578,6 +579,7 @@ async def run(
             "raised_at": time.time(),
         }
         STATE.fraud_alerts.append(fraud_alert)
+        repository.add_fraud_alert(fraud_alert)  # no-op unless USE_SUPABASE=true
         STATE.log(
             "FRAUD_ALERT",
             ACTOR_MERCHANT,
