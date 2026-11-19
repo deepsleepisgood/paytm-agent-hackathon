@@ -35,6 +35,17 @@ merchant_agent (8003) ──A2A HTTP──▶ paytm_agent (8002)        frontend
 
 ## One-time setup (≈5 minutes, on your laptop)
 
+**Quick path (one command).** After step 2 below (expose the schemas), run from the repo root:
+```bash
+python -m pip install "psycopg[binary]" psycopg-pool pandas pytest
+python supabase/seed/setup_local.py
+```
+It asks for the database password once (hidden; Project Settings → Database → Reset if forgotten), loads and verifies
+the data, gives `paytm_svc` / `merchant_svc` fresh random passwords (sent as SCRAM hashes, never printed) and writes
+`USE_SUPABASE=true` + the connection strings into the services' git-ignored `.env` files. Steps 1, 3 and 4 below are
+what it does, if you prefer to do them by hand.
+
+
 1. **Give the service roles passwords**: Dashboard → SQL Editor. Use two new random strings; never commit them:
    ```sql
    alter role paytm_svc    with password '<random-1>';
