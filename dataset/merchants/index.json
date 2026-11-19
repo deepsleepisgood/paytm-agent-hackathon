@@ -1,0 +1,41 @@
+{
+  "default_mid": "PAYTM_MERCH_1103",
+  "merchants": [
+    {
+      "slug": "raju_chai_tapri",
+      "mid": "PAYTM_MERCH_1101",
+      "name": "Raju Chai Tapri",
+      "type": "Chai tapri / street snacks",
+      "gross": 6800,
+      "net": 6564,
+      "variance": 236,
+      "mdr": 23,
+      "gst": 4,
+      "chargeback": false
+    },
+    {
+      "slug": "gupta_kirana_store",
+      "mid": "PAYTM_MERCH_1102",
+      "name": "Gupta General & Kirana Store",
+      "type": "Kirana / grocery",
+      "gross": 38000,
+      "net": 36065,
+      "variance": 1935,
+      "mdr": 115,
+      "gst": 21,
+      "chargeback": true
+    },
+    {
+      "slug": "bikaner_misthan_bhandar",
+      "mid": "PAYTM_MERCH_1103",
+      "name": "Bikaner Misthan Bhandar",
+      "type": "Sweets & restaurant (Bikaner style)",
+      "gross": 72000,
+      "net": 67973,
+      "variance": 4027,
+      "mdr": 532,
+      "gst": 96,
+      "chargeback": true
+    }
+  ]
+}

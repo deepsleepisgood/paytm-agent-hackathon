@@ -1,0 +1,26 @@
+{
+  "orders": [
+    {
+      "order_id": "#K-1187",
+      "amount": 450,
+      "type": "REFUND",
+      "status": "PROCESSED",
+      "note": "Expired packet returned"
+    },
+    {
+      "order_id": "#K-2290",
+      "txn_id": "#K-2290",
+      "amount": 1200,
+      "type": "CHARGEBACK",
+      "status": "HELD",
+      "pod_required": true,
+      "pod_due_hours": 48,
+      "delivered": true,
+      "note": "Home delivery, customer claims not received"
+    }
+  ],
+  "refund_policy": {
+    "autonomous_max_inr": 5000,
+    "above_threshold": "ESCALATE_HUMAN"
+  }
+}

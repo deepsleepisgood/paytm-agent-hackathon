@@ -1,0 +1,30 @@
+[
+  {
+    "utr": "632184921301",
+    "amount": 1650,
+    "payer_app": "GPay",
+    "status": "SUCCESS",
+    "settled": true,
+    "time": "01:15 PM",
+    "payer": "Family lunch"
+  },
+  {
+    "utr": "632184921302",
+    "amount": 3800,
+    "payer_app": "PhonePe",
+    "status": "PENDING",
+    "settled": false,
+    "note": "NPCI T+1 auto-reversal",
+    "time": "08:05 PM",
+    "payer": "Diwali gift box"
+  },
+  {
+    "utr": "632184921303",
+    "amount": 950,
+    "payer_app": "Paytm",
+    "status": "SUCCESS",
+    "settled": true,
+    "time": "08:40 PM",
+    "payer": "Walk-in"
+  }
+]

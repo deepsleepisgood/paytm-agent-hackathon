@@ -1,0 +1,30 @@
+[
+  {
+    "utr": "632184921101",
+    "amount": 20,
+    "payer_app": "PhonePe",
+    "status": "SUCCESS",
+    "settled": true,
+    "time": "07:12 AM",
+    "payer": "Walk-in"
+  },
+  {
+    "utr": "632184921102",
+    "amount": 2100,
+    "payer_app": "GPay",
+    "status": "SUCCESS",
+    "settled": true,
+    "time": "09:40 AM",
+    "payer": "Office catering (Tower B)"
+  },
+  {
+    "utr": "632184921103",
+    "amount": 40,
+    "payer_app": "Paytm",
+    "status": "PENDING",
+    "settled": false,
+    "note": "NPCI T+1 auto-reversal",
+    "time": "05:55 PM",
+    "payer": "Walk-in"
+  }
+]

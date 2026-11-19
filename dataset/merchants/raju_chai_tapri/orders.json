@@ -1,0 +1,15 @@
+{
+  "orders": [
+    {
+      "order_id": "#T-204",
+      "amount": 60,
+      "type": "REFUND",
+      "status": "PROCESSED",
+      "note": "Double scan, refunded"
+    }
+  ],
+  "refund_policy": {
+    "autonomous_max_inr": 5000,
+    "above_threshold": "ESCALATE_HUMAN"
+  }
+}

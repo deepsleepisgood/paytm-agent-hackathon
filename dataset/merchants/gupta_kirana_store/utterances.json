@@ -1,0 +1,30 @@
+{
+  "SETTLEMENT_RECONCILE": [
+    {
+      "id": "p1",
+      "hinglish": "Kal ₹38,000 ka sale tha, bank mein ₹36,065 aaya, baaki kahan gaya?",
+      "preset": true
+    }
+  ],
+  "CHARGEBACK_RESOLVE": [
+    {
+      "id": "c1",
+      "hinglish": "Haan, delivery proof bhejo (Order #K-2290)",
+      "preset": true
+    }
+  ],
+  "UTR_VERIFY": [
+    {
+      "id": "u1",
+      "hinglish": "Customer ne ₹2,750 ka screenshot dikhaya, check karo",
+      "preset": true
+    }
+  ],
+  "FEE_GST_LOAN": [
+    {
+      "id": "f1",
+      "hinglish": "Composition scheme mein GST ITC milega?",
+      "preset": true
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "Raju Chai Tapri",
+  "owner": "Raju Yadav",
+  "category": "Chai tapri / street snacks",
+  "segment": "MICRO",
+  "city": "Gurugram",
+  "locality": "Sector 29 Market",
+  "bank_account": "SBI ••3302",
+  "gst": {
+    "registered": false,
+    "gstin": null,
+    "itc_eligible": false
+  },
+  "avg_ticket_inr": 25,
+  "daily_txn_count": 240,
+  "mid": "PAYTM_MERCH_1101",
+  "language_pref": "hi-IN",
+  "devices": [
+    {
+      "type": "SOUNDBOX",
+      "device_id": "SB-11011",
+      "monthly_rental": 149,
+      "status": "CONNECTED"
+    }
+  ]
+}

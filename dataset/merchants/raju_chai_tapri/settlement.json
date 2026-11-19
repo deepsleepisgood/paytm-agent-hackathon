@@ -1,0 +1,48 @@
+{
+  "mid": "PAYTM_MERCH_1101",
+  "date": "2026-11-18",
+  "gross": 6800,
+  "net_bank_credit": 6564,
+  "variance": 236,
+  "gross_mix": [
+    {
+      "mode": "BANK_UPI",
+      "amount": 4700,
+      "mdr_rate_pct": 0.0
+    },
+    {
+      "mode": "WALLET_ON_UPI_GT_2K",
+      "amount": 2100,
+      "mdr_rate_pct": 1.1
+    }
+  ],
+  "deductions": [
+    {
+      "code": "MDR_FEE",
+      "amount": 23,
+      "label": "MDR Fee"
+    },
+    {
+      "code": "GST_ON_MDR",
+      "amount": 4,
+      "label": "GST on MDR (18%)",
+      "itc_eligible": false
+    },
+    {
+      "code": "CUSTOMER_REFUND",
+      "amount": 60,
+      "label": "Customer Refund",
+      "ref": "#T-204",
+      "status": "PROCESSED"
+    },
+    {
+      "code": "SOUNDBOX_RENTAL",
+      "amount": 149,
+      "label": "Soundbox Rental"
+    }
+  ],
+  "checks": {
+    "sum_of_deductions": 236,
+    "gross_minus_deductions": 6564
+  }
+}
