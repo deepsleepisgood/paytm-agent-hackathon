@@ -33,20 +33,22 @@ export default function Right({ m, L }) {
   return (
     <div className="col right">
       <div className="col-h">
-        <div><b>Paytm Acquiring & Lending Ledger</b><div className="muted xs">{m.profile.name} · {m.mid}</div></div>
-        <span className="state done"><i className="live" /> Live</span>
+        <div><b>What changed in Paytm’s books</b><div className="muted xs">{m.profile.name} · {m.mid}</div></div>
+        <span className="state done"><i className="live" /> Live ledger</span>
       </div>
 
+      <div className="sec">Impact so far</div>
       <div className="kpis">
-        <div className="kpi k1"><b>{L.verified}</b><span>Verified outcomes</span></div>
-        <div className="kpi k2"><b>{L.learned}</b><span>Strategies learned</span></div>
-        <div className="kpi"><b>{L.deflected}</b><span>Tickets deflected</span></div>
-        <div className="kpi k4"><b>{L.fraud}</b><span>Frauds blocked</span></div>
+        <div className="kpi k1"><b key={L.verified}>{L.verified}</b><span>Solved by AI</span></div>
+        <div className="kpi k2"><b key={L.learned}>{L.learned}</b><span>Strategies learned</span></div>
+        <div className="kpi"><b key={L.deflected}>{L.deflected}</b><span>Tickets avoided</span></div>
+        <div className="kpi k4"><b key={L.fraud}>{L.fraud}</b><span>Frauds blocked</span></div>
       </div>
       {L.learnedLog.length > 0 && (
         <div className="learn">{L.learnedLog.map((t, i) => <div key={i}>🧠 {t}</div>)}</div>
       )}
 
+      <div className="sec">Money</div>
       <Waterfall m={m} L={L} />
 
       {L.chargeback && (
@@ -56,6 +58,7 @@ export default function Right({ m, L }) {
         </div>
       )}
 
+      <div className="sec">Loan, account & payments</div>
       <div className="rcard">
         <div className="r-h"><b>Loan EDI</b><span className={`st ${stat}`}>{lo.status}</span></div>
         <div className="steps3">

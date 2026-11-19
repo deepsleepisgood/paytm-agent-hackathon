@@ -323,6 +323,7 @@ export default function App() {
   const [reveal, setReveal] = useState(0)
   const [busy, setBusy] = useState(false)
   const [speak, setSpeak] = useState(false)
+  const [queue, setQueue] = useState([])
   const timers = useRef([])
   const scroller = useRef(null)
 
@@ -363,6 +364,23 @@ export default function App() {
         }
       }, STEP_MS * (i + 1)))
     })
+  }
+
+  // Guided demo: plays the golden path one scenario after another.
+  useEffect(() => {
+    if (busy || !queue.length) return
+    const t = setTimeout(() => {
+      const [id, ...rest] = queue
+      setQueue(rest)
+      const sc = SCENARIOS.find((s) => s.id === id)
+      if (sc && (!sc.available || sc.available(m))) start(sc)
+    }, 1100)
+    return () => clearTimeout(t)
+  }, [busy, queue])
+  const playDemo = () => {
+    if (queue.length) return setQueue([])
+    reset()
+    setQueue(['settle', 'cb', 'fake', 'hold', 'edi'])
   }
 
   const onPreset = (id) => start(SCENARIOS.find((s) => s.id === id))
@@ -407,13 +425,14 @@ export default function App() {
     <div className="cc">
       <header className="cc-top">
         <PaytmLogo size={20} />
-        <div className="cc-title"><b>A2A Merchant–Paytm Resolution Network</b><span className="muted xs">Track 3 · Autonomous AI Teammates</span></div>
+        <div className="cc-title"><b>AI Teammate for Paytm merchants</b><span className="muted xs">Merchant AI Buddy ⇄ Paytm AI agents · solves problems end to end</span></div>
         <div className="cc-r">
           <select value={mkey} onChange={(e) => pickMerchant(e.target.value)} aria-label="Merchant">
             {MERCHANT_LIST.map((x) => <option key={x.slug} value={x.slug}>{x.name}</option>)}
           </select>
           <span className={`conn ${live ? 'on' : ''}`}>{live ? 'Paytm agent live' : 'Local demo engine'}</span>
-          <button className="reset" onClick={() => reset()}>Reset Demo</button>
+          <button className="play" onClick={playDemo}>{queue.length ? '■ Stop demo' : '▶ Play guided demo'}</button>
+          <button className="reset" onClick={() => { setQueue([]); reset() }}>Reset</button>
         </div>
       </header>
       <main className="cc-grid">
@@ -433,7 +452,7 @@ export default function App() {
             <div className="home-ind" />
           </div>
         </section>
-        <Center run={run} reveal={reveal} />
+        <Center run={run} reveal={reveal} busy={busy} onTry={onPreset} />
         <Right m={m} L={ledger} />
       </main>
     </div>

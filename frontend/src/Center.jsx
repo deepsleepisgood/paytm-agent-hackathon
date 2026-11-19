@@ -1,98 +1,127 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { I } from './icons.jsx'
 
 const AGENTS = [
-  { key: 'intelligence', name: 'Intelligence', ic: '🧠' },
-  { key: 'risk', name: 'Risk', ic: '🛡️' },
-  { key: 'resolution', name: 'Resolution', ic: '🧩' },
-  { key: 'ledger', name: 'Ledger Ops', ic: '📒' },
+  { key: 'intelligence', name: 'Intelligence', ic: '🧠', does: 'Reads the data' },
+  { key: 'risk', name: 'Risk', ic: '🛡️', does: 'Checks safety & policy' },
+  { key: 'resolution', name: 'Resolution', ic: '🧩', does: 'Decides the fix' },
+  { key: 'ledger', name: 'Ledger Ops', ic: '📒', does: 'Updates the books' },
 ]
+const STAGES = [
+  { label: 'Understand', keys: ['input'] },
+  { label: 'Permission', keys: ['consent'] },
+  { label: 'Decide', keys: ['eval'] },
+  { label: 'Paytm agents', keys: ['dispatch', 'intelligence', 'risk', 'resolution', 'ledger'] },
+  { label: 'Reply', keys: ['reply'] },
+]
+const CAPTION = {
+  input: 'Buddy understood the request',
+  consent: 'Checking the merchant’s permission (DPDP)',
+  eval: 'Buddy is comparing 3 ways to help',
+  dispatch: 'Sending a secure request to Paytm',
+  intelligence: 'Paytm is reading the data',
+  risk: 'Paytm is checking safety and policy',
+  resolution: 'Paytm is deciding the fix',
+  ledger: 'Paytm is updating the books',
+  reply: 'Answer sent to the merchant',
+}
 
-export default function Center({ run, reveal }) {
+export default function Center({ run, reveal, busy, onTry, demoActive }) {
+  const [tech, setTech] = useState(false)
   const steps = run?.steps || []
-  const shown = (key) => steps.findIndex((s) => s.key === key) < reveal && steps.findIndex((s) => s.key === key) >= 0
+  const idx = (key) => steps.findIndex((s) => s.key === key)
+  const shown = (key) => idx(key) >= 0 && idx(key) < reveal
   const get = (key) => steps.find((s) => s.key === key)
   const done = run && reveal >= steps.length
-  const activeIdx = AGENTS.findIndex((a) => !shown(a.key))
+  const cur = run && reveal > 0 ? steps[Math.min(reveal, steps.length) - 1] : null
+  const stageNow = run ? STAGES.findIndex((st) => st.keys.includes(cur?.key)) : -1
   const consent = get('consent'), ev = get('eval'), disp = get('dispatch')
+  const escalated = ev && ev.selected === 'C' && shown('eval')
+  const totalMs = steps.reduce((a, s) => a + (s.ms || 0), 0)
 
   return (
     <div className="col center">
       <div className="col-h">
-        <div><b>Live Orchestration & Decision Trace</b><div className="muted xs">Merchant Buddy ⇄ Paytm 4-Agent Mesh</div></div>
-        <span className={`state ${run ? (done ? 'done' : 'run') : ''}`}>{run ? (done ? 'Resolved' : 'Running…') : 'Idle'}</span>
+        <div><b>How the AI is solving it</b><div className="muted xs">Merchant AI Buddy ⇄ Paytm AI agents · live decision trace</div></div>
+        <span className={`state ${run ? (done ? 'done' : 'run') : ''}`}>{run ? (done ? 'Resolved' : 'Working…') : 'Ready'}</span>
       </div>
 
-      {run && <div className="utter"><span className="muted xs">Merchant said</span><div>“{run.utterance}”</div><span className="chip-i">{run.sc.intent}</span></div>}
-
-      <div className="mesh">
-        {AGENTS.map((a, k) => {
-          const on = shown(a.key), act = run && !done && on === false && k === activeIdx && reveal >= 4
-          return (
-            <React.Fragment key={a.key}>
-              <div className={`node ${on ? 'on' : ''} ${act ? 'act' : ''} ${on && get(a.key)?.tone === 'bad' ? 'bad' : ''} ${on && get(a.key)?.tone === 'warn' ? 'warn' : ''}`}>
-                <span className="n-ic">{a.ic}</span><b>{a.name}</b>
-                <span className="n-s">{on ? `${get(a.key).ms}ms ✓` : act ? '…' : 'idle'}</span>
+      {run && (
+        <>
+          <div className="utter"><span className="muted xs">Merchant asked</span><div>“{run.utterance}”</div><span className="chip-i">{run.sc.intent}</span></div>
+          <div className="stepper">
+            {STAGES.map((st, k) => (
+              <div key={st.label} className={`stp ${k < stageNow || (done && true) ? 'done' : ''} ${k === stageNow && !done ? 'now' : ''}`}>
+                <span className="dot">{k < stageNow || done ? '✓' : k + 1}</span><em>{st.label}</em>
               </div>
-              {k < 3 && <span className={`arrow ${on ? 'on' : ''}`}>→</span>}
-            </React.Fragment>
-          )
-        })}
-      </div>
+            ))}
+          </div>
+          <div className={`caption ${done ? 'ok' : ''}`}>{done ? '✓ Done — see the result below' : `${CAPTION[cur?.key] || 'Starting…'}…`}</div>
+        </>
+      )}
 
       {!run && (
         <div className="empty">
-          <I.Spark size={28} />
-          <b>Waiting for a merchant request</b>
-          <span className="muted sm">Tap a quick scenario on the phone, upload a PoD / screenshot, or type in Hinglish. The decision trace appears here live.</span>
-        </div>
-      )}
-
-      {shown('consent') && consent && (
-        <div className="tcard in">
-          <div className="t-h"><span className="ok-dot"><I.Check size={12} /></span><b>DPDP consent verified</b><span className="muted xs">by Paytm Risk Agent</span></div>
-          <div className="kv">
-            <span>Token</span><code>{consent.consent.token}</code>
-            <span>Purpose</span><code>{consent.consent.purpose}</code>
-            <span>Scope</span><code>{consent.consent.scope}</code>
-            <span>Issued · TTL</span><code>{consent.consent.issued} · {consent.consent.ttl_min} min</code>
+          <div className="e-ic"><I.Spark size={26} /></div>
+          <b>Pick a problem on the phone to start</b>
+          <span className="muted sm">Watch the Merchant Buddy ask for permission, weigh options, and hand work to four Paytm AI agents — all in seconds.</span>
+          <div className="how">
+            <span><i>1</i>Merchant asks</span><span><i>2</i>Buddy decides</span><span><i>3</i>Paytm agents act</span><span><i>4</i>Books update</span>
+          </div>
+          <div className="try">
+            <button className="cta" disabled={busy} onClick={() => onTry('settle')}>Try: “Paisa kahan kata?”</button>
+            <button className="ghost" disabled={busy} onClick={() => onTry('fake')}>Try: fake screenshot</button>
           </div>
         </div>
       )}
 
       {shown('eval') && ev && (
         <div className="tcard in">
-          <div className="t-h"><b>Merchant Buddy · Intervention evaluation</b><span className="chip-i sel">Selected {ev.selected}</span></div>
+          <div className="t-h"><span className="n">1</span><b>Merchant Buddy compares 3 options</b><span className="chip-i sel">Chose {ev.selected}</span></div>
           {ev.options.map((o) => (
             <div key={o.id} className={`opt ${o.id === ev.selected ? 'sel' : ''}`}>
               <span className="o-id">{o.id}</span>
               <div className="o-mid"><div className="o-l">{o.label}</div><div className="muted xs">{o.why}</div><div className="o-bar"><i style={{ width: o.score + '%' }} /></div></div>
-              <span className="o-sc">{o.score}</span>
+              <span className="o-sc" title="Fit score out of 100">{o.score}</span>
             </div>
           ))}
         </div>
       )}
 
-      {shown('dispatch') && disp && (
+      {shown('consent') && consent && (
         <div className="tcard in">
-          <div className="t-h"><b>A2A dispatch</b><span className="muted xs">:8003 → :8002 /a2a/dispatch</span></div>
-          <div className="json">
-            <div><span className="muted xs">REQUEST</span><pre>{JSON.stringify(disp.request, null, 1)}</pre></div>
-            <div><span className="muted xs">RESPONSE</span><pre>{JSON.stringify(disp.response, null, 1)}</pre></div>
+          <div className="t-h"><span className="ok-dot"><I.Check size={12} /></span><b>Merchant’s permission verified</b><span className="muted xs">DPDP · by Paytm Risk Agent</span></div>
+          <div className="plain">Allowed purpose: <b>{consent.consent.purpose.replace(/_/g, ' ')}</b> · valid {consent.consent.ttl_min} min</div>
+          <div className="kv">
+            <span>Token</span><code>{consent.consent.token}</code>
+            <span>Scope</span><code>{consent.consent.scope}</code>
+            <span>Issued</span><code>{consent.consent.issued}</code>
           </div>
         </div>
       )}
 
       {AGENTS.some((a) => shown(a.key)) && (
         <div className="tcard in">
-          <div className="t-h"><b>Paytm sub-agents</b><span className="muted xs">Intelligence → Risk → Resolution → Ledger Ops</span></div>
+          <div className="t-h"><span className="n">2</span><b>Four Paytm AI agents work in order</b></div>
+          <div className="mesh">
+            {AGENTS.map((a, k) => {
+              const on = shown(a.key), s = get(a.key)
+              return (
+                <React.Fragment key={a.key}>
+                  <div className={`node ${on ? 'on' : ''} ${on && s.tone === 'bad' ? 'bad' : ''} ${on && s.tone === 'warn' ? 'warn' : ''}`}>
+                    <span className="n-ic">{a.ic}</span><b>{a.name}</b><span className="n-s">{a.does}</span>
+                  </div>
+                  {k < 3 && <span className={`arrow ${on ? 'on' : ''}`}>→</span>}
+                </React.Fragment>
+              )
+            })}
+          </div>
           {AGENTS.filter((a) => shown(a.key)).map((a) => {
             const s = get(a.key)
             return (
               <div key={a.key} className={`ag ${s.tone || ''}`}>
                 <span className="ag-ic">{a.ic}</span>
                 <div><b>{a.name}</b><div className="sm">{s.say}</div></div>
-                <span className="muted xs">{s.ms}ms</span>
               </div>
             )
           })}
@@ -100,9 +129,25 @@ export default function Center({ run, reveal }) {
       )}
 
       {shown('reply') && (
-        <div className={`tcard in reply ${get('reply').tone || ''}`}>
-          <div className="t-h"><b>Reply to merchant</b><span className="muted xs">Hinglish · TTS-ready</span></div>
-          <div className="sm">{get('reply').reply}</div>
+        <div className={`tcard in result ${get('reply').tone === 'bad' ? 'bad' : escalated ? 'esc' : 'good'}`}>
+          <div className="res-h">
+            <span className="res-b">{get('reply').tone === 'bad' ? '🚫 Fraud blocked' : escalated ? '🎫 Handed to a human' : '✅ Resolved by AI'}</span>
+            <span className="muted xs">{(totalMs / 1000).toFixed(1)}s of agent time</span>
+          </div>
+          <div className="sm">“{get('reply').reply}”</div>
+          <div className="muted xs">Check the right column — the ledger already changed.</div>
+        </div>
+      )}
+
+      {run && shown('dispatch') && disp && (
+        <div className="tech">
+          <button onClick={() => setTech(!tech)}>{tech ? '▾' : '▸'} Technical details (A2A request / response)</button>
+          {tech && (
+            <div className="json">
+              <div><span className="muted xs">REQUEST · :8003 → :8002 /a2a/dispatch</span><pre>{JSON.stringify(disp.request, null, 1)}</pre></div>
+              <div><span className="muted xs">RESPONSE</span><pre>{JSON.stringify(disp.response, null, 1)}</pre></div>
+            </div>
+          )}
         </div>
       )}
     </div>

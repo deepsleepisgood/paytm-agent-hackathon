@@ -250,3 +250,47 @@ body{background:#eef3fa}
 .eq{font-size:11px;color:#0d7a45;background:#e6f6ed;border-radius:8px;padding:6px 8px;margin-top:6px}
 .sts{display:flex;justify-content:space-between;align-items:center;font-size:12px;gap:8px}
 .steps3 span{font-size:9.5px}
+
+/* ===== UX polish pass ===== */
+.cc-r .play{background:linear-gradient(120deg,#00baf2,#0a79c4);color:#fff;border-radius:10px;padding:8px 16px;font-weight:700;font-size:13px;box-shadow:0 4px 12px rgba(0,186,242,.3)}
+.reset{background:#fff;color:var(--navy);box-shadow:0 0 0 1px #d6e0ee}
+.sec{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a97ab;margin:4px 2px -4px}
+.col-h b{font-size:16px}
+/* left: scenario picker */
+.pk-h{display:flex;justify-content:space-between;align-items:baseline;margin:14px 2px 6px;font-size:13.5px;color:var(--navy)}
+.cats{display:flex;gap:4px;background:#e9eff7;border-radius:11px;padding:3px}
+.cats button{flex:1;font-size:11px;font-weight:700;padding:7px 2px;border-radius:9px;color:#5c6b80;transition:.15s}
+.cats button.on{background:#fff;color:var(--navy);box-shadow:0 1px 4px rgba(0,30,80,.12)}
+.rows{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.row-btn{display:flex;align-items:center;gap:10px;background:#fff;border-radius:13px;padding:10px 12px;text-align:left;box-shadow:0 0 0 1px #e3ebf5;transition:.15s}
+.row-btn:hover:not(:disabled){box-shadow:0 0 0 1.5px var(--blue),0 6px 14px rgba(0,186,242,.15);transform:translateY(-1px)}
+.row-btn:disabled{opacity:.45;cursor:not-allowed}
+.r-ic{width:36px;height:36px;border-radius:11px;background:#eaf6fd;display:grid;place-items:center;font-size:18px;flex:none}
+.r-t{flex:1;display:flex;flex-direction:column;min-width:0}.r-t b{font-size:13px;color:var(--ink)}.r-t em{font-style:normal;font-size:11px;color:var(--mu)}
+.r-go{color:#a9b5c6;font-size:20px}
+/* center */
+.stepper{display:flex;justify-content:space-between;gap:4px}
+.stp{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;color:#9aa6b8;position:relative}
+.stp:not(:last-child):after{content:'';position:absolute;top:11px;left:calc(50% + 14px);right:calc(-50% + 14px);height:2px;background:#e3e9f2}
+.stp.done:not(:last-child):after{background:var(--green)}
+.stp .dot{width:24px;height:24px;border-radius:50%;background:#e9eef6;display:grid;place-items:center;font-weight:800;font-size:11px;position:relative;z-index:1}
+.stp.done .dot{background:var(--green);color:#fff}.stp.now .dot{background:var(--blue);color:#fff;animation:pulse 1s infinite}.stp.now,.stp.done{color:var(--ink);font-weight:600}
+.caption{font-size:13px;font-weight:600;color:#0a79c4;background:#eaf6fd;border-radius:10px;padding:8px 12px}.caption.ok{color:#0d7a45;background:#e3f6ee}
+.e-ic{width:52px;height:52px;border-radius:16px;background:#e6f6fe;display:grid;place-items:center}
+.empty{padding:26px 14px;gap:8px}.empty .how{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;justify-content:center}.how span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink);background:#f1f6fc;border-radius:99px;padding:5px 11px}.how i{font-style:normal;width:18px;height:18px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:800}
+.try{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}.ghost{border-radius:99px;padding:9px 18px;font-weight:600;color:var(--navy);box-shadow:0 0 0 1.5px #cfe0f3}.try button:disabled{opacity:.5}
+.t-h .n{width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;flex:none}
+.plain{font-size:12.5px}
+.node .n-s{font-size:10px;text-align:center;line-height:1.2}
+.mesh{margin-bottom:4px}.tcard .mesh .node{padding:8px 3px}
+.result{gap:6px}.result.good{background:#f0fbf5;border-color:#a9e3c5}.result.esc{background:#fff8e8;border-color:#f3d79b}.result.bad{background:#fff1f1;border-color:#f3b8b8}
+.res-h{display:flex;justify-content:space-between;align-items:center}.res-b{font-size:15px;font-weight:800;color:var(--navy)}
+.tech button{font-size:12px;color:var(--mu);font-weight:600}.tech .json{margin-top:8px}
+/* right */
+.kpi b{animation:pop .5s ease}@keyframes pop{0%{transform:scale(1.5);color:var(--blue)}100%{transform:scale(1)}}
+.kpi span{font-size:11px}
+.rcard{transition:box-shadow .3s}
+/* spacing/readability */
+.card,.tcard,.rcard{border-radius:16px}
+.col.center,.col.right{padding:18px;gap:14px}
+.chat{gap:10px}.bubble{font-size:13.5px}

@@ -4,6 +4,25 @@ import { SCENARIOS } from './engine.js'
 import { inr } from './data.js'
 import Khata from './Khata.jsx'
 
+const GROUPS = [
+  { id: 'payout', label: 'Payout', items: [
+    { id: 'settle', ic: '💰', t: 'Paisa kahan kata?', s: 'Why is my settlement lower?' },
+    { id: 'hold', ic: '🔒', t: 'Settlement hold', s: 'Bank / KYC hold on my money' },
+    { id: 'sbrent', ic: '🔊', t: 'Soundbox rent kat raha', s: 'Charged after returning device' } ] },
+  { id: 'pay', label: 'Payments', items: [
+    { id: 'utr', ic: '🔎', t: 'UTR pending', s: 'Is this payment real?' },
+    { id: 'fake', ic: '🚫', t: 'Fake screenshot', s: 'Catch a tampered UPI proof' },
+    { id: 'refund', ic: '↩️', t: 'Refund karna hai', s: 'Auto up to ₹5,000, else human' } ] },
+  { id: 'loan', label: 'Loan & growth', items: [
+    { id: 'edi', ic: '🏦', t: 'Loan EDI fail', s: 'Mandate failed, fix it' },
+    { id: 'noc', ic: '📄', t: 'Loan NOC', s: 'Paid negotiated settlement' },
+    { id: 'growth', ic: '📈', t: 'Business badhao', s: 'Ideas from my 6-month data' } ] },
+  { id: 'help', label: 'Disputes & help', items: [
+    { id: 'cb', ic: '⚖️', t: 'Chargeback proof', s: 'Send delivery proof, free the hold' },
+    { id: 'bank', ic: '🏛️', t: 'Bank account update', s: 'Change settlement account' },
+    { id: 'soundbox', ic: '🛠️', t: 'Soundbox kharab', s: 'Hardware issue → human ticket' } ] },
+]
+
 function Insights({ m }) {
   const i = m.insights
   const ms = i.monthly_sales
@@ -15,15 +34,15 @@ function Insights({ m }) {
   const h = i.cashflow_health
   return (
     <div className="ins">
-      <div className="ins-h"><b>Business insights</b><span className="muted xs">{i.period}</span></div>
+      <div className="ins-h"><b>Aapka business, ek nazar mein</b><span className="muted xs">{i.period}</span></div>
       <div className="ins-grid">
         <div>
-          <div className="muted xs">6-mahine sales</div>
+          <div className="muted xs">Sales trend</div>
           <svg viewBox="0 0 100 38" className="spark"><polyline points={pts} fill="none" stroke="#00baf2" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" /></svg>
           <div className={`trend ${pct >= 0 ? 'up' : 'dn'}`}>{pct >= 0 ? '▲' : '▼'} {Math.abs(pct)}%</div>
         </div>
         <div>
-          <div className="muted xs">Weekday peaks</div>
+          <div className="muted xs">Busiest days</div>
           <div className="wk">
             {i.weekday_avg_sales.map((v, k) => (
               <span key={k} title={`${i.weekdays[k]} ${inr(v)}`}><i className={top.includes(v) ? 'pk' : ''} style={{ height: 8 + (v / wmax) * 30 }} /><em>{i.weekdays[k][0]}</em></span>
@@ -31,7 +50,7 @@ function Insights({ m }) {
           </div>
         </div>
         <div className="gauge">
-          <div className="muted xs">Cashflow health</div>
+          <div className="muted xs">Cash health</div>
           <div className="ring" style={{ '--p': h.score }}><b>{h.score}</b></div>
           <div className="xs b">{h.label}</div>
         </div>
@@ -46,6 +65,7 @@ export default function Buddy({ m, L, chat, busy, onPreset, onText, onUpload, sp
   const [rec, setRec] = useState(false)
   const [micNote, setMicNote] = useState('')
   const [khata, setKhata] = useState(false)
+  const [cat, setCat] = useState('payout')
   const end = useRef(null)
   const podRef = useRef(null)
   const shotRef = useRef(null)
@@ -80,12 +100,19 @@ export default function Buddy({ m, L, chat, busy, onPreset, onText, onUpload, sp
       <div className="b-scroll">
         <Insights m={m} />
 
-        <div className="pills">
-          {SCENARIOS.map((s) => {
+        <div className="pk-h"><b>Kya madad chahiye?</b><span className="muted xs">Tap one, watch the AI work →</span></div>
+        <div className="cats">
+          {GROUPS.map((g) => <button key={g.id} className={cat === g.id ? 'on' : ''} onClick={() => setCat(g.id)}>{g.label}</button>)}
+        </div>
+        <div className="rows">
+          {GROUPS.find((g) => g.id === cat).items.map((it) => {
+            const s = SCENARIOS.find((x) => x.id === it.id)
             const ok = !s.available || s.available(m)
             return (
-              <button key={s.id} className="pill-btn" disabled={busy || !ok} title={ok ? s.utterance(m) : 'No active chargeback for this merchant'} onClick={() => onPreset(s.id)}>
-                {s.chip}
+              <button key={it.id} className="row-btn" disabled={busy || !ok} onClick={() => onPreset(it.id)} title={ok ? s.utterance(m) : 'No active chargeback for this merchant'}>
+                <span className="r-ic">{it.ic}</span>
+                <span className="r-t"><b>{it.t}</b><em>{ok ? it.s : 'Not applicable for this merchant'}</em></span>
+                <span className="r-go">›</span>
               </button>
             )
           })}
