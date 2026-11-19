@@ -54,8 +54,6 @@ function insights(daily, inv, payable) {
       id: 'g' + (i + 1),
       title: `Weekend stock: ${it.name}`,
       hinglish: `Weekend se pehle ${it.name} ka stock badhao — pichle 6 mahine mein ${it.weekend_stockout_count_6m} baar weekend par khatam hua.`,
-      hi: `वीकेंड से पहले ${it.name} का स्टॉक बढ़ाइए — पिछले 6 महीनों में ${it.weekend_stockout_count_6m} बार वीकेंड पर खत्म हुआ।`,
-      en: `Stock up on ${it.name} before the weekend — it ran out ${it.weekend_stockout_count_6m} times on weekends in the last 6 months.`,
       impact: `${it.weekend_stockout_count_6m} weekend stock-outs`,
     })),
   }

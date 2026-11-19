@@ -2,9 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import { I, PaytmLogo, AIMark, MerchantLogo } from './icons.jsx'
 import { inr } from './data.js'
 import { MERCHANTS, DEFAULT_MERCHANT } from './merchants.js'
-import { SCENARIOS, runScenario, routeText, initLedger, applyEffects, liveOk, sayText, CONFIRM_LABEL } from './engine.js'
+import { SCENARIOS, runScenario, routeText, initLedger, applyEffects, liveOk } from './engine.js'
 import Buddy from './Buddy.jsx'
-import { loadLang, saveLang, t as tr } from './i18n.js'
 import Center from './Center.jsx'
 import Right from './Right.jsx'
 import { checkServices, getLedger, resetLive, getStrategyMemory, queryAudio } from './api.js'
@@ -346,8 +345,6 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   const [speak, setSpeak] = useState(true)
   const [dark, setDark] = useState(false)
-  const [lang, setLangState] = useState(loadLang)
-  const setLang = (l) => { setLangState(l); saveLang(l) }
   const [queue, setQueue] = useState([])
   const timers = useRef([])
   const scroller = useRef(null)
@@ -401,7 +398,7 @@ export default function App() {
         setReveal(i + 1)
         if (s.effects) setLedger((L) => applyEffects(L, s.effects))
         if (s.key === 'reply') {
-          setChat((c) => [...c, { who: 'ai', text: s.reply, texts: s.replies, tone: s.tone, confirm: s.confirm && CONFIRM_LABEL[s.confirm.kind] ? { ...s.confirm, label: CONFIRM_LABEL[s.confirm.kind][lang] } : s.confirm, audio: r.audio }])
+          setChat((c) => [...c, { who: 'ai', text: s.reply, tone: s.tone, confirm: s.confirm, audio: r.audio }])
           setBusy(false)
           if (r.live) {
             getLedger(m.mid).then((led) => led && setLedger((L) => overlayLedger(L, led)))
@@ -413,20 +410,19 @@ export default function App() {
   }
 
   const startLocal = (sc, ctx) => {
-    const r = runScenario(sc, m, { ...ctx, lang })
+    const r = runScenario(sc, m, ctx)
     setChat((c) => (ctx.silent ? c : [...c, { who: 'me', text: r.utterance }]))
     play(r, STEP_MS)
   }
 
   const startLive = async (sc, ctx) => {
-    const utterance = ctx.utterance || sc.utterance(m) // sent to the backend (tested phrasing)
-    const shownText = ctx.utterance || sayText(sc, m, lang)
-    setChat((c) => [...c, { who: 'me', text: shownText }])
+    const utterance = ctx.utterance || sc.utterance(m)
+    setChat((c) => [...c, { who: 'me', text: utterance }])
     setBusy(true); setRun(null); setReveal(0)
     const t0 = performance.now()
     try {
       const resp = await callLive(sc, m, { ...ctx, utterance })
-      play(responseToRun(sc, m, resp, shownText, performance.now() - t0), 320)
+      play(responseToRun(sc, m, resp, utterance, performance.now() - t0), 320)
     } catch (e) {
       const missing = e.status === 404
       setChat((c) => [...c, { who: 'ai', text: missing ? 'Ye live endpoint abhi us service par available nahi hai — local demo engine se chala raha hoon.' : `Live service error (${e.message}). Local demo engine se chala raha hoon.`, tone: 'bad' }])
@@ -484,7 +480,7 @@ export default function App() {
   const onAudio = async (blob) => {
     if (busy) return
     if (modeRef.current !== 'live') {
-      setChat((c) => [...c, { who: 'ai', text: tr(lang, 'needLive'), tone: 'bad' }])
+      setChat((c) => [...c, { who: 'ai', text: 'Awaaz ke liye Live services chaliye, ya neeche se koi sawaal chunein.', tone: 'bad' }])
       return
     }
     setBusy(true); setRun(null); setReveal(0)
@@ -521,7 +517,7 @@ export default function App() {
     settlements: <Settlement d={d} />,
     loans: <Loans d={d} />,
     account: <Account d={d} />,
-    buddy: <Buddy m={m} L={ledger} chat={chat} busy={busy} mode={mode} onPreset={onPreset} onText={onText} onUpload={onUpload} onConfirm={onConfirm} onAudio={onAudio} run={run} reveal={reveal} onTheme={setDark} speak={speak} setSpeak={setSpeak} lang={lang} setLang={setLang} />,
+    buddy: <Buddy m={m} L={ledger} chat={chat} busy={busy} mode={mode} onPreset={onPreset} onText={onText} onUpload={onUpload} onConfirm={onConfirm} onAudio={onAudio} run={run} reveal={reveal} onTheme={setDark} speak={speak} setSpeak={setSpeak} />,
   }
   const body = (sub && subs[sub]) || tabs[tab]
 
