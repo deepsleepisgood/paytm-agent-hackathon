@@ -44,7 +44,14 @@ function Badge({ status }) {
 }
 
 /* ---------------- Home ---------------- */
-const GLYPH = { cb: '!', cash: '₹', edi: '↻', sb: 'i' }
+const S = (children) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{children}</svg>
+// Premium line icons (SF-Symbols style) for the attention list.
+const ICON = {
+  cb: S(<><path d="M12 3.2l7 2.8v5.4c0 4.4-2.9 7.6-7 9.4-4.1-1.8-7-5-7-9.4V6z" /><path d="M12 8.2v4.2" /><path d="M12 15.4v.1" /></>),
+  cash: S(<><path d="M4.5 8V7a2 2 0 0 1 2-2H17a1.5 1.5 0 0 1 1.5 1.5V8" /><rect x="4" y="8" width="16" height="11" rx="2.6" /><path d="M16 13.5h.1" strokeWidth="2.6" /></>),
+  edi: S(<><path d="M20 12a8 8 0 1 1-2.6-5.9" /><path d="M20 4.5v4.2h-4.2" /><path d="M9.6 10.2h4.2M9.6 13h3.2" /></>),
+  sb: S(<><rect x="6.5" y="3" width="11" height="18" rx="3.2" /><circle cx="12" cy="14.2" r="3" /><path d="M12 7.2h.1" strokeWidth="2.4" /></>),
+}
 const CamIcon = () => (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.2-2h6.2l1.2 2h2.2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="13" r="3.4" /></svg>
 )
@@ -96,7 +103,7 @@ function Attention({ m, L, lang, onAlert, onUpload }) {
             return (
               <div key={x.id} className={`az-row ${isOpen ? 'open' : ''}`}>
                 <button className="az-row-h" onClick={() => setOpenId(isOpen ? null : x.id)} aria-expanded={isOpen}>
-                  <span className={`az-ic ${x.level}`}>{GLYPH[x.id] || '!'}</span>
+                  <span className={`az-ic ${x.level}`}>{ICON[x.id] || ICON.cb}</span>
                   <span className="az-t"><b>{x.title}</b><em>{x.chip}</em></span>
                   <span className="az-chev">›</span>
                 </button>
