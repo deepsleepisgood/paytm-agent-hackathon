@@ -6,7 +6,7 @@ import { SCENARIOS, runScenario, routeText, initLedger, applyEffects, liveOk } f
 import Buddy from './Buddy.jsx'
 import Center from './Center.jsx'
 import Right from './Right.jsx'
-import { checkServices, getLedger, resetLive, getStrategyMemory } from './api.js'
+import { checkServices, getLedger, resetLive, getStrategyMemory, queryAudio } from './api.js'
 import { callLive, responseToRun, overlayLedger, overlayStrategy } from './live.js'
 
 const TABS = [
@@ -343,7 +343,8 @@ export default function App() {
   const [run, setRun] = useState(null)
   const [reveal, setReveal] = useState(0)
   const [busy, setBusy] = useState(false)
-  const [speak, setSpeak] = useState(false)
+  const [speak, setSpeak] = useState(true)
+  const [dark, setDark] = useState(false)
   const [queue, setQueue] = useState([])
   const timers = useRef([])
   const scroller = useRef(null)
@@ -397,15 +398,11 @@ export default function App() {
         setReveal(i + 1)
         if (s.effects) setLedger((L) => applyEffects(L, s.effects))
         if (s.key === 'reply') {
-          setChat((c) => [...c, { who: 'ai', text: s.reply, tone: s.tone, confirm: s.confirm }])
+          setChat((c) => [...c, { who: 'ai', text: s.reply, tone: s.tone, confirm: s.confirm, audio: r.audio }])
           setBusy(false)
           if (r.live) {
             getLedger(m.mid).then((led) => led && setLedger((L) => overlayLedger(L, led)))
             getStrategyMemory().then((sm) => sm && setLedger((L) => overlayStrategy(L, sm)))
-          }
-          if (r.audio) { try { new Audio('data:audio/wav;base64,' + r.audio).play() } catch { /* ignore */ } }
-          else if (speak && 'speechSynthesis' in window) {
-            const u = new SpeechSynthesisUtterance(s.reply); u.lang = 'hi-IN'; window.speechSynthesis.speak(u)
           }
         }
       }, gap * (i + 1)))
@@ -479,6 +476,25 @@ export default function App() {
     }
     start(sc, { file: f.name, fileObj: f, utterance: kind === 'pod' ? `${f.name} (Proof of Delivery)` : `${f.name} (UPI screenshot)` })
   }
+  // Real voice: recorded audio goes to /merchant/query-audio (Sarvam STT + full pipeline).
+  const onAudio = async (blob) => {
+    if (busy) return
+    if (modeRef.current !== 'live') {
+      setChat((c) => [...c, { who: 'ai', text: 'Awaaz ke liye Live services chaliye, ya neeche se koi sawaal chunein.', tone: 'bad' }])
+      return
+    }
+    setBusy(true); setRun(null); setReveal(0)
+    const t0 = performance.now()
+    try {
+      const resp = await queryAudio(blob, m.mid)
+      const utterance = resp.transcript || 'Voice request'
+      setChat((c) => [...c, { who: 'me', text: utterance }])
+      play(responseToRun({ id: 'voice', intent: resp.intent }, m, resp, utterance, performance.now() - t0), 320)
+    } catch (e) {
+      setChat((c) => [...c, { who: 'ai', text: `Awaaz samajh nahi aayi (${e.message}). Dobara boliye.`, tone: 'bad' }])
+      setBusy(false)
+    }
+  }
   const onConfirm = (item, k) => {
     if (busy) return
     setChat((c) => c.map((x, i) => (i === k ? { ...x, done: true } : x)))
@@ -501,7 +517,7 @@ export default function App() {
     settlements: <Settlement d={d} />,
     loans: <Loans d={d} />,
     account: <Account d={d} />,
-    buddy: <Buddy m={m} L={ledger} chat={chat} busy={busy} mode={mode} onPreset={onPreset} onText={onText} onUpload={onUpload} onConfirm={onConfirm} speak={speak} setSpeak={setSpeak} />,
+    buddy: <Buddy m={m} L={ledger} chat={chat} busy={busy} mode={mode} onPreset={onPreset} onText={onText} onUpload={onUpload} onConfirm={onConfirm} onAudio={onAudio} run={run} reveal={reveal} onTheme={setDark} speak={speak} setSpeak={setSpeak} />,
   }
   const body = (sub && subs[sub]) || tabs[tab]
 
@@ -523,7 +539,7 @@ export default function App() {
       </header>
       <main className="cc-grid">
         <section className="col left">
-          <div className="phone">
+          <div className={`phone ${dark ? 'dark' : ''}`}>
             <div className="notch" />
             <StatusBar />
             <div className={`content ${tab === 'buddy' && !sub ? 'flex' : ''}`} ref={scroller}>{body}</div>

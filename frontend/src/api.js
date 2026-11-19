@@ -52,3 +52,12 @@ export async function resetLive() {
 export const getStrategyMemory = () => req(`${MERCHANT_URL}/merchant/strategy-memory`, {}, 3000).catch(() => null)
 export const getKhataExport = () => req(`${MERCHANT_URL}/merchant/khata-export`, {}, 5000).catch(() => null)
 export const khataCsvUrl = () => `${MERCHANT_URL}/merchant/khata-export?format=csv`
+
+// Real voice path: the browser records audio and the merchant agent runs Sarvam STT + the whole pipeline.
+export function queryAudio(blob, mid = MID) {
+  const fd = new FormData()
+  fd.append('audio', blob, 'voice.webm')
+  fd.append('mid', mid)
+  fd.append('consent_granted', 'true')
+  return req(`${MERCHANT_URL}/merchant/query-audio`, { method: 'POST', body: fd }, 45000)
+}

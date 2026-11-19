@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { AIMark } from './icons.jsx'
+import Voice from './Voice.jsx'
 import { SCENARIOS, liveOk } from './engine.js'
 import { inr } from './data.js'
 import Khata from './Khata.jsx'
@@ -99,46 +100,37 @@ function Insights({ m, always }) {
   )
 }
 
-export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUpload, onConfirm, speak, setSpeak }) {
-  const [text, setText] = useState('')
-  const [rec, setRec] = useState(false)
-  const [micNote, setMicNote] = useState('')
-  const [view, setView] = useState('chat') // 'chat' | 'menu' | 'khata'
-  const [plus, setPlus] = useState(false)
-  const end = useRef(null)
+export default function Buddy({ m, L, chat, busy, mode, run, reveal, onPreset, onText, onAudio, onUpload, onConfirm, speak, setSpeak, onTheme }) {
+  const [view, setView] = useState('voice') // 'voice' | 'menu' | 'khata'
+  const [attach, setAttach] = useState(false)
   const podRef = useRef(null)
   const shotRef = useRef(null)
 
-  const started = chat.some((c) => c.who === 'me')
-  const messages = chat.slice(1) // first entry is the welcome text, shown as the greeting
-  const firstName = m.profile.owner.replace(/^Mr\.?\s*/i, '').split(' ')[0]
+  useEffect(() => { onTheme && onTheme(view === 'voice'); return () => onTheme && onTheme(false) }, [view])
+
   const okFor = (id) => {
     const s = SCENARIOS.find((x) => x.id === id)
-    return s && (!s.available || s.available(m)) && (mode !== 'live' || liveOk(s))
+    return !!s && (!s.available || s.available(m)) && (mode !== 'live' || liveOk(s))
   }
-  const tops = ['settle', 'utr', okFor('cb') ? 'cb' : 'hold', 'edi']
-
-  useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [chat.length, busy])
-
-  const send = () => { if (text.trim() && !busy) { onText(text.trim()); setText(''); setPlus(false) } }
-  const run = (id) => { setView('chat'); setPlus(false); onPreset(id) }
-
-  const mic = () => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) return setMicNote('Mic is not available in this browser. Use the suggestions.')
-    if (rec) return
-    const r = new SR()
-    r.lang = 'hi-IN'
-    r.onstart = () => { setRec(true); setMicNote('Sun raha hoon…') }
-    r.onerror = () => { setRec(false); setMicNote('Mic unavailable. Use the suggestions.') }
-    r.onend = () => setRec(false)
-    r.onresult = (e) => { setMicNote(''); onText(e.results[0][0].transcript) }
-    try { r.start() } catch { setRec(false) }
-  }
+  const promptIds = ['settle', 'utr', okFor('cb') ? 'cb' : 'hold', 'edi', 'dup', 'growth']
+  const prompts = promptIds.map((id) => {
+    const s = SCENARIOS.find((x) => x.id === id)
+    return { id, t: SUGGEST[id] ? SUGGEST[id][0] : (GROUPS.flatMap((g) => g.items).find((it) => it.id === id) || {}).t, say: s.utterance(m), ok: okFor(id) }
+  })
+  const HI = { settle: 'पैसा कहाँ कटा?', utr: 'UTR जाँचें', cb: 'डिलीवरी प्रूफ भेजें', hold: 'सेटलमेंट होल्ड', edi: 'लोन EDI फेल', dup: 'दो बार पैसा कटा', growth: 'धंधा कैसे बढ़ाएँ' }
+  prompts.forEach((p) => { p.hi = HI[p.id] || p.t })
+  // Smart nudge: the single most urgent thing for this merchant today, from their own data.
+  const cb = m.d.chargeback
+  const edi = m.d.loan.edi
+  const nudge = cb && cb.status === 'HELD'
+    ? { id: 'shield_cb', title: `${cb.order} का ₹${cb.amount} रुका हुआ है`, text: 'डिलीवरी का सबूत भेजिए, पैसा 48 घंटे में छूट जाएगा।', say: SCENARIOS.find((s) => s.id === 'cb')?.utterance(m) || '' , run: okFor('cb') ? 'cb' : 'settle' }
+    : { id: 'settle', title: 'आज का हिसाब देखें', text: 'सेटलमेंट में कितना कटा, एक बटन में जानिए।', say: '', run: 'settle' }
+  const nudgeP = { ...nudge, id: nudge.run, say: SCENARIOS.find((s) => s.id === nudge.run).utterance(m) }
+  const run1 = (id) => { setView('voice'); onPreset(id) }
 
   const Back = ({ title }) => (
     <div className="pg-nav">
-      <button className="pg-back" onClick={() => setView('chat')} aria-label="Back to Assistant">
+      <button className="pg-back" onClick={() => setView('voice')} aria-label="Back to Assistant">
         <svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2L2 10l8 8" /></svg>
         <span>Assistant</span>
       </button>
@@ -162,7 +154,7 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
                   const sc = SCENARIOS.find((x) => x.id === it.id)
                   const why = mode === 'live' && !liveOk(sc) ? 'Local demo only (not in contract yet)' : 'Not applicable for this merchant'
                   return (
-                    <button key={it.id} className="row-btn" disabled={busy || !ok} onClick={() => run(it.id)}>
+                    <button key={it.id} className="row-btn" disabled={busy || !ok} onClick={() => run1(it.id)}>
                       <span className="r-t"><b>{it.t}</b><em>{ok ? it.s : why}</em></span>
                       <span className="r-go">›</span>
                     </button>
@@ -186,75 +178,21 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
   }
 
   return (
-    <div className="screen buddy">
-      <div className="ai-head">
-        <AIMark size={36} />
-        <div className="ah-t"><b>Assistant</b><span>{m.profile.name}</span></div>
-        <button className={`spk ${speak ? 'on' : ''}`} onClick={() => setSpeak(!speak)} aria-label={speak ? 'Turn voice replies off' : 'Turn voice replies on'} title="Hindi voice replies"><SpeakerIcon on={speak} /></button>
-      </div>
-
-      <div className="b-scroll">
-        {!started && (
-          <>
-            <div className="greet-ai">
-              <h2>Namaste, {firstName} ji</h2>
-              <p>Aaj main aapki kya madad karun?</p>
-            </div>
-            <div className="sugs">
-              {tops.map((id, k) => {
-                const ok = okFor(id)
-                const [t, s] = SUGGEST[id]
-                return (
-                  <button key={id} className={`sug ${k === 0 ? 'primary' : ''}`} disabled={busy || !ok} onClick={() => run(id)}>
-                    <b>{t}</b><span>{s}</span>
-                  </button>
-                )
-              })}
-            </div>
-            <button className="sum-row" onClick={() => setView('menu')}>
-              <span className="sr-l"><b>Aapka business</b><em>Sales trend, busiest days, cash health</em></span>
-              <span className="sr-r">Dekhein</span>
-            </button>
-          </>
-        )}
-
-        {started && (
-          <div className="chat">
-            {messages.map((c, k) => (
-              <div key={k} className={`msg ${c.who}`}>
-                <div className={`bubble ${c.tone || ''}`}>{c.text}{c.confirm && (
-                  <button className="confirm-btn" disabled={busy || c.done} onClick={() => onConfirm(c, k + 1)}>{c.done ? 'Sign-off sent' : c.confirm.label}</button>
-                )}</div>
-              </div>
-            ))}
-            {busy && <div className="msg ai"><div className="bubble typing"><i /><i /><i /></div></div>}
-            <div ref={end} />
-          </div>
-        )}
-      </div>
-
-      <div className="composer">
-        <div className="strip">
-          <button onClick={() => setView('menu')}>Madad menu</button>
-          <button onClick={() => setView('khata')}>Khata & Tally</button>
-        </div>
-        {micNote && <div className="mic-note">{micNote}</div>}
-        {plus && (
-          <div className="plus-menu">
-            <button disabled={busy} onClick={() => { setPlus(false); podRef.current.click() }}>Delivery proof</button>
-            <button disabled={busy} onClick={() => { setPlus(false); shotRef.current.click() }}>UPI screenshot</button>
-          </div>
-        )}
-        <div className="inp">
-          <button className={`plus ${plus ? 'on' : ''}`} onClick={() => setPlus(!plus)} aria-label="Attach"><PlusIcon /></button>
-          <div className="field">
-            <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} placeholder="Poochiye, Hindi ya English…" />
-            {text.trim() ? <button className="send" onClick={send} disabled={busy} aria-label="Send">↑</button> : <button className={`mic ${rec ? 'rec' : ''}`} onClick={mic} aria-label="Voice"><MicIcon /></button>}
+    <div className="screen buddy voice-screen">
+      <Voice m={m} chat={chat} busy={busy} run={run} reveal={reveal} speak={speak} setSpeak={setSpeak} mode={mode} prompts={prompts} nudge={nudgeP}
+        onText={onText} onAudio={onAudio} onPreset={onPreset} onConfirm={onConfirm}
+        onMenu={() => setView('menu')} onKhata={() => setView('khata')} onAttach={() => setAttach(!attach)} />
+      {attach && (
+        <div className="attach-sheet" onClick={() => setAttach(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <button disabled={busy} onClick={() => { setAttach(false); podRef.current.click() }}>डिलीवरी का सबूत (फ़ोटो)</button>
+            <button disabled={busy} onClick={() => { setAttach(false); shotRef.current.click() }}>UPI स्क्रीनशॉट जाँचें</button>
+            <button className="cancel" onClick={() => setAttach(false)}>रद्द करें</button>
           </div>
         </div>
-        <input ref={podRef} type="file" hidden accept="image/*,.pdf" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('pod', f); e.target.value = '' }} />
-        <input ref={shotRef} type="file" hidden accept="image/*" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('shot', f); e.target.value = '' }} />
-      </div>
+      )}
+      <input ref={podRef} type="file" hidden accept="image/*,.pdf" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('pod', f); e.target.value = '' }} />
+      <input ref={shotRef} type="file" hidden accept="image/*" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('shot', f); e.target.value = '' }} />
     </div>
   )
 }
