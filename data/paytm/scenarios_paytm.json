@@ -1,0 +1,407 @@
+{
+  "mid": "PAYTM_MERCH_8821",
+  "consent_required": true,
+  "scenarios": [
+    {
+      "intent": "MANDATE_TROUBLESHOOT",
+      "merchant_fixture": {
+        "edi_date": "2026-11-17",
+        "loan_id": "CLX-ML-26-008821",
+        "dip_days": [
+          "2026-11-14",
+          "2026-11-15",
+          "2026-11-16"
+        ],
+        "strategy_memory": [
+          "SM-002",
+          "SM-007"
+        ]
+      },
+      "agent_trace": [
+        {
+          "agent": "IntelligenceAgent",
+          "reads": [
+            "lending/edi_collections.csv",
+            "lending/enach_mandates.csv",
+            "risk/merchant_risk_scores.csv"
+          ],
+          "decision": "17 Nov eNACH returned 04 (balance insufficient) after a 3-day market closure; 18 Nov EDI succeeded; health LOW risk",
+          "state_change": null
+        },
+        {
+          "agent": "RiskPolicyAgent",
+          "reads": [
+            "lending/lender_policies.json",
+            "learning/outcome_history.csv"
+          ],
+          "decision": "First-attempt success 95.9% ≥ 90%, DPD 0, sales recovered next day → FRICTION_NOT_DEFAULT; Option B (UPI link) best: 91% success",
+          "state_change": null
+        },
+        {
+          "agent": "ResolutionAgent",
+          "reads": [
+            "lending/kfs_document.md (4.1)"
+          ],
+          "decision": "Send 1-tap UPI link for ₹500; bounce charge waived under 4.1",
+          "state_change": {
+            "mandate.upi_link": "SENT"
+          }
+        },
+        {
+          "agent": "LedgerOpsAgent",
+          "reads": [
+            "lending/loan_book.json"
+          ],
+          "decision": "On payment: mark 17 Nov EDI recovered, overdue 0",
+          "state_change": {
+            "loan.overdue_amount": 0,
+            "counters.outcomes_verified": "+1"
+          }
+        }
+      ],
+      "verified_outcome": "EDI 2026-11-17 RECOVERED_VIA_UPI_LINK, bounce charge ₹0, DPD 0, mandate ACTIVE"
+    },
+    {
+      "intent": "SETTLEMENT_RECONCILE",
+      "merchant_fixture": {
+        "batch_id": "STL-20261118",
+        "refund_id": "RFD-4412",
+        "chargeback_id": "CB-9981",
+        "bulk_order_txn_id": "PTM26111700016"
+      },
+      "agent_trace": [
+        {
+          "agent": "IntelligenceAgent",
+          "reads": [
+            "settlement_batches.csv",
+            "settlement_lines_2026-11-18.csv",
+            "acquiring_ledger.csv"
+          ],
+          "decision": "STL-20261118: gross ₹1,00,000 from 17 Nov; 6 deduction lines total ₹4,160",
+          "state_change": null
+        },
+        {
+          "agent": "RiskPolicyAgent",
+          "reads": [
+            "mdr_rate_card.json"
+          ],
+          "decision": "All deductions match the (illustrative) rate card; nothing to dispute",
+          "state_change": null
+        },
+        {
+          "agent": "ResolutionAgent",
+          "reads": [],
+          "decision": "Itemise: MDR ₹1,450 (card/postpaid/wallet), GST ₹261 (ITC), refund #4412 ₹1,500, rental ₹149, hold #9981 ₹800",
+          "state_change": null
+        },
+        {
+          "agent": "LedgerOpsAgent",
+          "reads": [],
+          "decision": "No money moves; record explanation",
+          "state_change": {
+            "counters.tickets_deflected": "+1"
+          }
+        }
+      ],
+      "verified_outcome": "Variance ₹4,160 explained line by line; ₹261 ITC flagged; ₹800 linked to CB-9981"
+    },
+    {
+      "intent": "CHARGEBACK_RESOLVE",
+      "merchant_fixture": {
+        "chargeback_id": "CB-9981",
+        "order_id": "9981",
+        "txn_id": "PTM26111400012",
+        "awb": "DEX7781203345",
+        "pod_document": "services/sarvam_service/app/samples/pod_9981.png",
+        "connector": "SHIPROCKET_SYNC"
+      },
+      "agent_trace": [
+        {
+          "agent": "IntelligenceAgent",
+          "reads": [
+            "chargebacks.csv",
+            "connectors/shiprocket_pod.json",
+            "consent/dpdp_consents.csv"
+          ],
+          "decision": "CB-9981 HELD ₹800, reason 13.1; PoD delivered 16 Nov 18:42 to Rohit Verma (OTP + signature); consent ACTIVE",
+          "state_change": null
+        },
+        {
+          "agent": "RiskPolicyAgent",
+          "reads": [
+            "policies/chargeback_policy.json",
+            "policies/dispute_tat.json"
+          ],
+          "decision": "PoD predates dispute, recipient matches, inside 48h evidence window → submit (needs merchant sign-off)",
+          "state_change": null
+        },
+        {
+          "agent": "ResolutionAgent",
+          "reads": [],
+          "decision": "Submit evidence pack after 1-tap sign-off",
+          "state_change": {
+            "chargebacks.CB-9981.evidence_received": true
+          }
+        },
+        {
+          "agent": "LedgerOpsAgent",
+          "reads": [
+            "settlement_batches.csv"
+          ],
+          "decision": "Release hold into next batch",
+          "state_change": {
+            "chargebacks.CB-9981.status": "RELEASED",
+            "counters.money_recovered_inr": "+800"
+          }
+        }
+      ],
+      "verified_outcome": "CB-9981 HELD → RELEASED; ₹800 credited in the next T+1 batch"
+    },
+    {
+      "intent": "UTR_VERIFY",
+      "merchant_fixture": {
+        "genuine_utr": "632184920111",
+        "genuine_txn_id": "PTM26111800011",
+        "pending_utr": "632184920999",
+        "pending_txn_id": "PTM26111800018",
+        "fake_screenshot_utr": "632184920555"
+      },
+      "agent_trace": [
+        {
+          "agent": "IntelligenceAgent",
+          "reads": [
+            "npci_utr_log.csv"
+          ],
+          "decision": "632184920111: SUCCESS; 632184920999: PENDING (reversal by T+1); 632184920555: not found",
+          "state_change": null
+        },
+        {
+          "agent": "RiskPolicyAgent",
+          "reads": [
+            "risk/fraud_signals.csv"
+          ],
+          "decision": "Not found + screenshot → NOT_FOUND_SUSPECTED_FAKE (score high)",
+          "state_change": null
+        },
+        {
+          "agent": "ResolutionAgent",
+          "reads": [],
+          "decision": "Neutral advice: don't hand over goods until the Soundbox announces the payment",
+          "state_change": null
+        },
+        {
+          "agent": "LedgerOpsAgent",
+          "reads": [],
+          "decision": "Log fraud signal",
+          "state_change": {
+            "counters.fraud_blocked": "+1"
+          }
+        }
+      ],
+      "verified_outcome": "Fake screenshot blocked; genuine and pending UTRs reported with their real status"
+    },
+    {
+      "intent": "DUPLICATE_RECONCILE",
+      "merchant_fixture": {
+        "order_id": "4489",
+        "customer_id": "C017",
+        "txn_ids": [
+          "PTM26111800020",
+          "PTM26111800021"
+        ],
+        "utrs": [
+          "632299206882",
+          "632230725895"
+        ]
+      },
+      "agent_trace": [
+        {
+          "agent": "IntelligenceAgent",
+          "reads": [
+            "npci_utr_log.csv",
+            "acquiring_ledger.csv"
+          ],
+          "decision": "Order 4489: two SUCCESS UTRs, same customer, ₹1,180 each, 48 s apart (DUPGRP-4489)",
+          "state_change": null
+        },
+        {
+          "agent": "RiskPolicyAgent",
+          "reads": [
+            "policies/refund_policy.json"
+          ],
+          "decision": "₹1,180 ≤ ₹5,000 and provable → AUTO",
+          "state_change": null
+        },
+        {
+          "agent": "ResolutionAgent",
+          "reads": [],
+          "decision": "Refund the second payment to the original instrument",
+          "state_change": {
+            "refunds.RFD-DUP-4489": "PROCESSED"
+          }
+        },
+        {
+          "agent": "LedgerOpsAgent",
+          "reads": [
+            "refunds.csv"
+          ],
+          "decision": "Queue refund in next batch",
+          "state_change": {
+            "counters.outcomes_verified": "+1"
+          }
+        }
+      ],
+      "verified_outcome": "RFD-DUP-4489 PROCESSED (₹1,180); order reconciled to one payment"
+    },
+    {
+      "intent": "GROWTH_ADVISORY",
+      "merchant_fixture": {
+        "daily_avg": 32000,
+        "fri_sun_vs_mon_thu": 2.3,
+        "monthly_gross": {
+          "2026-05": 461290,
+          "2026-06": 1041515,
+          "2026-07": 771130,
+          "2026-08": 812092,
+          "2026-09": 945954,
+          "2026-10": 1073613,
+          "2026-11": 782406
+        },
+        "weekend_stockout_skus": [
+          "MOB-MI-CHG33",
+          "MOB-BOT-BH100",
+          "LGT-PHI-10W2",
+          "ELC-HAV-EXT41",
+          "MOB-POR-CAB1M"
+        ]
+      },
+      "agent_trace": [
+        {
+          "agent": "IntelligenceAgent",
+          "reads": [
+            "acquiring_ledger.csv",
+            "merchant_master.csv"
+          ],
+          "decision": "₹32,000/day, Fri–Sun 2.3×, GMV in cohort top half",
+          "state_change": null
+        },
+        {
+          "agent": "RiskPolicyAgent",
+          "reads": [
+            "risk/merchant_risk_scores.csv",
+            "lending/lender_policies.json"
+          ],
+          "decision": "LOW risk, DPD 0 → eligible to *see* a working-capital offer (KFS shown first)",
+          "state_change": null
+        },
+        {
+          "agent": "ResolutionAgent",
+          "reads": [],
+          "decision": "Advise stocking up by Thursday; optional offer with KFS link; no auto-acceptance",
+          "state_change": null
+        },
+        {
+          "agent": "LedgerOpsAgent",
+          "reads": [],
+          "decision": "Record advice; no money moved",
+          "state_change": null
+        }
+      ],
+      "verified_outcome": "Advice delivered with cited numbers; any credit needs explicit acceptance after KFS"
+    },
+    {
+      "intent": "CASHFLOW_EDI_SWITCH",
+      "merchant_fixture": {
+        "refund_id": "RFD-4490",
+        "order_id": "4490",
+        "payable_id": "PAY-TOMORROW",
+        "loan_id": "CLX-ML-26-008821",
+        "kfs_clause": "4.2"
+      },
+      "agent_trace": [
+        {
+          "agent": "IntelligenceAgent",
+          "reads": [
+            "refunds.csv",
+            "consent/dpdp_consents.csv"
+          ],
+          "decision": "RFD-4490 ₹3,500 queued → projected payout ₹1,200 vs ₹4,500 payable (VYAPAR_POS_SYNC, consented)",
+          "state_change": null
+        },
+        {
+          "agent": "RiskPolicyAgent",
+          "reads": [
+            "lending/lender_policies.json",
+            "lending/kfs_document.md (4.2)",
+            "lending/loan_book.json"
+          ],
+          "decision": "Clause 4.2: DPD 0, 95.9% ≥ 90%, no holiday in last 30 days, gap documented → eligible; needs lender approval",
+          "state_change": null
+        },
+        {
+          "agent": "ResolutionAgent",
+          "reads": [],
+          "decision": "Request Clix Capital approval with merchant consent token; approval logged",
+          "state_change": {
+            "loan.lender_approval": "APPROVED (Clix Capital credit ops)"
+          }
+        },
+        {
+          "agent": "LedgerOpsAgent",
+          "reads": [
+            "lending/loan_book.json"
+          ],
+          "decision": "Pause EDIs 19–20 Nov, append to tenure end",
+          "state_change": {
+            "loan.edi_status": "PAUSED_2_DAYS",
+            "loan.resume_date": "2026-11-21"
+          }
+        }
+      ],
+      "verified_outcome": "EDI PAUSED_2_DAYS with lender approval + KFS consent artifact; ₹1,000 freed; resumes 2026-11-21"
+    },
+    {
+      "intent": "ESCALATE_HUMAN",
+      "merchant_fixture": {
+        "device_id": "SB-8821-01",
+        "log_window": "2026-11-10 to 2026-11-18",
+        "open_ticket": "TKT-PAYTM-1290"
+      },
+      "agent_trace": [
+        {
+          "agent": "IntelligenceAgent",
+          "reads": [
+            "devices/soundbox_telemetry.csv",
+            "devices/soundbox_fleet.csv",
+            "support/tickets.csv"
+          ],
+          "decision": "SB-8821-01 battery health 41% → 18%, heartbeats missed from 15 Nov; TKT-PAYTM-1290 still open",
+          "state_change": null
+        },
+        {
+          "agent": "RiskPolicyAgent",
+          "reads": [
+            "policies/dispute_tat.json"
+          ],
+          "decision": "Hardware fault → needs a human (replacement), L2",
+          "state_change": null
+        },
+        {
+          "agent": "ResolutionAgent",
+          "reads": [],
+          "decision": "Open TKT-PAYTM-1291 (L2, Device Ops) with diagnostics attached",
+          "state_change": {
+            "tickets.new": "TKT-PAYTM-1291"
+          }
+        },
+        {
+          "agent": "LedgerOpsAgent",
+          "reads": [],
+          "decision": "Link ticket to device and merchant; close duplicate TKT-PAYTM-1290",
+          "state_change": null
+        }
+      ],
+      "verified_outcome": "TKT-PAYTM-1291 created with logs; replacement within 2 days; merchant repeats nothing"
+    }
+  ]
+}

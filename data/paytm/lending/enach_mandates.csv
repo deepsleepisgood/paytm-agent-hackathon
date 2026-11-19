@@ -1,0 +1,2 @@
+umrn,mid,loan_id,sponsor_bank,debtor_account_masked,max_amount,frequency,registered_on,valid_till,status,last_presentment,last_result,last_return
+UMRN-DEMO-0000008821,PAYTM_MERCH_8821,CLX-ML-26-008821,Demo Sponsor Bank,XXXXXX4821,1000,DAILY (as presented),2026-05-30,2027-05-30,ACTIVE,2026-11-18,SUCCESS,2026-11-17 (04 Balance insufficient)

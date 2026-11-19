@@ -1,0 +1,36 @@
+{
+  "disclaimer": "ILLUSTRATIVE: synthetic demo values, not actual Paytm pricing or policy",
+  "effective_from": "2026-04-01",
+  "gst_on_mdr_percent": 18,
+  "tiers": {
+    "SMALL (GMV < ₹20 lakh/month)": "applies to PAYTM_MERCH_8821",
+    "MEDIUM": "₹20 lakh – ₹1 crore/month"
+  },
+  "rates_percent": {
+    "SMALL": {
+      "upi_p2m": 0.0,
+      "rupay_debit": 0.0,
+      "other_debit_card": 0.4,
+      "credit_card": 2.0,
+      "paytm_postpaid": 2.0,
+      "wallet_on_upi_upto_2000": 0.0,
+      "wallet_on_upi_above_2000": 1.1,
+      "emi_card": 2.0
+    },
+    "MEDIUM": {
+      "upi_p2m": 0.0,
+      "rupay_debit": 0.0,
+      "other_debit_card": 0.4,
+      "credit_card": 1.9,
+      "paytm_postpaid": 1.9,
+      "wallet_on_upi_upto_2000": 0.0,
+      "wallet_on_upi_above_2000": 1.1,
+      "emi_card": 1.9
+    }
+  },
+  "notes": [
+    "UPI P2M MDR is zero for small merchants.",
+    "MDR is charged per transaction and netted in the T+1 batch.",
+    "Debit cards in data/seed are RuPay (0%)."
+  ]
+}

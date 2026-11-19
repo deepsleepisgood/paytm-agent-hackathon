@@ -1,0 +1,23 @@
+{
+  "disclaimer": "ILLUSTRATIVE: synthetic demo values, not actual Paytm pricing or policy",
+  "units": "hours unless stated",
+  "chargeback": {
+    "paytm_evidence_due": 48,
+    "network_response_days": 7
+  },
+  "refund": {
+    "auto": 1,
+    "human_approval": 24
+  },
+  "upi_pending": {
+    "auto_reversal": "T+1 (NPCI deemed-transaction rules)"
+  },
+  "edi_pause": {
+    "lender_decision": 2
+  },
+  "tickets": {
+    "L1": 4,
+    "L2": 24,
+    "hardware_replacement_days": 2
+  }
+}

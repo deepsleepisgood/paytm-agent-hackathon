@@ -1,0 +1,11 @@
+ticket_id,mid,level,intent,summary,channel,opened_at,assignee_team,sla_due,status,outcome,resolution,resolved_at,csat
+TKT-PAYTM-1041,PAYTM_MERCH_8821,L2,ESCALATE_HUMAN,Soundbox not announcing payments,app_chat,2026-06-14T10:20:00,Device Ops,2026-06-15T10:20:00,CLOSED,RESOLVED,Remote restart + volume reset,2026-06-14T11:05:00,5
+TKT-PAYTM-1107,PAYTM_MERCH_8821,L1,MANDATE_TROUBLESHOOT,EDI bounced after heavy rain,voice,2026-07-14T09:10:00,Lending Support,2026-07-14T13:10:00,CLOSED,RESOLVED,Reminder sent; re-presented next day,2026-07-15T07:05:00,3
+TKT-PAYTM-1119,PAYTM_MERCH_8821,L1,MANDATE_TROUBLESHOOT,EDI bounced after heavy rain,voice,2026-07-28T08:40:00,Lending Support,2026-07-28T12:40:00,CLOSED,RESOLVED,1-tap UPI link sent,2026-07-28T10:30:00,5
+TKT-PAYTM-1162,PAYTM_MERCH_8821,L1,SETTLEMENT_RECONCILE,Why was MDR deducted?,app_chat,2026-08-21T12:00:00,Merchant Support,2026-08-21T16:00:00,CLOSED,RESOLVED,Explained card/wallet MDR + GST ITC,2026-08-21T12:20:00,4
+TKT-PAYTM-1178,PAYTM_MERCH_8821,L2,CHARGEBACK_RESOLVE,Chargeback on ONDC order #9920,app_chat,2026-08-07T07:32:00,Disputes,2026-08-08T07:32:00,CLOSED,LOST,No PoD (parcel lost by courier); chargeback accepted,2026-08-10T07:32:00,2
+TKT-PAYTM-1204,PAYTM_MERCH_8821,L1,MANDATE_TROUBLESHOOT,EDI bounced: bank outage,voice,2026-09-22T09:30:00,Lending Support,2026-09-22T13:30:00,CLOSED,RESOLVED,Auto re-presented next day,2026-09-23T07:05:00,4
+TKT-PAYTM-1236,PAYTM_MERCH_8821,L1,UTR_VERIFY,"Customer showed payment screenshot, no Soundbox alert",voice,2026-10-03T19:15:00,Risk & Fraud,2026-10-03T23:15:00,CLOSED,FRAUD_PREVENTED,UTR not in NPCI log; merchant asked customer to pay again,2026-10-03T19:18:00,5
+TKT-PAYTM-1251,PAYTM_MERCH_8821,L1,MANDATE_TROUBLESHOOT,EDI bounced after Diwali stock payment,voice,2026-10-13T08:15:00,Lending Support,2026-10-13T12:15:00,CLOSED,RESOLVED,1-tap UPI link sent,2026-10-13T11:20:00,5
+TKT-PAYTM-1263,PAYTM_MERCH_8821,L2,CHARGEBACK_RESOLVE,Chargeback on ONDC order #9962,app_chat,2026-10-21T19:11:00,Disputes,2026-10-22T19:11:00,CLOSED,WON,Submitted OTP-verified Shiprocket PoD; hold released,2026-10-23T19:11:00,5
+TKT-PAYTM-1290,PAYTM_MERCH_8821,L2,ESCALATE_HUMAN,"Soundbox battery drains by evening, misses announcements",app_chat,2026-11-16T21:40:00,Device Ops,2026-11-17T21:40:00,OPEN,OPEN,Advised full charge overnight; issue persists,,
