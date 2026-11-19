@@ -36,7 +36,7 @@ def _reset(client):
         ("GST ka ITC kitna milega aur loan EDI kitni hai", "FEE_GST_LOAN"),
         ("मेरा लोन कितना बाकी है", "FEE_GST_LOAN"),
         ("mujhe kisi insaan se baat karni hai", "ESCALATE_HUMAN"),
-        ("namaste", "SETTLEMENT_RECONCILE"),
+        ("namaste", None),  # nothing matched: the buddy asks instead of guessing settlement
         ("Kal ₹1,00,000 sale tha, bank mein ₹95,840 aaya — ₹4,160 kahan kata?", "SETTLEMENT_RECONCILE"),
         ("mera soundbox kharab ho gaya, awaaz nahi aa rahi", "ESCALATE_HUMAN"),
         ("साउंडबॉक्स बंद हो गया है", "ESCALATE_HUMAN"),
@@ -96,7 +96,8 @@ def test_all_intents_offline(client, text, intent, status):
     for t in ("DPDP_CONSENT_VERIFIED", "INTENT_CLASSIFIED", "MERCHANT_TO_PAYTM", "PAYTM_TO_MERCHANT", "VOICE_REPLY_READY"):
         assert t in types
     m2p = next(e for e in body["a2a_events"] if e["type"] == "MERCHANT_TO_PAYTM")["payload"]
-    assert set(m2p) == {"request_id", "mid", "intent", "selected_intervention", "payload", "consent_token"}
+    assert set(m2p) == {"request_id", "mid", "intent", "selected_intervention", "payload", "consent_token",
+                        "session_id", "language_code"}
     assert "text" not in m2p["payload"]  # data minimisation: raw utterance never leaves merchant side
 
 
@@ -151,7 +152,8 @@ def test_upload_requires_consent(client):
     assert r.status_code == 403
 
 
-def test_query_audio_falls_back_to_mock_transcript(client):
+def test_query_audio_without_stt_asks_again_instead_of_guessing(client):
+    """STT down used to substitute a canned settlement question and answer it."""
     r = client.post(
         "/merchant/query-audio",
         files={"audio": ("q.wav", b"RIFF....", "audio/wav")},
@@ -159,9 +161,11 @@ def test_query_audio_falls_back_to_mock_transcript(client):
     )
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["transcript_source"] == "mock"
-    assert body["intent"] == "SETTLEMENT_RECONCILE"
-    assert body["a2a_events"][0]["type"] == "DPDP_CONSENT_VERIFIED"  # consent before STT
+    assert body["transcript"] is None and body["intent"] == "UNCLEAR" and body["paytm_source"] == "none"
+    assert body["pending_action"]["type"] == "REPHRASE"
+    types = [e["type"] for e in body["a2a_events"]]
+    assert types[0] == "DPDP_CONSENT_VERIFIED"  # consent before STT
+    assert "MERCHANT_TO_PAYTM" not in types  # nothing was sent to Paytm
 
 
 def test_reset(client):

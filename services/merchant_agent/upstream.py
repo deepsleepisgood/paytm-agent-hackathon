@@ -29,7 +29,9 @@ log = logging.getLogger("merchant_agent.upstream")
 try:  # PLAN.md: URLs are configured via .env on the demo laptop
     from dotenv import load_dotenv
 
-    load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+    _here = os.path.dirname(os.path.abspath(__file__))
+    load_dotenv(os.path.join(_here, ".env"))  # service .env wins (load_dotenv never overrides)
+    load_dotenv(os.path.join(_here, "..", "..", ".env"))  # then the shared repo-root .env
 except ImportError:  # pragma: no cover
     pass
 
@@ -41,6 +43,10 @@ TIMEOUT_S = float(os.getenv("UPSTREAM_TIMEOUT_S", "6"))
 # Person 1 gives Sarvam Vision up to 25 s (SARVAM_DOC_LATENCY_BUDGET) before its own fallback,
 # so a 6 s cut-off here would discard every real extraction. Wait a little longer than that.
 DOC_TIMEOUT_S = float(os.getenv("DOC_EXTRACT_TIMEOUT_S", "30"))
+# Sarvam TTS took 4-8 s for a 30-35 word reply in live tests; must exceed 8001's SARVAM_LATENCY_BUDGET (12).
+TTS_TIMEOUT_S = float(os.getenv("TTS_TIMEOUT_S", "15"))
+# Sarvam STT on a 3-10 s voice note; the general 6 s timeout cut it off and the old code then invented a question.
+STT_TIMEOUT_S = float(os.getenv("STT_TIMEOUT_S", "20"))
 # After a host refuses a connection, skip it for this long (instant fallback instead of re-waiting).
 CIRCUIT_COOLDOWN_S = float(os.getenv("UPSTREAM_CIRCUIT_COOLDOWN_S", "10"))
 
@@ -95,16 +101,29 @@ def _label(body: dict[str, Any]) -> str:
 # ----------------------------------------------------------------------------- Sarvam (8001)
 
 
-async def stt(audio: bytes, filename: str, content_type: str) -> tuple[Optional[str], str]:
+async def stt(audio: bytes, filename: str, content_type: str,
+              language_code: str = "hi-IN") -> tuple[Optional[str], str]:
+    """What the merchant actually said, or (None, why). Never a made-up line.
+
+    8001's mock STT returns a canned demo sentence; treating it as speech made every voice query come back as
+    "settlement kam kyun aaya" (the user saw answers to questions they never asked). So mock = not heard.
+    hi-IN + saaras codemix keeps Hinglish ("UTR", "settlement") in Latin script; auto-detect misreads short clips."""
     try:
         r = await _post(
             SARVAM_URL, "/stt",
-            files={"audio": (filename or "audio.wav", audio, content_type or "audio/wav")},
+            files={"audio": (filename or "audio.webm", audio, (content_type or "audio/webm").split(";")[0])},
+            data={"language_code": language_code},
+            timeout=httpx.Timeout(STT_TIMEOUT_S, connect=min(2.0, STT_TIMEOUT_S)),
         )
         r.raise_for_status()
         body = r.json() or {}
-        if body.get("transcript"):
-            return body["transcript"], _label(body)
+        if _label(body) == "mock":
+            log.warning("STT answered from mock (no Sarvam key / Sarvam down): not using its canned transcript")
+            return None, "mock"
+        text = str(body.get("transcript") or "").strip()
+        if text:
+            return text, "live"
+        return None, "empty"
     except Exception as exc:  # noqa: BLE001 - any upstream failure falls back
         log.warning("STT failed (%s): %s", type(exc).__name__, exc)
     return None, "unavailable"
@@ -153,13 +172,41 @@ def _parse_json(reply: Any) -> Optional[dict[str, Any]]:
     return None
 
 
-async def tts(text: str, language_code: str = "hi-IN") -> tuple[Optional[str], str]:
+_sarvam_mode_cache: tuple[float, str] = (0.0, "")
+
+
+async def sarvam_mode() -> str:
+    """live | mock | down: 8001's own /health (cached 10 s). mock = no SARVAM_API_KEY, so voice can't work."""
+    global _sarvam_mode_cache
+    ts, mode = _sarvam_mode_cache
+    if mode and time.monotonic() - ts < 10:
+        return mode
     try:
-        r = await _post(SARVAM_URL, "/tts", json={"text": text, "language_code": language_code})
+        r = await client().get(f"{SARVAM_URL}/health", timeout=2.0)
+        mode = str((r.json() or {}).get("mode") or "unknown")
+    except Exception:  # noqa: BLE001
+        mode = "down"
+    _sarvam_mode_cache = (time.monotonic(), mode)
+    return mode
+
+
+async def tts(text: str, language_code: str = "hi-IN") -> tuple[Optional[str], str]:
+    """Sarvam voice for the reply. Measured live: a 30-35 word Hindi reply takes Sarvam 4-8 s, so this call
+    gets its own TTS_TIMEOUT_S (and 8001 needs SARVAM_LATENCY_BUDGET ≥ 12, set in .env).
+
+    8001's mock audio is a placeholder tone: forwarding it made the app beep instead of speak. So mock audio
+    is dropped and the frontend speaks the text with the browser's own voice instead."""
+    try:
+        r = await _post(SARVAM_URL, "/tts", json={"text": text, "language_code": language_code},
+                        timeout=httpx.Timeout(TTS_TIMEOUT_S, connect=min(2.0, TTS_TIMEOUT_S)))
         r.raise_for_status()
         body = r.json() or {}
-        if body.get("audio_base64"):
-            return body["audio_base64"], _label(body)
+        label = _label(body)
+        if body.get("audio_base64") and label != "mock":
+            return body["audio_base64"], label
+        if label == "mock":
+            log.warning("TTS answered from mock (placeholder tone): sending no audio, the browser will speak")
+            return None, "mock"
     except Exception as exc:  # noqa: BLE001
         log.warning("TTS failed (%s): %s", type(exc).__name__, exc)
     return None, "unavailable"
@@ -184,6 +231,20 @@ async def doc_extract(
     return mock_doc_extract(doc_type, filename), "mock"
 
 
+async def doc_extract_sample(doc_type: str) -> tuple[Optional[dict[str, Any]], str]:
+    """Ask 8001 to extract its consented sample connector document (Shiprocket PoD for #9981)."""
+    try:
+        r = await _post(SARVAM_URL, "/doc-extract", data={"doc_type": doc_type, "use_sample_connector": "true"},
+                        timeout=httpx.Timeout(DOC_TIMEOUT_S, connect=min(2.0, DOC_TIMEOUT_S)))
+        r.raise_for_status()
+        body = r.json() or {}
+        if isinstance(body.get("extracted_fields"), dict):
+            return body, _label(body)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("doc-extract (sample connector) failed (%s): %s", type(exc).__name__, exc)
+    return None, "unavailable"
+
+
 def mock_doc_extract(doc_type: str, filename: str = "") -> dict[str, Any]:
     """Field names mirror Person 1's /doc-extract (utr, payer_app, order_id, ...)."""
     d = dl.DATA
@@ -195,10 +256,11 @@ def mock_doc_extract(doc_type: str, filename: str = "") -> dict[str, Any]:
             "order_id": cb.get("order_id", "9981"),
             "txn_id": cb.get("txn_id", cb.get("order_id", "9981")),
             "amount": cb.get("amount"),
-            "recipient_name": "Ramesh Kumar",
+            "recipient_name": "Rohit Verma",
             "delivery_date": "2026-11-16",
-            "courier_name": "Delhivery",
-            "awb_or_tracking_id": "DLV7712093341",
+            "courier_name": "Demo Express Logistics",
+            "awb_or_tracking_id": "DEX7781203345",
+            "otp_verified": True,
             "signature_present": True,
         }
     else:
@@ -441,18 +503,24 @@ def mock_paytm(envelope: dict[str, Any]) -> dict[str, Any]:
 
     if intent == "REFUND_MANAGE":
         oid = dl.digits(p.get("order_id"))
-        amount = p.get("amount")
-        known = d.refund(oid) if oid else d.refund()
-        if known:
+        amount = p.get("amount_inr", p.get("amount"))
+        initiate = str(p.get("action") or "").upper() == "INITIATE"
+        if oid:
+            known = d.refund(oid)
+        else:  # no order: only a status question may fall back to the latest refund, and only if the amount fits
+            latest = None if initiate else d.refund()
+            known = latest if latest and (amount is None or dl.num(latest.get("amount")) == dl.num(amount)) else None
+        if known and not initiate:
             st = known.get("status") or "PROCESSED"
             return _answer(base, st, {"order_id": known["order_id"], "amount": known.get("amount"),
                                       "deducted_in_settlement": d.settlement["settlement_date"]}, [
                 f"Refund #{known['order_id']} found: {st}", consent,
                 "Explained deduction to merchant", "No ledger change"], resolved=True)
+        if amount is not None and float(amount) > float(d.refund_limit):  # PLAN.md / 8002: > ₹5,000 needs a human
+            return _escalation(base, envelope, "REFUND_MANAGE",
+                               f"Refund {_inr(amount)}{f' on order #{oid}' if oid else ''} exceeds "
+                               f"{_inr(d.refund_limit)} autonomous limit")
         if oid and amount:
-            if float(amount) > float(d.refund_limit):  # PLAN.md: > ₹5,000 needs a human
-                return _escalation(base, envelope, "REFUND_MANAGE",
-                                   f"Refund ₹{amount} on order #{oid} exceeds ₹{d.refund_limit} autonomous limit")
             return _answer(base, "INITIATED", {"order_id": oid, "amount": amount, "eta": "T+1"}, [
                 f"Order #{oid} eligible for refund",
                 f"{_inr(amount)} ≤ {_inr(d.refund_limit)} autonomous limit — approved",
@@ -515,14 +583,12 @@ def mock_paytm(envelope: dict[str, Any]) -> dict[str, Any]:
         offer.setdefault("lender", h.get("active_lender"))
         trend = six_month_trend_pct()
         data = {"weekend_multiplier": h.get("weekend_multiplier"), "six_month_trend_pct": trend,
-                "daily_avg_sales": h.get("daily_avg_sales"), "offer": offer,
-                "kfs": {"apr_pct": offer.get("apr_pct"), "processing_fee_pct": offer.get("processing_fee_pct"),
-                        "tenure_days": offer.get("tenure_days"), "cooling_off_days": 3}}
+                "daily_avg_sales": h.get("daily_avg_sales"), "offer": offer}
         return _answer(base, "OFFER_PREAPPROVED", data, [
             f"Weekend sales {h.get('weekend_multiplier')}x weekdays"
             + (f"; 6-month trend {trend:+d}%" if trend is not None else ""),
-            f"{consent}; pre-underwritten {_inr(offer.get('amount'))} line, KFS APR {offer.get('apr_pct')}%",
-            f"Weekend-weighted EDI: {_inr(offer.get('edi_weekday'))} weekday / {_inr(offer.get('edi_weekend'))} weekend",
+            f"{consent}; {_inr(offer.get('amount'))} working-capital limit pre-approved by {offer.get('lender')}",
+            "Rate and tenure only in the NBFC's KFS, shown before any drawdown",
             "Offer stored — no disbursal without merchant e-sign",
         ], resolved=True)
 
@@ -596,7 +662,7 @@ def mock_paytm(envelope: dict[str, Any]) -> dict[str, Any]:
 def six_month_trend_pct() -> Optional[int]:
     """Growth from the first to the last *full* month of history (a month-to-date row is skipped)."""
     months = [m for m in dl.DATA.history.get("monthly_sales") or [] if isinstance(m, dict)]
-    full = [m for m in months if not re.search(r"\d\s*[–-]\s*\d|mtd|to date", str(m.get("note", "")), re.I)] or months
+    full = [m for m in months if not re.search(r"\d\s*[–-]\s*\d|mtd|to date|partial", str(m.get("note", "")), re.I)] or months
     if len(full) < 2 or not full[0].get("sales"):
         return None
     return round((full[-1]["sales"] / full[0]["sales"] - 1) * 100)
@@ -685,6 +751,94 @@ def mock_execute_edi_pause(body: dict[str, Any]) -> dict[str, Any]:
         f"{lender} EDI paused {days} days ({_inr(edi * days)} liquidity freed)",
         f"loan_edi_status ACTIVE → {status}; resumes {data['resume_date']}",
     ], resolved=True)
+
+
+
+# ----------------------------------------------------------------------------- live 8002 -> merchant view
+# Person 2's /a2a/dispatch answers every intent with status RESOLVED | ACTION_REQUIRED | ESCALATED and puts
+# the specifics in `data` (lookup_status, hold_status, refund_status, *_inr amounts, lines, remedies...).
+# The merchant side (replies, ITC log, fraud alert, khata, learning) keys on specific outcomes, so this
+# translates one into the other. The raw 8002 body is still returned to the frontend as paytm_response.
+
+_UTR_STATUS = {"SUCCESS_SETTLED": "SUCCESS", "SUCCESS": "SUCCESS", "PENDING": "PENDING", "FAILED": "FAILED",
+               "REVERSED": "FAILED"}
+
+
+def _amt_of(d: dict[str, Any], *keys: str) -> Any:
+    return next((d[k] for k in keys if d.get(k) is not None), None)
+
+
+def interpret(intent: str, resp: dict[str, Any], source: str) -> dict[str, Any]:
+    if source != "live" or not isinstance(resp, dict):
+        return resp
+    mesh = str(resp.get("status") or "").upper()
+    if mesh not in ("RESOLVED", "ACTION_REQUIRED", "ESCALATED"):
+        return resp  # already specific (or an older 8002 build)
+    d = resp.get("data") or {}
+    status, data = mesh, dict(d)
+    ar = resp.get("action_required")
+    # Person 2 renamed two plan intents and accepts both names; read either.
+    canon = {"DUPLICATE_RECONCILE": "DUPLICATE_PAYMENT_RECONCILE", "GROWTH_ADVISORY": "WORKING_CAPITAL_ADVISORY"}.get(
+        intent, resp.get("intent_canonical") or intent)
+
+    if canon == "SETTLEMENT_RECONCILE" and "lines" in d:
+        breakdown = []
+        for ln in d.get("lines") or []:
+            rec = {"head": ln.get("code") or ln.get("label"), "label": ln.get("label"),
+                   "amount": _amt_of(ln, "amount_inr", "amount")}
+            if (m := re.search(r"order\s*#?\s*(\d+)", str(ln.get("label") or ""), re.I)):
+                rec["order_id"] = m.group(1)
+            if "CHARGEBACK" in str(rec["head"]).upper() or "HOLD" in str(rec["head"]).upper():
+                rec["status"] = str(ln.get("status") or "HELD").upper()
+            breakdown.append(rec)
+        data = {"settlement_date": d.get("settlement_date"), "gross": d.get("gross_inr"),
+                "net_bank_credit": d.get("net_credit_inr"), "variance": d.get("variance_inr"), "breakdown": breakdown,
+                "reconciles": d.get("reconciles")}
+        status = "RECONCILED" if mesh == "RESOLVED" else mesh
+    elif canon == "UTR_VERIFY" and "lookup_status" in d:
+        look = str(d.get("lookup_status") or "").upper()
+        fake = look == "NOT_FOUND" or d.get("internal_flag") == "POSSIBLE_FAKE"
+        status = "NOT_FOUND_SUSPECTED_FAKE" if fake else _UTR_STATUS.get(look, look or mesh)
+        data = {"utr_number": d.get("utr"), "amount": d.get("amount_inr"), "payer_app": d.get("payer_app"),
+                "advice": d.get("advice"), "amount_matches_claim": d.get("amount_matches_claim")}
+        if fake:
+            ar = ar or {"type": "DO_NOT_RELEASE_GOODS", "message": "Payment not found in NPCI log. Possible fake screenshot."}
+    elif canon == "CHARGEBACK_RESOLVE" and "hold_status" in d:
+        status = "RELEASED" if str(d.get("hold_status")).upper() == "RELEASED" else (
+            "HELD" if mesh != "ESCALATED" else mesh)
+        data = {"order_id": d.get("order_id"), "txn_id": d.get("txn_id"), "amount": d.get("amount_held_inr"),
+                "pod_due_in_hours": round(float(d["hours_left"])) if d.get("hours_left") is not None else None,
+                "evidence_status": d.get("evidence_status"), "release": "T+1" if status == "RELEASED" else None}
+    elif canon == "MANDATE_TROUBLESHOOT" and ("remedies" in d or "bounce_date" in d):
+        status = "REMEDIES_OFFERED" if mesh == "ACTION_REQUIRED" else ("MANDATE_RESOLVED" if mesh == "RESOLVED" else mesh)
+        data = {"missed_edi": d.get("amount_inr"), "bounce_date": d.get("bounce_date"), "bounce_reason": d.get("bounce_reason"),
+                "lender": d.get("nbfc"), "is_default": d.get("is_default"), "remedies": d.get("remedies") or [],
+                "penalty_waived": not d.get("bounce_charge_inr") or None, "bounce_charge_inr": d.get("bounce_charge_inr")}
+    elif canon == "DUPLICATE_PAYMENT_RECONCILE" and "duplicates_found" in d:
+        refund, keep = d.get("refund") or {}, d.get("keep") or {}
+        if not d.get("duplicates_found"):
+            status = "NO_DUPLICATE_FOUND"
+        elif mesh == "RESOLVED":
+            status = "REFUND_INITIATED"
+        data = {"order_id": d.get("order_id"), "amount": d.get("order_amount_inr") or refund.get("amount_inr"),
+                "utrs": [x.get("utr") for x in d.get("payments") or []], "kept_utr": keep.get("utr"),
+                "refunded_utr": refund.get("utr"), "refund_status": d.get("refund_status"), "customer": None}
+    elif canon == "WORKING_CAPITAL_ADVISORY" and ("credit_offer" in d or "sales" in d):
+        offer, sales, loan = d.get("credit_offer") or {}, d.get("sales") or {}, d.get("existing_loan") or {}
+        # Newer 8002 (05d32c8+) gives sales advice + the existing loan and deliberately offers no new credit.
+        status = ("OFFER_PREAPPROVED" if offer else "ADVICE_READY") if mesh == "RESOLVED" else mesh
+        data = {"daily_avg_sales": sales.get("avg_daily_sales_inr"), "weekend_multiplier": sales.get("weekend_multiplier"),
+                "weekend_daily_sales": d.get("weekend_daily_sales_inr"), "restock_by": sales.get("restock_by"),
+                "busiest_days": sales.get("busiest_days"), "months": sales.get("months"),
+                "existing_loan": {"lender": loan.get("nbfc"), "balance": loan.get("balance_inr"),
+                                  "edi_per_day": loan.get("edi_per_day_inr"),
+                                  "edi_share_of_daily_sales_pct": d.get("share_of_daily_takings_repaid_percent")} if loan else None,
+                "new_facility_offered": d.get("new_facility_offered", bool(offer)),
+                "offer": {"amount": offer.get("pre_approved_inr"), "lender": offer.get("nbfc"),
+                          "kfs_required": offer.get("kfs_required"), "terms": offer.get("terms")} if offer else None}
+    elif mesh == "ESCALATED":
+        data = {**d, "reason": (resp.get("escalation_ticket") or {}).get("reason_text")}
+    return {**resp, "status": status, "data": data, "action_required": ar, "mesh_status": mesh}
 
 
 reset_mock_ledger()

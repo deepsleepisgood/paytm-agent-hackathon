@@ -12,10 +12,11 @@ Everything here is deterministic and offline; the LLM only phrases the final rep
 from __future__ import annotations
 
 import time
-from statistics import mean
+from datetime import date
 from typing import Any, Optional
 
 import dataset_loader as dl
+import repository
 import upstream
 from schemas import Slots
 from state import STATE
@@ -173,15 +174,33 @@ def profile() -> dict[str, Any]:
 # ----------------------------------------------------------------------------- 1. diagnose
 
 
+def _expected_sales(h: dict[str, Any], row: dict[str, Any]) -> float:
+    """What a normal day like this one sells: the row's own `expected` (same weekday, past weeks) if the
+    dataset gives it, else the weekday/weekend split of the daily average (Fri–Sun run `weekend_multiplier`x)."""
+    if (e := dl.num(row.get("expected"))) is not None:
+        return float(e)
+    avg = float(dl.num(h.get("daily_avg_sales")) or 0)
+    m = float(dl.num(h.get("weekend_multiplier")) or 1)
+    weekday_avg = avg * 7 / (4 + 3 * m)  # 4 weekdays at b, 3 weekend days at m·b, averaging to avg
+    try:
+        weekend = date.fromisoformat(str(row["date"])[:10]).weekday() >= 4  # Fri, Sat, Sun
+    except ValueError:
+        return avg
+    return weekday_avg * m if weekend else weekday_avg
+
+
 def _sales_dip(h: dict[str, Any]) -> dict[str, Any]:
-    avg = dl.num(h.get("daily_avg_sales")) or 0
     rows = [r for r in h.get("recent_daily_sales") or [] if isinstance(r, dict) and dl.num(r.get("sales")) is not None]
-    dip = [r for r in rows if r.get("dip")] or [r for r in rows if avg and r["sales"] < 0.75 * avg]
-    dip_pct = round((1 - mean(r["sales"] for r in dip) / avg) * 100) if dip and avg else 0
-    recovered = bool(rows) and avg > 0 and rows[-1]["sales"] >= 0.9 * avg
+    exp = {r["date"]: _expected_sales(h, r) for r in rows}
+    dip = [r for r in rows if r.get("dip")] or [r for r in rows if exp[r["date"]] and r["sales"] < 0.75 * exp[r["date"]]]
+    expected_total = sum(exp[r["date"]] for r in dip)
+    dip_pct = round((1 - sum(r["sales"] for r in dip) / expected_total) * 100) if dip and expected_total else 0
+    after = [r for r in rows if dip and r["date"] > dip[-1]["date"]]
+    recovered = any(r["sales"] >= 0.9 * exp[r["date"]] for r in after)
     note = next((r.get("note") for r in dip if r.get("note")), None)
+    first_back = next((r for r in after if r["sales"] >= 0.9 * exp[r["date"]]), None)
     return {"dip_pct": dip_pct, "dip_dates": [r["date"] for r in dip], "cause": note, "recovered": recovered,
-            "latest_day": rows[-1] if rows else None}
+            "latest_day": first_back or (rows[-1] if rows else None)}
 
 
 def _diag_mandate(h: dict[str, Any], slots: Slots, extra: dict[str, Any]) -> dict[str, Any]:
@@ -263,13 +282,16 @@ def _diag_duplicate(h, slots, extra):
                 "evidence": [], "tip_hi": "", "metrics": {}}
     name = dup.get("customer")
     cust = next((c for c in h.get("recent_customers") or [] if isinstance(c, dict) and c.get("name") == name), {})
+    if dup.get("customer_visits_6m"):
+        cust = {**cust, "visits_6m": dup["customer_visits_6m"]}
     return {"root_cause": "CUSTOMER_PAID_TWICE", "classification": "GENUINE_DUPLICATE",
             "summary": f"{name} paid {_inr(dup.get('amount'))} twice for order #{dup.get('order_id')}"
                        + (f"; repeat customer ({cust.get('visits_6m')} visits in 6 months)" if cust else ""),
             "evidence": [f"UTRs {', '.join(map(str, dup.get('utrs') or []))} on {dup.get('date')}"],
             "tip_hi": (f"{name} आपके repeat customer हैं, तुरंत refund से भरोसा बढ़ेगा।" if cust
                        else "Duplicate का तुरंत refund customer का भरोसा बढ़ाता है।"),
-            "metrics": {"customer_visits_6m": cust.get("visits_6m"), "amount": dl.num(dup.get("amount"))}}
+            "metrics": {"customer_visits_6m": cust.get("visits_6m"), "amount": dl.num(dup.get("amount")),
+                        "order_id": dl.digits(dup.get("order_id"))}}
 
 
 def _diag_growth(h, slots, extra):
@@ -319,13 +341,20 @@ def _diag_cashflow(h, slots, extra):
 def _diag_escalate(h, slots, extra):
     if extra.get("issue_type") == "HARDWARE_SOUNDBOX":
         diag = h.get("soundbox_diagnostics") or {}
-        causes = [c for c, bad in (("LOW_BATTERY", (dl.num(diag.get("battery_pct")) or 100) < 20),
-                                   ("WEAK_NETWORK", "weak" in str(diag.get("network", "")).lower()),
-                                   ("SPEAKER_FAILED", str(diag.get("speaker_test", "")).upper() == "FAILED")) if bad]
+        health = dl.num(diag.get("battery_health_pct"))
+        causes = [c for c, bad in (
+            ("BATTERY_DEGRADED", health is not None and health < 40),
+            ("LOW_BATTERY", (dl.num(diag.get("battery_pct")) or 100) < 20),
+            ("WEAK_NETWORK", any(w in str(diag.get("network", "")).lower() for w in ("weak", "offline", "2g"))),
+            ("SPEAKER_FAILED", str(diag.get("speaker_test", "")).upper() == "FAILED")) if bad]
+        parts = [f"battery health {health:g}%" if health is not None else f"battery {diag.get('battery_pct')}%",
+                 str(diag.get("network") or ""),
+                 f"{diag['heartbeats_missed_24h']} heartbeats missed" if diag.get("heartbeats_missed_24h") else "",
+                 f"{diag['announce_failures_24h']} payments not announced in 24h" if diag.get("announce_failures_24h")
+                 else f"speaker test {diag.get('speaker_test')}"]
         return {"root_cause": "+".join(causes) or "DEVICE_FAULT", "classification": "HARDWARE_FAULT",
-                "summary": f"Soundbox logs: battery {diag.get('battery_pct')}%, {diag.get('network')}, "
-                           f"speaker test {diag.get('speaker_test')}",
-                "evidence": [f"Last heartbeat {diag.get('last_heartbeat')}"],
+                "summary": "Soundbox logs: " + ", ".join(p for p in parts if p),
+                "evidence": [f"Device {diag.get('device_id') or ''} last heartbeat {diag.get('last_heartbeat')}".strip()],
                 "tip_hi": "तब तक Paytm app में payment notification चालू रखिए।", "metrics": diag}
     return {"root_cause": "SUPPORT_REQUEST", "classification": "HUMAN_REQUESTED",
             "summary": "Merchant asked for a human", "evidence": [], "tip_hi": "", "metrics": {}}
@@ -412,8 +441,9 @@ def _priors() -> dict[str, dict[str, list[float]]]:
                     s = n * r / 100
             else:
                 continue
-            if s is not None and n:
-                out.setdefault(str(intent).upper(), {})[str(action).upper()] = [s, n]
+            if s is not None and n:  # this merchant's recorded outcomes add to the population priors
+                s0, n0 = out.setdefault(str(intent).upper(), {}).get(str(action).upper(), [0, 0])
+                out[str(intent).upper()][str(action).upper()] = [s0 + s, n0 + n]
     return out
 
 
@@ -526,6 +556,7 @@ def verify_and_learn(intent: str, evaluation: dict[str, Any], resp: dict[str, An
     }
     if resolved is not None:
         STATE.strategy_memory.append(record)
+        repository.record_strategy(record)  # no-op unless USE_SUPABASE=true
     return {**record, "learned": resolved is not None,
             "strategy_success_rate": history_stats(intent, str(sel.get("action")))["success_rate"]}
 

@@ -445,7 +445,7 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
 
   const fi = run ? flowInfo(run, reveal) : null
   const FLOW = fi ? fi.FLOW : []
-  const resBadge = run && shown('reply') ? (get('reply').tone === 'bad' ? 'Fraud blocked' : awaiting ? 'Needs your OK' : escalated ? 'Human handoff' : 'Resolved by AI') : ''
+  const resBadge = run && shown('reply') ? (run.unclear ? 'Asked to rephrase' : run.info ? 'Answered from your books' : get('reply').tone === 'bad' ? 'Fraud blocked' : awaiting ? 'Needs your OK' : escalated ? 'Human handoff' : 'Resolved by AI') : ''
   const sections = run ? [
     { k: 'agents', show: true, title: 'Agent team', sub: done ? `${fi.P.usedCount} of 9 agents used · ${escalated ? '1 human handoff' : '0 humans in the loop'}` : fi.cur >= 0 ? `Working now: ${FLOW[fi.cur].name}` : 'Getting ready…', badge: `${fi.P.usedCount}/9` },
     { k: 'decision', show: shown('insight') || shown('eval'), title: 'What the AI knew and chose', sub: ev && shown('eval') ? (ev.options ? `Chose option ${ev.selected}: ${(ev.options.find((o) => o.id === ev.selected) || {}).label || ''}` : `Intent ${ev.route?.intent}`) : 'Recalling this merchant’s history…', badge: ev && ev.options && shown('eval') ? `Option ${ev.selected}` : '' },

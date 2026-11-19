@@ -1,0 +1,55 @@
+{
+  "connector": "SHIPROCKET_SYNC",
+  "consent_id": "CNS-SHIPROCKET_SYNC",
+  "mid": "PAYTM_MERCH_8821",
+  "received_by_paytm_at": null,
+  "received_note": "Not yet pulled: the merchant agent pulls it during CHARGEBACK_RESOLVE",
+  "order_id": "9981",
+  "chargeback_id": "CB-9981",
+  "payment_txn_id": "PTM26111400012",
+  "awb": "DEX7781203345",
+  "courier": "Demo Express Logistics",
+  "ship_to": "B-14, Lajpat Nagar, New Delhi 110024",
+  "amount": 800,
+  "items": [
+    {
+      "sku": "LGT-PHI-10W2",
+      "name": "Philips 10W LED Bulb (pack of 2)",
+      "qty": 1,
+      "price": 250
+    },
+    {
+      "sku": "MOB-BOT-BH100",
+      "name": "boAt Bassheads 100 Wired Earphones",
+      "qty": 1,
+      "price": 400
+    },
+    {
+      "sku": "MOB-POR-CAB1M",
+      "name": "Portronics USB-C Cable 1m",
+      "qty": 1,
+      "price": 150
+    }
+  ],
+  "shipped_at": "2026-11-14T16:00:00",
+  "pod": {
+    "delivered_at": "2026-11-16T18:42:00",
+    "recipient": "Rohit Verma",
+    "otp_verified": true,
+    "signature": true,
+    "photo_on_delivery": false,
+    "document": "services/sarvam_service/app/samples/pod_9981.png",
+    "note": "Same values as the Sarvam sample PoD read by /doc-extract (use_sample_connector=true)"
+  },
+  "document": {
+    "path": "services/sarvam_service/app/samples/pod_9981.png",
+    "sha256": "c60c27c0225a42fc6dbf442b7786051f5ecac20c788a95bdfc9cba4e1fd3d8b6",
+    "expected_extraction": {
+      "order_id": "9981",
+      "delivery_date": "2026-11-16",
+      "recipient_name": "Rohit Verma",
+      "amount": 800,
+      "signature_present": true
+    }
+  }
+}

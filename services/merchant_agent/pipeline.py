@@ -2,7 +2,10 @@
 -> side effects (ITC, fraud, khata) -> verify + learn -> Hinglish voice reply."""
 from __future__ import annotations
 
+import contextvars
 import json
+import logging
+import re
 import time
 import uuid
 from typing import Any, Awaitable, Callable, Optional
@@ -12,9 +15,41 @@ from fastapi import HTTPException
 import advisor
 import dataset_loader as dl
 import khata
+import repository
 import upstream
 from schemas import Slots
 from state import STATE, order_sheet
+
+log = logging.getLogger("merchant_agent.pipeline")
+
+# Reply wording. Default: Sarvam's LLM answers the merchant's actual question from Paytm's answer (numbers checked,
+# verified tip appended verbatim); the per-status templates are the fallback. REPLY_LLM=0 = templates only.
+# (Templates alone answered the topic, not the question: every settlement question got the same breakdown.)
+REPLY_LLM = __import__("os").getenv("REPLY_LLM", "1").strip().lower() in ("1", "true", "yes", "on")
+
+# Reply language for this request (the app's हि / EN tab). Set once per request by the endpoint.
+_REPLY_LANG: contextvars.ContextVar[str] = contextvars.ContextVar("reply_lang", default="hi")
+
+
+def set_lang(code: Optional[str]) -> str:
+    value = "en" if str(code or "").lower().startswith("en") else "hi"
+    _REPLY_LANG.set(value)
+    return value
+
+
+def lang() -> str:
+    return _REPLY_LANG.get()
+
+
+def tts_code() -> str:
+    return "en-IN" if lang() == "en" else "hi-IN"
+
+
+LANGUAGE_RULE = {
+    "hi": "Write in Hinglish using Devanagari script, EVEN IF the question was typed in Roman letters; keep UTR, GST, "
+          "ITC, settlement, chargeback, refund, MDR, EDI, KFS, PoD, Soundbox in English.",
+    "en": "Write in simple Indian English (Latin script only, no Hindi words).",
+}
 
 FRAUD_STATUS = "NOT_FOUND_SUSPECTED_FAKE"
 ACTOR_MERCHANT = "MERCHANT_AGENT"
@@ -132,13 +167,12 @@ def is_fraud(resp: dict[str, Any]) -> bool:
 # ----------------------------------------------------------------------------- vernacular reply
 
 REPLY_SYSTEM_PROMPT = """You are the warm AI business buddy of {merchant_name}, a small Paytm merchant in India.
-You get JSON with the merchant's question, Paytm's multi-agent answer, your own root-cause diagnosis
-(historical_insight) and the intervention you chose. Reply in Hinglish written in Devanagari; keep
-financial terms like UTR, GST, ITC, settlement, chargeback, refund, MDR, EDI, KFS, PoD in English.
-Combine (1) what was resolved or what the merchant must do next with (2) ONE short business tip from
-historical_insight.tip_hi. At most 2 sentences and 35 words in total. Use ONLY numbers present in the JSON
-(format rupees like ₹4,160). If status is NOT_FOUND_SUSPECTED_FAKE, warn firmly not to hand over goods and
-skip the tip. If confirmation is awaited, ask for a 1-tap yes. No greetings, no markdown, no bullet points."""
+You get JSON with the merchant's exact question, Paytm's multi-agent answer (paytm_response) and your diagnosis.
+ANSWER THE MERCHANT'S QUESTION directly in 1-2 short sentences (at most 30 words): what Paytm found or did that
+answers it, plus the one next step if paytm_response has one (action_required). {language_rule}
+Rules: use ONLY numbers present in the JSON (rupees like ₹4,160). Do not invent advice or facts. Tell the merchant to
+hold goods ONLY if status is NOT_FOUND_SUSPECTED_FAKE or PENDING. No business tip (one is added separately), no
+greetings, no markdown."""
 
 MAX_REPLY_WORDS = 35
 
@@ -190,7 +224,8 @@ def _deduction_phrase(item: dict[str, Any]) -> str:
 
 _SUCCESS = {"SUCCESS", "SETTLED", "VERIFIED", "CONFIRMED", "CREDITED", "RECEIVED"}
 _PENDING = {"PENDING", "IN_PROGRESS", "PROCESSING", "INITIATED"}
-_CAUSE_HI = (("rain", "बारिश"), ("flood", "बाढ़"), ("holiday", "छुट्टी"), ("bandh", "बंद"), ("strike", "हड़ताल"))
+_CAUSE_HI = (("closure", "बाज़ार बंदी"), ("rain", "बारिश"), ("flood", "बाढ़"), ("holiday", "छुट्टी"),
+             ("bandh", "बंद"), ("strike", "हड़ताल"))
 
 
 def _cause_hi(cause: Any) -> str:
@@ -273,6 +308,11 @@ def template_reply(intent: str, resp: dict[str, Any], gst_entry: Optional[dict[s
             return f"{why} Reminder भेज दिया है, कल फिर debit होगा।"
         if status == "ALERT_RAISED":
             return f"{why} 1-tap UPI link भेजूँ? 48 घंटे की grace मिलेगी।"
+        if status == "REMEDIES_OFFERED":  # live 8002: UPI link to pay today, or a KFS 2-day pause
+            pause = any(r.get("offer_id") for r in data.get("remedies") or [])
+            return f"{why} 1-tap UPI link से आज भरिए, penalty नहीं{'; चाहें तो 2 दिन का KFS pause भी है' if pause else ''}।"
+        if status == "MANDATE_RESOLVED":
+            return f"{why} Paytm ने मामला सुलझा दिया है, penalty नहीं लगेगी।"
         return f"{why} 1-tap UPI link भेजा है, penalty नहीं लगेगी।"
     if intent == "DUPLICATE_RECONCILE" and status != "ESCALATED":
         if status == "NO_DUPLICATE_FOUND":
@@ -280,12 +320,22 @@ def template_reply(intent: str, resp: dict[str, Any], gst_entry: Optional[dict[s
         amt = _inr(data.get("amount"))
         return (f"{data.get('customer') or 'Customer'} ने order #{data.get('order_id')} के {amt} दो बार दिए थे। "
                 f"Duplicate {amt} का refund शुरू कर दिया, T+1 में पहुँचेगा।")
+    if intent == "GROWTH_ADVISORY" and status == "ADVICE_READY":  # 8002: advice only, no new credit offered
+        day = {"Monday": "सोमवार", "Tuesday": "मंगलवार", "Wednesday": "बुधवार", "Thursday": "गुरुवार",
+               "Friday": "शुक्रवार"}.get(str(data.get("restock_by")), data.get("restock_by") or "गुरुवार")
+        loan = data.get("existing_loan") or {}
+        loan_line = (f" {loan.get('lender')} loan का {_inr(loan.get('balance'))} बाकी है, {_inr(loan.get('edi_per_day'))} EDI "
+                     f"रोज़ की बिक्री का सिर्फ़ {loan.get('edi_share_of_daily_sales_pct')}% है।"
+                     if loan.get("balance") and loan.get("edi_share_of_daily_sales_pct") is not None else "")
+        return (f"रोज़ औसत {_inr(data.get('daily_avg_sales'))}, Fri–Sun {data.get('weekend_multiplier')}x "
+                f"(~{_inr(data.get('weekend_daily_sales'))}/दिन) — {day} तक stock भर लीजिए।{loan_line}")
     if intent == "GROWTH_ADVISORY":
         offer = data.get("offer") or h.get("growth_offer") or {}
         trend = data.get("six_month_trend_pct")
         grew = f"6 महीने में बिक्री {trend}% बढ़ी है। " if isinstance(trend, (int, float)) and trend > 0 else ""
+        # No rate is quoted: rate and tenure are the NBFC's to disclose in the KFS (same stance as 8002).
         return (f"{grew}{offer.get('lender') or h.get('active_lender')} का {_inr(offer.get('amount'))} working capital "
-                f"pre-approved है, KFS में APR {offer.get('apr_pct')}% साफ़ लिखा है।")
+                "pre-approved है; rate और tenure KFS में देखकर ही लें।")
     if intent == "CASHFLOW_EDI_SWITCH":
         gap = ctx.get("cashflow") or {}
         offer = data.get("edi_pause_offer") or {}
@@ -324,7 +374,8 @@ def template_reply(intent: str, resp: dict[str, Any], gst_entry: Optional[dict[s
         return (f"Bank account {data.get('bank_status')} होने से settlement रुका है। "
                 "Account update कीजिए, अगले cycle में पैसा आ जाएगा।")
     ticket = (resp.get("escalation_ticket") or {}).get("ticket_id", "")
-    hardware = data.get("device") or data.get("issue_type") == "HARDWARE_SOUNDBOX"
+    hardware = (data.get("device") or data.get("issue_type") == "HARDWARE_SOUNDBOX"
+                or ctx.get("issue_type") == "HARDWARE_SOUNDBOX")  # live 8002 doesn't echo the device back
     what = "Soundbox की खराबी का मामला" if hardware else "आपका मामला"
     return (
         f"मैंने {what} Paytm की L2 team को भेज दिया है{f', ticket {ticket}' if ticket else ''}। "
@@ -367,14 +418,106 @@ async def vernacular_reply(
         ensure_ascii=False,
         default=str,
     )
-    system_prompt = REPLY_SYSTEM_PROMPT.format(merchant_name=dl.DATA.merchant["name"])
-    reply = await upstream.llm(system_prompt, user_prompt, response_format="text")
-    # PLAN.md budget is ≤35 words; allow some slack, otherwise use the (short) template.
-    if isinstance(reply, str) and len(reply) > 10 and len(reply.split()) <= 45:
-        return reply, "llm"
+    system_prompt = REPLY_SYSTEM_PROMPT.format(merchant_name=dl.DATA.merchant["name"], language_rule=LANGUAGE_RULE[lang()])
+    # Consent moments (EDI pause offer, dispute sign-off) are never paraphrased: live, the LLM turned
+    # "EDI 2 दिन रोक दूँ?" into "Paytm ने EDI pause किया है" before the merchant had said yes.
+    awaiting = (ctx or {}).get("awaiting_confirmation")
+    reply = None if (awaiting or not REPLY_LLM) else await upstream.llm(system_prompt, user_prompt, response_format="text")
     resolution = template_reply(intent, resp, gst_entry, {**(ctx or {}), "insight": insight})
     tip = None if is_fraud(resp) else insight.get("tip_hi")
-    return compose(resolution, tip), "template"
+    # The tip names the duplicate payer from the merchant's books; if Paytm matched a different order, drop it.
+    paid_order = dl.digits((resp.get("data") or {}).get("order_id"))
+    if intent == "DUPLICATE_RECONCILE" and paid_order and paid_order != (insight.get("metrics") or {}).get("order_id"):
+        tip = None
+    template = compose(resolution, tip)
+    english = lang() == "en"
+    if english:
+        tip = None  # the verified tips are Hindi; an English reply carries the answer only
+        if awaiting and (en := consent_template_en(intent, resp, ctx or {})):
+            return en, "template"
+    # The LLM answers the question; the verified tip is appended verbatim. (Live, it once rewrote the Soundbox tip
+    # "payment notification चालू रखिए" into "PoD लेकर रखें", so it no longer writes tips.)
+    if isinstance(reply, str) and len(reply.strip()) > 10 and len(reply.split()) <= 40:
+        bad = ungrounded_numbers(reply, " ".join([user_prompt, template, merchant_text or ""]))
+        if not bad and not (english and _DEVANAGARI.search(reply)):
+            return compose(human_dates(reply.strip()), tip, max_words=48), "llm"
+        # Live: the LLM said "₹4,160 का UTR" when no amount existed. Money talk must come from the facts.
+        log.warning("LLM reply dropped (ungrounded numbers %s / wrong language)", bad)
+    elif REPLY_LLM and not awaiting:
+        log.warning("LLM reply unusable (%s): using the template",
+                    "no answer / timed out" if not isinstance(reply, str) else f"{len(reply.split())} words")
+    if english:  # no Hindi template in English mode: Paytm's own English answer, if it gave one
+        if isinstance(resp.get("template_text"), str) and resp["template_text"].strip():
+            return resp["template_text"].strip(), "template"
+    return template, "template"
+
+
+_DEVANAGARI = re.compile("[\u0900-\u097F]")
+_ISO_DATE = re.compile(r"\b(20\d\d)-(\d\d)-(\d\d)\b")
+_MONTHS = {"en": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+           "hi": ["\u091C\u0928\u0935\u0930\u0940", "\u092B\u093C\u0930\u0935\u0930\u0940", "\u092E\u093E\u0930\u094D\u091A", "\u0905\u092A\u094D\u0930\u0948\u0932", "\u092E\u0908", "\u091C\u0942\u0928", "\u091C\u0941\u0932\u093E\u0908", "\u0905\u0917\u0938\u094D\u0924", "\u0938\u093F\u0924\u0902\u092C\u0930", "\u0905\u0915\u094D\u091F\u0942\u092C\u0930", "\u0928\u0935\u0902\u092C\u0930", "\u0926\u093F\u0938\u0902\u092C\u0930"]}
+
+
+def human_dates(text: str) -> str:
+    """'2026-11-20' -> '20 Nov' / '20 \u0928\u0935\u0902\u092C\u0930' (reads and sounds natural). Runs after the number check."""
+    months = _MONTHS[lang()]
+    return _ISO_DATE.sub(lambda m: f"{int(m.group(3))} {months[int(m.group(2)) - 1]}", text)
+
+
+def consent_template_en(intent: str, resp: dict[str, Any], ctx: dict[str, Any]) -> Optional[str]:
+    """English wording for the two consent prompts (never paraphrased by the LLM)."""
+    d, h = dl.DATA, dl.DATA.history
+    data = resp.get("data") or {}
+    status = str(resp.get("status") or "").upper()
+    if intent == "CHARGEBACK_RESOLVE" and status == "ALERT_RAISED" and ctx.get("pod_ready"):
+        cb = d.chargeback() or {}
+        oid = data.get("order_id") or cb.get("order_id", "")
+        return (f"Paytm flagged a chargeback on order #{oid} for {_inr(data.get('amount') or cb.get('amount'))}. "
+                "The signed proof of delivery from Shiprocket is ready: tap yes and I will file the dispute.")
+    if intent == "CASHFLOW_EDI_SWITCH" and status == "ALERT_RAISED":
+        gap, offer = ctx.get("cashflow") or {}, data.get("edi_pause_offer") or {}
+        if gap.get("shortfall") and offer.get("eligible"):
+            refund = gap.get("refund_request") or {}
+            return (f"After the {_inr(refund.get('amount'))} refund, tomorrow's payout will be "
+                    f"{_inr(gap.get('projected_net_payout'))} but your stock bill is {_inr(gap.get('tomorrow_stock_due'))}. "
+                    f"Shall I pause the {offer.get('nbfc') or h.get('active_lender')} {_inr(d.loan.get('edi_per_day'))} EDI "
+                    f"for {offer.get('pause_days') or 2} days?")
+    return None
+
+
+_NUM_RE = re.compile(r"(₹\s*)?(\d[\d,]*(?:\.\d+)?)")
+
+
+def _num_forms(text: str) -> set[str]:
+    forms: set[str] = set()
+    for _, n in _NUM_RE.findall(text.translate(str.maketrans("०१२३४५६७८९", "0123456789"))):
+        n = n.replace(",", "").rstrip(".")
+        forms.add(n)
+        try:
+            f = float(n)
+            forms.add(str(int(f)) if f == int(f) else str(f))
+        except ValueError:
+            pass
+    return forms
+
+
+def ungrounded_numbers(reply: str, facts: str) -> list[str]:
+    """Amounts (₹…) and 3+ digit numbers (UTRs, orders, years) in `reply` that appear nowhere in `facts`."""
+    known = _num_forms(facts)
+    bad = []
+    for rupee, n in _NUM_RE.findall(reply.translate(str.maketrans("०१२३४५६७८९", "0123456789"))):
+        plain = n.replace(",", "").rstrip(".")
+        if not (rupee or len(re.sub(r"\D", "", plain)) >= 3):
+            continue
+        forms = {plain}
+        try:
+            f = float(plain)
+            forms.add(str(int(f)) if f == int(f) else str(f))
+        except ValueError:
+            pass
+        if not forms & known:
+            bad.append((rupee or "") + n)
+    return bad
 
 
 # ----------------------------------------------------------------------------- pending action
@@ -393,7 +536,60 @@ def pending_action(resp: dict[str, Any]) -> Optional[dict[str, Any]]:
     ar = resp.get("action_required")
     if not isinstance(ar, dict) or not ar.get("type"):
         return None
-    return {**ar, **_NEXT_STEP.get(str(ar["type"]).upper(), {})}
+    out = {**ar, **_NEXT_STEP.get(str(ar["type"]).upper(), {})}
+    if str(ar["type"]).upper() == "CHOOSE_REMEDY":  # 8002 mandate: UPI link or a KFS pause (confirmable here)
+        out["remedies"] = (resp.get("data") or {}).get("remedies") or []
+        pause = next((r for r in out["remedies"] if r.get("offer_id")), None)
+        if pause:
+            out.update(offer_id=pause["offer_id"], pause_endpoint="/merchant/confirm-edi-pause")
+    return out
+
+
+def _register_remedy_offers(resp: dict[str, Any], request_id: str, insight: dict[str, Any],
+                            evaluation: dict[str, Any]) -> None:
+    """8002 offers a KFS hardship pause as a mandate remedy; keep it so /merchant/confirm-edi-pause can accept it."""
+    for r in (resp.get("data") or {}).get("remedies") or []:
+        if r.get("offer_id") and r.get("eligible", True) and r["offer_id"] not in STATE.edi_offers:
+            STATE.edi_offers[r["offer_id"]] = {
+                "offer_id": r["offer_id"], "eligible": True, "nbfc": r.get("nbfc"), "pause_days": r.get("pause_days", 2),
+                "edi_saved_inr": r.get("edi_saved_inr"), "kfs_clause": r.get("kfs_clause", "4.2"), "status": "OFFERED",
+                "request_id": request_id, "insight": insight, "evaluation": evaluation, "cashflow": None,
+                "source": "MANDATE_REMEDY"}
+
+
+# "wapas karna hai", "refund kar do/karo", "return karo": the merchant wants to send money back (vs. "refund hua?")
+_REFUND_ASK_RE = re.compile(r"wapas\s+(karna|kar\s*do|karo|dena|de\s*do)|refund\s+(karna|kar\s*do|karo|dena|de\s*do|initiate|start)|लौटा(ना|\s*दो)|वापस\s+(करना|कर\s*दो|करो)", re.I)
+
+
+def paytm_payload_aliases(intent: str, payload: dict[str, Any], ctx: dict[str, Any], from_document: bool,
+                          merchant_text: Optional[str] = None) -> dict[str, Any]:
+    """Field names Person 2's 8002 reads (it answers 400 BAD_PAYLOAD without them); ours stay alongside."""
+    out: dict[str, Any] = {}
+    if payload.get("utr_number"):
+        out["utr"] = payload["utr_number"]
+    if intent == "UTR_VERIFY":
+        out["source"] = "screenshot" if from_document else "voice"
+        if payload.get("amount") is not None:
+            out["claimed_amount_inr"] = payload["amount"]
+    if intent == "CHARGEBACK_RESOLVE" and payload.get("pod_document") and "doc_confidence" not in payload:
+        out["doc_confidence"] = ctx.get("doc_confidence")
+    if intent == "FEE_GST_LOAN":  # 8002 answers one topic (FEE | GST | LOAN) and defaults to FEE without one
+        t = (merchant_text or "").lower()
+        out["topic"] = ("GST" if re.search(r"gst|itc|tax|टैक्स|जीएसटी", t)
+                        else "LOAN" if re.search(r"loan|edi|emi|लोन|ईडीआई|interest|byaj|ब्याज", t) else "FEE")
+    if intent == "REFUND_MANAGE":  # 8002 reads order_id + action (STATUS | INITIATE) + amount_inr
+        out["action"] = "INITIATE" if _REFUND_ASK_RE.search(merchant_text or "") else "STATUS"
+        if payload.get("amount") is not None:
+            out["amount_inr"] = int(payload["amount"])
+    if intent == "ESCALATE_HUMAN" and not payload.get("reason_code"):
+        out["reason_code"] = "MERCHANT_REQUESTED_HUMAN"  # 8002 has no hardware code; the details go in reason_text
+        if payload.get("issue_type") == "HARDWARE_SOUNDBOX":
+            diag = payload.get("diagnostics") or {}
+            out["reason_text"] = "Soundbox hardware fault: needs a replacement device"
+            out["tried"] = [f"Device logs checked: battery health {diag.get('battery_health_pct', diag.get('battery_pct'))}%, "
+                            f"network {diag.get('network')}, {diag.get('announce_failures_24h', '?')} payments not announced"
+                            f" in 24h, speaker test {diag.get('speaker_test')}"]
+    return out
 
 
 # ----------------------------------------------------------------------------- core
@@ -459,6 +655,7 @@ async def run(
             }
         if extra_payload:
             payload.update(extra_payload)
+        payload.update(paytm_payload_aliases(intent, payload, ctx, doc_extract is not None, merchant_text))
         envelope = {
             "request_id": request_id,
             "mid": mid,
@@ -466,6 +663,10 @@ async def run(
             "selected_intervention": sel,
             "payload": payload,
             "consent_token": consent_token,
+            # Person 2's DispatchRequest: a session lets 8002 apply cross-call rules (repeated unknown UTRs).
+            # `merchant_said` is deliberately not sent (DPDP data minimisation, D8): structured slots only.
+            "session_id": STATE.session_id,
+            "language_code": tts_code(),
         }
         STATE.log("MERCHANT_TO_PAYTM", ACTOR_MERCHANT, f"A2A request → Paytm: {intent} / {sel['action']}",
                   envelope, request_id)
@@ -478,6 +679,11 @@ async def run(
             {**resp, "_source": paytm_source},
             request_id,
         )
+
+    raw_resp = resp
+    resp = upstream.interpret(intent, resp, paytm_source)  # 8002's RESOLVED/ACTION_REQUIRED -> specific outcome
+    if intent == "MANDATE_TROUBLESHOOT":
+        _register_remedy_offers(resp, request_id, insight, evaluation)
 
     # Local merchant side-effects
     gst_entry: Optional[dict[str, Any]] = None
@@ -516,6 +722,7 @@ async def run(
             "raised_at": time.time(),
         }
         STATE.fraud_alerts.append(fraud_alert)
+        repository.add_fraud_alert(fraud_alert)  # no-op unless USE_SUPABASE=true
         STATE.log(
             "FRAUD_ALERT",
             ACTOR_MERCHANT,
@@ -541,13 +748,13 @@ async def run(
     reply_text, reply_source = await vernacular_reply(
         intent, resp, gst_entry, merchant_text, (doc_extract or {}).get("doc_type"), insight, evaluation, ctx
     )
-    audio_b64, tts_source = await upstream.tts(reply_text, "hi-IN")
+    audio_b64, tts_source = await upstream.tts(reply_text, tts_code())
     tts_note = {"live": "", "mock": " (TTS mock audio)"}.get(tts_source, " (text only — TTS unavailable)")
     STATE.log(
         "VOICE_REPLY_READY",
         ACTOR_MERCHANT,
         "Hinglish voice reply ready" + tts_note,
-        {"reply_text": reply_text, "reply_source": reply_source, "tts": tts_source, "language_code": "hi-IN"},
+        {"reply_text": reply_text, "reply_source": reply_source, "tts": tts_source, "language_code": tts_code()},
         request_id,
     )
 
@@ -565,7 +772,12 @@ async def run(
         "intervention_evaluation": evaluation,
         "verified_outcome": outcome,
         "pending_action": pending_action(resp),
-        "paytm_response": resp,
+        # 8002's body as sent, plus the merchant-side reading of it (e.g. RESOLVED -> RELEASED)
+        # D1 shape: `status` is the specific outcome (RELEASED, PENDING, …), as in mock mode, which the frontend
+        # keys its ledger effects on. 8002's own RESOLVED/ACTION_REQUIRED/ESCALATED stays in `mesh_status`;
+        # `data` stays 8002's raw body (the frontend reads its field names).
+        "paytm_response": {**raw_resp, "status": resp.get("status"), "mesh_status": raw_resp.get("status"),
+                           "status_detail": resp.get("status")} if raw_resp is not resp else resp,
         "paytm_source": paytm_source,
         "paytm_agent_trace": resp.get("agent_trace") if isinstance(resp.get("agent_trace"), list) else [],
         "hindi_reply": reply_text,
@@ -573,10 +785,113 @@ async def run(
         "reply_source": reply_source,
         "audio_base64": audio_b64,
         "audio_source": tts_source,
-        "language_code": "hi-IN",
+        "language_code": tts_code(),
         "fraud_alert": fraud_alert,
         "gst_itc_logged": gst_entry,
         "local_gst_itc_log": STATE.local_gst_itc_log,
         "proactive": None,
         "a2a_events": STATE.a2a_events,
+    }
+
+
+# ----------------------------------------------------------------------------- not understood
+
+CLARIFY_HI = {
+    # STT ran but heard nothing usable
+    "stt": "माफ़ कीजिए, आपकी आवाज़ साफ़ नहीं आई। फ़ोन थोड़ा पास रखकर फिर से बोलिए, या सवाल टाइप कीजिए।",
+    # 8001 has no Sarvam key (mock mode) or is down: be honest instead of answering a canned line
+    "voice_off": "आवाज़ पहचानने की सेवा अभी बंद है, इसलिए मैं सुन नहीं पाया। कृपया सवाल टाइप कीजिए या नीचे का कोई बटन दबाइए।",
+    # off-topic or too vague
+    "unclear": ("माफ़ कीजिए, यह मैं ठीक से समझ नहीं पाया। मैं settlement, UTR या payment check, chargeback, refund, "
+                "loan EDI, Soundbox और KYC में मदद करता हूँ। इनमें से क्या जानना है?"),
+}
+
+
+CLARIFY_EN = {
+    "stt": "Sorry, I couldn't hear that clearly. Please hold the phone a little closer and say it again, or type it.",
+    "voice_off": "Voice recognition is off right now, so I couldn't hear you. Please type your question or tap a button below.",
+    "unclear": ("Sorry, I didn't quite get that. I can help with settlements, UTR or payment checks, chargebacks, refunds, "
+                "loan EDI, your Soundbox and KYC. What would you like to know?"),
+}
+
+
+def clarify_text(reason: str) -> str:
+    table = CLARIFY_EN if lang() == "en" else CLARIFY_HI
+    return table.get(reason, table["unclear"])
+
+
+async def clarify(*, request_id: str, mid: str, consent_token: str, reason: str, merchant_text: Optional[str],
+                  transcript: Optional[str] = None, transcript_source: Optional[str] = None,
+                  intent_source: str = "none") -> dict[str, Any]:
+    """The buddy didn't understand: say so and ask again. Nothing is sent to Paytm, nothing is logged as an
+    outcome, and no strategy is learned (the old code guessed SETTLEMENT_RECONCILE and answered that)."""
+    reply = clarify_text(reason)
+    examples = [u.get("chip_label") or u["text"] for u in dl.DATA.presets()][:4]
+    STATE.log("INTENT_UNCLEAR", ACTOR_MERCHANT,
+              {"stt": "Voice not clear: asked the merchant to repeat",
+               "voice_off": "Voice recognition is off (Sarvam in mock mode): asked the merchant to type",
+               }.get(reason, "Not a question the buddy can act on: asked the merchant to rephrase"),
+              {"reason": reason, "merchant_text": merchant_text, "transcript_source": transcript_source}, request_id)
+    audio_b64, tts_source = await upstream.tts(reply, tts_code())
+    STATE.log("VOICE_REPLY_READY", ACTOR_MERCHANT, "Clarifying question ready",
+              {"reply_text": reply, "reply_source": "template", "tts": tts_source, "language_code": tts_code()}, request_id)
+    return {
+        "request_id": request_id, "mid": mid, "transcript": transcript, "transcript_source": transcript_source,
+        "consent_token": consent_token, "intent": "UNCLEAR", "intent_source": intent_source,
+        "slots": Slots().model_dump(), "doc_extract": None,
+        "historical_insight": {}, "intervention_evaluation": {}, "verified_outcome": {},
+        "pending_action": {"type": "REPHRASE", "reason": reason, "message": reply, "examples": examples},
+        "paytm_response": {"status": "NOT_UNDERSTOOD", "reason": reason}, "paytm_source": "none",
+        "paytm_agent_trace": [], "hindi_reply": reply, "reply_text": reply, "reply_source": "template",
+        "audio_base64": audio_b64, "audio_source": tts_source, "language_code": tts_code(),
+        "fraud_alert": None, "gst_itc_logged": None, "local_gst_itc_log": STATE.local_gst_itc_log,
+        "proactive": None, "a2a_events": STATE.a2a_events,
+    }
+
+
+# ----------------------------------------------------------------------------- questions about the merchant's books
+
+INFO_SYSTEM_PROMPT = """You are the AI business buddy of {merchant_name}, a small Paytm merchant in India.
+Answer the merchant's question using ONLY the facts JSON (their own books; "today" is facts.today).
+Give the direct answer first, in 1-2 short sentences (at most 35 words). {language_rule}
+If the facts do not contain the answer, say you don't have that information and that you can check settlements,
+payments, chargebacks, refunds, the loan EDI or the Soundbox. Use ONLY numbers that appear in the facts
+(rupees like ₹22,189; dates like 20 Nov). No greetings, no markdown."""
+
+
+async def answer_info(*, request_id: str, mid: str, consent_token: str, merchant_text: str,
+                      transcript: Optional[str] = None, transcript_source: Optional[str] = None,
+                      intent_source: str = "llm") -> dict[str, Any]:
+    """Read-only answer from the merchant's own books ("अगला settlement कब आएगा?"). Nothing goes to Paytm."""
+    import facts  # local: facts imports state, which imports this module's siblings
+
+    f = facts.merchant_facts()
+    facts_json = json.dumps(f, ensure_ascii=False, default=str)
+    reply = await upstream.llm(
+        INFO_SYSTEM_PROMPT.format(merchant_name=dl.DATA.merchant["name"], language_rule=LANGUAGE_RULE[lang()]),
+        json.dumps({"question": merchant_text, "facts": f}, ensure_ascii=False, default=str), response_format="text")
+    ok = (isinstance(reply, str) and len(reply.strip()) > 5 and len(reply.split()) <= 55
+          and not ungrounded_numbers(reply, facts_json + " " + (merchant_text or ""))
+          and not (lang() == "en" and _DEVANAGARI.search(reply)))
+    if not ok:
+        log.warning("INFO answer unusable (LLM down, ungrounded numbers or wrong language): asking to rephrase")
+        return await clarify(request_id=request_id, mid=mid, consent_token=consent_token, reason="unclear",
+                             merchant_text=merchant_text, transcript=transcript, transcript_source=transcript_source,
+                             intent_source=intent_source)
+    reply = human_dates(reply.strip())
+    STATE.log("INFO_ANSWERED", ACTOR_MERCHANT, "Answered from the merchant's own books (read-only, nothing sent to Paytm)",
+              {"question": merchant_text, "facts_used": sorted(f)}, request_id)
+    audio_b64, tts_source = await upstream.tts(reply, tts_code())
+    STATE.log("VOICE_REPLY_READY", ACTOR_MERCHANT, "Answer ready",
+              {"reply_text": reply, "reply_source": "llm", "tts": tts_source, "language_code": tts_code()}, request_id)
+    return {
+        "request_id": request_id, "mid": mid, "transcript": transcript, "transcript_source": transcript_source,
+        "consent_token": consent_token, "intent": "INFO_QUERY", "intent_source": intent_source,
+        "slots": Slots().model_dump(), "doc_extract": None,
+        "historical_insight": {}, "intervention_evaluation": {}, "verified_outcome": {}, "pending_action": None,
+        "paytm_response": {"status": "ANSWERED_FROM_BOOKS"}, "paytm_source": "none", "paytm_agent_trace": [],
+        "hindi_reply": reply, "reply_text": reply, "reply_source": "llm",
+        "audio_base64": audio_b64, "audio_source": tts_source, "language_code": tts_code(),
+        "fraud_alert": None, "gst_itc_logged": None, "local_gst_itc_log": STATE.local_gst_itc_log,
+        "proactive": None, "a2a_events": STATE.a2a_events,
     }

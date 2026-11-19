@@ -647,6 +647,7 @@ img[alt="Paytm for Business"]{mix-blend-mode:normal}
 .vp:active:not(:disabled){transform:scale(.96)}.vp:disabled{opacity:.4}
 .vp b{display:block;font-size:17px;font-weight:700;line-height:1.25}.vp span{display:block;margin-top:5px;font-size:12px;color:#2a6bb8}
 .vp-links{display:flex;justify-content:center;gap:8px;margin-top:6px;padding:0 14px}
+.vp-type{display:flex;gap:8px;margin:2px 22px 4px}.vp-type input{flex:1;min-width:0;font-size:15px;padding:10px 14px;border-radius:99px;border:1px solid #e3ecf7;background:#fff;color:#0a2a63;outline:none}.vp-type input:focus{border-color:#2a6bb8}.vp-type button{font-size:14px;font-weight:700;padding:9px 16px;border-radius:99px;background:#0a2a63;color:#fff}.vp-type button:disabled{opacity:.4}
 .vp-links button{font-size:14px;font-weight:600;color:#2a4a7a;padding:9px 15px;border-radius:99px;background:#eef3fa}
 .attach-sheet{position:absolute;inset:0;z-index:20;background:rgba(10,42,99,.35);display:flex;align-items:flex-end;padding:14px 14px 90px;animation:in .2s ease}
 .attach-sheet>div{width:100%;display:flex;flex-direction:column;gap:8px}
@@ -791,8 +792,7 @@ img[alt="Paytm for Business"]{mix-blend-mode:normal}
 .opt.sel{background:#eaf5fa;border-color:#5ab4d1}
 .opt.sel .o-id{background:#127fa6}
 
-/* ================= COLOR SYSTEM (semantic) =================
-   Blue = brand + information (Paytm navy / sky)      Green = money in + success (emerald, cool-leaning so it sits next to blue)
+/* ================= COLOR SYSTEM (semantic) ==========   Blue = brand + information (Paytm navy / sky)      Green = money in + success (emerald, cool-leaning so it sits next to blue)
    Amber = needs attention (complement of blue)       Red = loss + risk                     Teal/indigo = AI states (listening/speaking/thinking) */
 :root{--ok:#1f9d6b;--ok-ink:#0e7a50;--ok-bg:#e3f5ec;--green:#1f9d6b}
 .green,.v.green,.big.green,.line .green,.g-r b.green{color:var(--ok)}
@@ -1339,3 +1339,7 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .mn.work{border-color:#2d7be0;animation:trGlow 1.6s ease-in-out infinite;transform:translate(-50%,-50%) scale(1.06)}
 .mn.work em{color:#1b4f9c;font-weight:700}
 @media (prefers-reduced-motion:reduce){.mn.work,.mesh-e .e.go{animation:none}}
+=======
+/* the answer area scrolls under the orb label: fade its edges instead of letting text collide with it */
+.v-cap{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%)}
+.sign.pinned{position:relative;z-index:3;margin-top:4px;padding:0 22px 6px;flex:none}

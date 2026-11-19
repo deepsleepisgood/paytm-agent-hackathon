@@ -28,6 +28,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
   const [live, setLive] = useState('')
   const [spoken, setSpoken] = useState(0)
   const [note, setNote] = useState('')
+  const [typed, setTyped] = useState('') // typing fallback: when the mic mishears or voice is off
   const orb = useRef(null)
   const rec = useRef({})
   const sim = useRef(null)
@@ -35,6 +36,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
   const speakTimer = useRef(null)
   const safety = useRef(null)
   const latest = useRef({})
+  const capRef = useRef(null) // the answer area scrolls; each new answer starts at its top
 
   const setLevel = (v) => orb.current && orb.current.style.setProperty('--lvl', Math.max(0, Math.min(1, v)).toFixed(3))
   const last = chat[chat.length - 1]
@@ -55,6 +57,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
   useEffect(() => {
     if (chat.length === seen.current) return
     seen.current = chat.length
+    capRef.current?.scrollTo(0, 0)
     const msg = chat[chat.length - 1]
     if (!msg || msg.who !== 'ai') return
     const ws = msg.text.split(/\s+/)
@@ -103,16 +106,19 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
   const route = (blob) => {
     const r = rec.current
     setPhase('idle')
-    const text = (r.final || '').trim()
+    const text = (r.final || '').trim() // the browser's own recognizer: live captions, and a fallback only
     const X = latest.current
-    const L = { lang: X.lang }
-    if (text) {
+    const handle = (heard) => {
       setLive('')
-      if (X.pending && CONFIRM_RE.test(text)) return X.onConfirm(X.reply, X.chat.length - 1)
-      return X.onText(text)
+      if (X.pending && CONFIRM_RE.test(heard)) return X.onConfirm(X.reply, X.chat.length - 1)
+      return X.onText(heard)
     }
-    if (blob && blob.size > 1500 && r.heard && X.mode === 'live') { setLive(''); return X.onAudio(blob) }
-    setNote(t(L.lang, r.heard ? 'unclear' : 'silent'))
+    if (X.pending && text && CONFIRM_RE.test(text)) return handle(text) // a quick spoken "haan" for a sign-off
+    // Live mode: Sarvam STT (built for Hinglish/Hindi) decides what was said. The browser's hi-IN recognizer
+    // garbles Hinglish ("UTR", amounts) and used to be trusted first.
+    if (X.mode === 'live' && blob && blob.size > 1500 && r.heard) return X.onAudio(blob, text, handle)
+    if (text) return handle(text)
+    setNote(t(X.lang, r.heard ? 'unclear' : 'silent'))
   }
   const finish = () => {
     const r = rec.current
@@ -147,7 +153,8 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
         setLevel(lvl)
         const now = performance.now()
         if (lvl > 0.12) { r.heard = true; quietSince = now }
-        if ((r.heard && now - quietSince > 1600) || now - t0 > 12000) return finish()
+        // 2 s of quiet ends the turn (1.6 s cut people off mid-sentence, e.g. while reading out a UTR)
+        if ((r.heard && now - quietSince > 2000) || now - t0 > 15000) return finish()
         r.raf = requestAnimationFrame(tick)
       }
       r.raf = requestAnimationFrame(tick)
@@ -158,10 +165,11 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
     }
     if (SR) {
       try {
-        const sr = new SR(); sr.lang = latest.current.lang === 'en' ? 'en-IN' : 'hi-IN'; sr.interimResults = true; sr.continuous = false
+        // continuous: with continuous=false Chrome ended the whole recording at the first pause
+        const sr = new SR(); sr.lang = latest.current.lang === 'en' ? 'en-IN' : 'hi-IN'; sr.interimResults = true; sr.continuous = true
         sr.onresult = (e) => { let t = ''; for (const res of e.results) t += res[0].transcript; r.final = t; r.heard = true; setLive(t) }
         sr.onerror = () => {}
-        sr.onend = () => finish()
+        sr.onend = () => { if (!rec.current.stream) finish() } // with a mic stream, silence detection decides
         sr.start(); r.sr = sr
       } catch { /* ignore */ }
     }
@@ -213,7 +221,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
         )}
       </div>
 
-      <div className="v-cap">
+      <div className="v-cap" ref={capRef}>
         {state === 'listening' && <div className="cap speech">{live || <span className="ph">{T('ph')}</span>}</div>}
         {state === 'thinking' && lastMe && <div className="cap me">“{lastMe.text}”</div>}
         {(state === 'speaking' || state === 'idle') && reply && info && (
@@ -243,13 +251,14 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
           </div>
         )}
         {note && state === 'idle' && <div className="cap note">{note}</div>}
-        {pending && (
-          <div className="sign">
-            <button className="yes" onClick={() => onConfirm(reply, chat.length - 1)} disabled={busy}>{reply.confirm.label}</button>
-            <span>{T('yesSay')}</span>
-          </div>
-        )}
       </div>
+      {/* outside the scrolling answer: the sign-off button must always be visible */}
+      {pending && (
+        <div className="sign pinned">
+          <button className="yes" onClick={() => onConfirm(reply, chat.length - 1)} disabled={busy}>{reply.confirm.label}</button>
+          <span>{T('yesSay')}</span>
+        </div>
+      )}
 
       {state === 'listening' && <div className="v-act"><button className="stop-btn" onClick={finish}>{T('stop')}</button></div>}
       {(state === 'idle' || state === 'speaking') && reply && !pending && (
@@ -265,6 +274,17 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
             </button>
           ))}
         </div>
+        {!pending && <form className="vp-type" onSubmit={(e) => {
+          e.preventDefault()
+          const v = typed.trim()
+          if (!v || busy) return
+          setTyped(''); setNote('')
+          if (pending && CONFIRM_RE.test(v)) return onConfirm(reply, chat.length - 1)
+          onText(v)
+        }}>
+          <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={T('typePh')} aria-label={T('typePh')} disabled={busy} />
+          <button type="submit" disabled={busy || !typed.trim()}>{T('send')}</button>
+        </form>}
         <div className="vp-links">
           <button onClick={onMenu}>{T('menu')}</button>
           <button onClick={onKhata}>{T('khata')}</button>

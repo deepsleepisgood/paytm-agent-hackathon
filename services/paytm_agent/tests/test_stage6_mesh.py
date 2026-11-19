@@ -161,7 +161,8 @@ def test_a_replay_returns_the_same_trace_and_stores_one(client):
 
 
 def test_a_request_we_could_not_read_has_no_trace(client):
-    r = client.post("/a2a/dispatch", json=escalate_body(payload={}))
+    r = client.post("/a2a/dispatch", json=escalate_body(
+        payload={"reason_code": "NOT_A_REAL_CODE"}))
     assert r.status_code == 400
     assert "agent_trace" not in r.json()
     assert store.traces == {}

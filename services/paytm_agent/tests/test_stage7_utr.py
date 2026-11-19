@@ -222,9 +222,39 @@ def test_the_trace_shows_the_pattern_being_spotted(client):
 
 
 def test_a_missing_utr_is_a_bad_payload(client):
+    """Unlike a missing escalation reason, there is nothing sensible to default to:
+    without a reference there is no payment to look up."""
     r = client.post("/a2a/dispatch", json=body(payload={}))
     assert r.status_code == 400
     assert r.json()["error"]["code"] == "BAD_PAYLOAD"
+    assert "utr_number" in r.json()["error"]["message"]  # names both spellings
+
+
+def test_the_intent_routers_field_names_are_accepted(client):
+    """sarvam_service's intent schema returns utr_number and amount, where the contract
+    says utr and claimed_amount_inr. The merchant agent passes them straight through."""
+    out = client.post("/a2a/dispatch", json=body(payload={
+        "utr_number": KNOWN_SETTLED, "amount": 1250,
+    })).json()
+
+    assert out["status"] == "RESOLVED"
+    assert out["data"]["utr"] == KNOWN_SETTLED
+    assert out["data"]["lookup_status"] == "SUCCESS_SETTLED"
+    assert out["data"]["amount_matches_claim"] is True
+
+
+def test_the_contracts_own_field_names_still_work(client):
+    out = client.post("/a2a/dispatch", json=body(payload={
+        "utr": KNOWN_SETTLED, "claimed_amount_inr": 1250,
+    })).json()
+    assert out["data"]["amount_matches_claim"] is True
+
+
+def test_a_mismatch_is_caught_whichever_field_name_carried_it(client):
+    out = client.post("/a2a/dispatch", json=body(payload={
+        "utr_number": KNOWN_SETTLED, "amount": 9999,
+    })).json()
+    assert out["data"]["amount_matches_claim"] is False
 
 
 # --- intent names across the team -------------------------------------------------------------

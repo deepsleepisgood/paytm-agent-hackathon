@@ -19,7 +19,7 @@ from typing import Any, Optional
 
 import dataset_loader as dl
 import upstream
-from schemas import INTENTS, Classification, Slots
+from schemas import INFO_QUERY, INTENTS, UNCLEAR, Classification, Slots
 
 FAST_PATH = os.getenv("UTTERANCE_FAST_PATH", "1").strip().lower() not in ("0", "false", "no")
 FUZZY_MIN = 0.7  # token-set Jaccard needed to trust a near-match from the utterance bank
@@ -150,11 +150,12 @@ KEYWORD_RULES: list[tuple[str, list[str]]] = [
 CLASSIFIER_SYSTEM_PROMPT = """You are the intent router for a Paytm merchant's AI business buddy.
 The merchant ({merchant_name}, MID {mid}) speaks Hindi, Hinglish or English.
 Classify the message into EXACTLY ONE intent:
-- SETTLEMENT_RECONCILE: settlement amount lower than expected, bank credit mismatch, "paise kam aaye", deductions overall
+- SETTLEMENT_RECONCILE: settlement amount lower than expected, bank credit mismatch, "paise kam aaye", why money was deducted
 - UTR_VERIFY: check whether a UPI payment / UTR / screenshot is genuine or received
 - CHARGEBACK_RESOLVE: chargeback, disputed or held transaction, proof of delivery (PoD)
 - REFUND_MANAGE: customer refund status or a refund deducted from settlement
-- FEE_GST_LOAN: MDR fees, GST / input tax credit (ITC), soundbox rental amount, loan EDI amount or balance
+- FEE_GST_LOAN: why / how much MDR (payment) fees or GST / input tax credit (ITC) were charged, or the loan's
+  interest rate / terms
 - MANDATE_TROUBLESHOOT: loan EDI / eNACH / auto-debit mandate failed or bounced, missed EDI
 - DUPLICATE_RECONCILE: a customer paid twice for the same order, double payment
 - GROWTH_ADVISORY: business growth advice, sales trends, past months' data, stocking up, working capital
@@ -163,11 +164,20 @@ Classify the message into EXACTLY ONE intent:
 - LOAN_CLOSURE_NOC: wants to close / settle / foreclose the loan, or asks for the NOC
 - BANK_KYC_UPDATE: change the settlement bank account, IFSC or KYC details
 - SETTLEMENT_HOLD_BANK: settlement held or not arriving because the bank account is inactive / frozen / on hold
-- ESCALATE_HUMAN: wants a human, Soundbox/QR hardware fault (not working, no sound), angry complaint, or anything unsupported
-(A Soundbox *rental fee* question is FEE_GST_LOAN; returning it is SOUNDBOX_RETURN; a faulty one is ESCALATE_HUMAN.
+- ESCALATE_HUMAN: explicitly wants a human / call / complaint, or a Soundbox/QR hardware fault (not working, no sound)
+- INFO_QUERY: any OTHER question about this merchant's own account or business numbers that needs no action:
+  WHEN the next settlement comes ("agla settlement kab aayega", "paisa kab aayega"), how much they sold today /
+  this week / yesterday, transaction counts, how much of the loan is left, next EDI date, Soundbox rent amount,
+  store details
+- UNCLEAR: NOT about this merchant's Paytm business (cricket, weather, food orders, jokes, general knowledge),
+  OR too vague to act on ("haan", "theek hai", "hello", "kuch gadbad hai" with no detail), OR garbled/incomplete
+  speech. Never guess a business intent for these: the buddy will ask the merchant to rephrase.
+(A Soundbox *rent amount* question is INFO_QUERY; returning it is SOUNDBOX_RETURN; a faulty one is ESCALATE_HUMAN.
 "Loan settle" means LOAN_CLOSURE_NOC, not SETTLEMENT_RECONCILE.)
 Extract slots when present (else null): utr_number (exactly 12 digits, as a string),
 order_id (digits only, as a string), amount (number in rupees), date (YYYY-MM-DD).
+If the message is about money, payments, settlement, loan, Soundbox, KYC or refunds but you are unsure which,
+pick the closest intent above (not UNCLEAR).
 Respond with ONLY JSON: {{"intent": "...", "slots": {{"utr_number": null, "order_id": null, "amount": null, "date": null}}}}"""
 
 
@@ -179,6 +189,9 @@ def classifier_prompt(examples_per_intent: int = 2) -> str:
     for intent in INTENTS:
         bank = sorted((u for u in d.routing_utterances() if u["intent"] == intent), key=lambda u: not u.get("preset"))
         lines += [f'"{u["text"]}" -> {intent}' for u in bank[:examples_per_intent]]
+    lines += ['"मेरा अगला settlement कब आएगा?" -> INFO_QUERY', '"aaj kitni sale hui?" -> INFO_QUERY',
+              '"When will I get my next payout?" -> INFO_QUERY',
+              '"aaj cricket match kaun jeeta?" -> UNCLEAR', '"haan theek hai" -> UNCLEAR']
     return prompt + ("\nExamples:\n" + "\n".join(lines) if lines else "")
 
 
@@ -200,12 +213,14 @@ def _rules() -> list[tuple[str, list[str]]]:
     return [(intent, patterns + [p for p in extra.get(intent, []) if p]) for intent, patterns in KEYWORD_RULES]
 
 
-def keyword_intent(text: str) -> str:
-    t = text.lower()
+def keyword_intent(text: str) -> Optional[str]:
+    """First keyword rule that matches, else None. (It used to default to SETTLEMENT_RECONCILE, so any question
+    the buddy didn't understand, even "cricket match kaun jeeta", got a settlement answer.)"""
+    t = spoken_digits(text).lower()
     for intent, patterns in _rules():
         if any(re.search(p, t) for p in patterns):
             return intent
-    return "SETTLEMENT_RECONCILE"  # most common merchant pain point; safest default
+    return None
 
 
 def is_hardware_fault(text: str) -> bool:
@@ -253,8 +268,62 @@ _ISO_DATE_RE = re.compile(r"\b(20\d{2})-(\d{2})-(\d{2})\b")
 _DMY_RE = re.compile(r"\b(\d{1,2})[/.-](\d{1,2})[/.-](20\d{2})\b")
 
 
+# Sarvam STT writes spoken numbers as words ("छह तीन दो …"). Only runs of 4+ digit tokens are joined, so
+# everyday words like "do baar" (twice) are left alone.
+_DIGIT_WORDS = {
+    "0": ("शून्य", "शुन्य", "ज़ीरो", "जीरो", "zero", "shunya", "shoonya"),
+    "1": ("एक", "ek", "one"), "2": ("दो", "do", "two"), "3": ("तीन", "teen", "three"),
+    "4": ("चार", "char", "chaar", "four"), "5": ("पांच", "पाँच", "paanch", "panch", "five"),
+    "6": ("छह", "छः", "छे", "छै", "chhe", "chhah", "che", "six"), "7": ("सात", "saat", "seven"),
+    "8": ("आठ", "aath", "eight"), "9": ("नौ", "nau", "nine"),
+}
+_WORD_TO_DIGIT = {w: d for d, ws in _DIGIT_WORDS.items() for w in ws}
+_DEVANAGARI_DIGITS = str.maketrans("०१२३४५६७८९", "0123456789")
+_TOKEN_RE = re.compile(r"[^\s,।.?!-]+|[\s,।.?!-]+")
+
+
+def spoken_digits(text: str) -> str:
+    """'UTR छह तीन दो एक …' -> 'UTR 6321…'. Devanagari digits become ASCII. A run of 4+ single digits / digit
+    words is joined; shorter runs and multi-digit numbers ("₹1,180") are left exactly as written."""
+    out: list[str] = []
+    digits: list[str] = []
+    raw: list[str] = []
+    last = 0
+
+    def flush() -> None:
+        nonlocal last
+        if len(digits) >= 4:
+            out.append("".join(digits))
+            out.extend(raw[last:])  # separators after the last digit
+        else:
+            out.extend(raw)
+        digits.clear()
+        raw.clear()
+        last = 0
+
+    for t in _TOKEN_RE.findall(text.translate(_DEVANAGARI_DIGITS)):
+        d = _WORD_TO_DIGIT.get(t.lower()) or (t if len(t) == 1 and t.isdigit() else None)
+        if d is not None:
+            digits.append(d)
+            raw.append(t)
+            last = len(raw)
+        elif digits and (t.isspace() or t.strip() in {",", "-"}):
+            raw.append(t)
+        else:
+            flush()
+            out.append(t)
+    flush()
+    return "".join(out)
+
+
+def _seen_digits(value: Optional[str], text: str) -> bool:
+    """True when an id the LLM returned is literally in what the merchant said (after spoken-digit normalising)."""
+    return bool(value) and value in re.sub(r"[\s,-]", "", spoken_digits(text))
+
+
 def extract_slots(text: str, today: Optional[date] = None) -> Slots:
     today = today or date.today()
+    text = spoken_digits(text)
     utr = _UTR_RE.search(text)
     m = _ORDER_RE.search(text) or _HASH_RE.search(text)
     order_id = m.group(1) if m else None
@@ -317,11 +386,26 @@ async def classify(text: str) -> Classification:
     result = await upstream.llm(classifier_prompt(), text, response_format="json")
     if isinstance(result, dict):
         intent = str(result.get("intent", "")).strip().upper()
+        if intent in (UNCLEAR, "OUT_OF_SCOPE", "UNKNOWN", "NONE"):
+            # The LLM says this isn't an actionable business question. A preset/near-exact match still wins.
+            if bank_intent and bank_score >= FUZZY_MIN:
+                return Classification(intent=bank_intent, slots=regex_slots, source="utterance_bank")
+            return Classification(intent=UNCLEAR, slots=regex_slots, source="llm")
+        if intent == INFO_QUERY:
+            return Classification(intent=INFO_QUERY, slots=regex_slots, source="llm")
         if intent in INTENTS:
             raw_slots = result.get("slots") if isinstance(result.get("slots"), dict) else result  # nested or flat
+            llm_slots = slots_from_dict(raw_slots)
+            # The LLM can invent a digit (live: 11 spoken digits came back as a 12-digit UTR, which then
+            # looked fake). Keep its UTR / order id only if those digits are really in the merchant's words.
+            llm_slots = llm_slots.model_copy(update={
+                "utr_number": llm_slots.utr_number if _seen_digits(llm_slots.utr_number, text) else None,
+                "order_id": llm_slots.order_id if _seen_digits(llm_slots.order_id, text) else None,
+            })
             # Regex wins: it is exact for UTRs/order ids; LLM fills what regex missed.
-            return Classification(intent=intent, slots=merge_slots(regex_slots, slots_from_dict(raw_slots)), source="llm")
+            return Classification(intent=intent, slots=merge_slots(regex_slots, llm_slots), source="llm")
 
     if bank_intent and bank_score >= FUZZY_MIN:
         return Classification(intent=bank_intent, slots=regex_slots, source="utterance_bank")
-    return Classification(intent=keyword_intent(text), slots=regex_slots, source="keyword_fallback")
+    # No LLM: keywords only. No match means we don't know, so ask instead of guessing.
+    return Classification(intent=keyword_intent(text) or UNCLEAR, slots=regex_slots, source="keyword_fallback")

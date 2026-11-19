@@ -19,7 +19,9 @@ from . import (
     chargeback,
     duplicate,
     escalate,
+    fees,
     mandate,
+    refund,
     settlement,
     utr,
 )
@@ -33,4 +35,7 @@ MODULES = {
     "WORKING_CAPITAL_ADVISORY": advisory,
     "CASHFLOW_EDI_SWITCH": cashflow,
     "ESCALATE_HUMAN": escalate,
+    # contract v1 intents that Person 1 and Person 3 still emit
+    "FEE_GST_LOAN": fees,
+    "REFUND_MANAGE": refund,
 }

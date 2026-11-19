@@ -224,8 +224,11 @@ check "three unknowns in one chat escalates" "$(echo "$TH" | jq -r '.status')" "
 check "for the right reason" "$(echo "$TH" | jq -r '.escalation_ticket.reason_code')" "REPEATED_UNKNOWN_UTR"
 check "fraud flags counted"  "$(curl -s "$BASE/metrics" | jq '.fraud_flags')" "4"
 
-say "Stage 7 — the team's two names for one scenario"
-for pair in 'DUPLICATE_RECONCILE:501' 'GROWTH_ADVISORY:501' 'MANDATE_TROUBLESHOOT:501' 'MAKE_TEA:400'; do
+say "All ten intents answer, under either team's spelling"
+for pair in 'DUPLICATE_RECONCILE:200' 'GROWTH_ADVISORY:200' 'MANDATE_TROUBLESHOOT:200' \
+            'SETTLEMENT_RECONCILE:200' 'CHARGEBACK_RESOLVE:200' 'CASHFLOW_EDI_SWITCH:200' \
+            'WORKING_CAPITAL_ADVISORY:200' 'DUPLICATE_PAYMENT_RECONCILE:200' \
+            'FEE_GST_LOAN:200' 'ESCALATE_HUMAN:200' 'MAKE_TEA:400'; do
   name="${pair%%:*}"; want="${pair#*:}"
   got=$(curl -s -o /dev/null -w '%{http_code}' -XPOST "$BASE/a2a/dispatch" \
         -H 'content-type: application/json' \

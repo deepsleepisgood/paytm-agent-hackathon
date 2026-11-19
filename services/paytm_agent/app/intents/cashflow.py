@@ -39,6 +39,12 @@ def gather(case: Case) -> str:
         },
         "loan_edi_status": loan.status,
         "nbfc": loan.nbfc,
+        # The projection nets the EDI off the payout because the contract's 1,200 figure
+        # does, and Person 1's recorded reply and Person 3's code both depend on it. The
+        # canonical loan data says the EDI is actually collected by eNACH from the bank
+        # account, so the collection method travels with the number rather than the
+        # discrepancy being hidden.
+        "edi_collection_method": loan.collection_method,
         # Deliberately absent: tomorrow_stock_due and the shortfall. Those come from the
         # merchant's Vyapar connector, which lives on 8003 and which Paytm does not read.
         "payables_known_to_paytm": False,

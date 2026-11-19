@@ -1,0 +1,113 @@
+{
+  "mid": "PAYTM_MERCH_8821",
+  "as_of": "2026-11-19T09:00:00",
+  "restored_by": "POST /ledger/reset",
+  "settlement": {
+    "batch_id": "STL-20261118",
+    "settlement_date": "2026-11-18",
+    "gross": 100000,
+    "net_credit": 95840,
+    "variance": 4160,
+    "deductions": {
+      "mdr": 1450,
+      "gst_on_mdr": 261,
+      "refund_4412": 1500,
+      "soundbox_rental": 149,
+      "chargeback_hold_9981": 800
+    },
+    "mdr_split": {
+      "credit_card_and_postpaid": {
+        "amount": 62600,
+        "mdr_rate": "2%",
+        "mdr": 1252
+      },
+      "wallet_on_upi_above_2000": {
+        "amount": 18000,
+        "mdr_rate": "1.1%",
+        "mdr": 198
+      },
+      "upi_p2m": {
+        "amount": 19400,
+        "mdr_rate": "0%",
+        "mdr": 0
+      }
+    }
+  },
+  "loan": {
+    "loan_id": "CLX-ML-26-008821",
+    "lender": "Clix Capital",
+    "edi_status": "ACTIVE",
+    "daily_edi": 500,
+    "outstanding": 42000,
+    "overdue_amount": 500,
+    "dpd": 0,
+    "kfs_edi_holiday_eligible": true
+  },
+  "mandate": {
+    "umrn": "UMRN-DEMO-0000008821",
+    "status": "ACTIVE",
+    "last_return_date": "2026-11-17",
+    "last_return_code": "04",
+    "last_return_reason": "Balance insufficient",
+    "bounce_charge": 0,
+    "on_time_rate_percent": 96
+  },
+  "chargebacks": {
+    "CB-9981": {
+      "order_id": "9981",
+      "txn_id": "PTM26111400012",
+      "amount": 800,
+      "status": "HELD",
+      "paytm_evidence_due": "2026-11-19T14:05:00"
+    }
+  },
+  "refunds": {
+    "RFD-4412": "PROCESSED",
+    "RFD-4490": "QUEUED",
+    "RFD-DUP-4489": "CANDIDATE"
+  },
+  "utrs": {
+    "632184920111": {
+      "amount": 1250,
+      "payer_app": "GPay",
+      "status": "SUCCESS_SETTLED",
+      "txn_id": "PTM26111800011"
+    },
+    "632184920999": {
+      "amount": 2400,
+      "payer_app": "PhonePe",
+      "status": "PENDING",
+      "txn_id": "PTM26111800018"
+    },
+    "632299206882": {
+      "amount": "1180",
+      "payer_app": "PhonePe",
+      "status": "SUCCESS_SETTLED",
+      "order_id": "4489",
+      "txn_id": "PTM26111800020"
+    },
+    "632230725895": {
+      "amount": "1180",
+      "payer_app": "PhonePe",
+      "status": "SUCCESS_SETTLED",
+      "order_id": "4489",
+      "txn_id": "PTM26111800021"
+    }
+  },
+  "unknown_utr_status": "NOT_FOUND_SUSPECTED_FAKE",
+  "devices": {
+    "SB-8821-01": "DEGRADED"
+  },
+  "next_ticket_id": "TKT-PAYTM-1291",
+  "consent": {
+    "valid_token_example": "DPDP_VERIFIED_TS_1795058100",
+    "expired_token_example": "DPDP_VERIFIED_TS_1794313800",
+    "missing_or_invalid_token": "HTTP 403"
+  },
+  "counters": {
+    "outcomes_verified": 0,
+    "tickets_deflected": 0,
+    "fraud_blocked": 0,
+    "money_recovered_inr": 0
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "disclaimer": "ILLUSTRATIVE: synthetic demo values, not actual Paytm pricing or policy",
+  "lender": "Clix Capital",
+  "applies_to_product": "Merchant cash loan with daily EDI",
+  "edi_holiday": {
+    "kfs_clause": "4.2",
+    "max_consecutive_days": 2,
+    "max_per_rolling_days": 30,
+    "requires_dpd": 0,
+    "min_first_attempt_success_90d": 0.9,
+    "requires_merchant_consent": true,
+    "requires_lender_approval": true,
+    "lsp_may_execute_alone": false,
+    "trigger": "projected_net_payout < committed payable due within 48h",
+    "penal_charges": 0,
+    "effect": "paused EDIs appended to tenure end"
+  },
+  "upi_fallback_collection": {
+    "kfs_clause": "4.1",
+    "allowed_after": "first eNACH return of the day",
+    "link_validity_hours": 24,
+    "bounce_charge_waived_if_paid_same_day": true
+  },
+  "dpd": {
+    "grace_days": 3,
+    "dpd_starts": "day 4 after a missed EDI"
+  },
+  "hardship": {
+    "classify_as_friction_if": {
+      "first_attempt_success_90d_min": 0.9,
+      "sales_dip_max_days": 7,
+      "sales_recovered_within_days": 3
+    },
+    "escalate_to_collections_if": "2+ unrecovered EDIs or DPD > 7"
+  },
+  "approvals": {
+    "edi_pause": "Clix Capital credit ops (auto-approve if all edi_holiday rules pass)",
+    "restructure": "Clix Capital credit committee (never autonomous)"
+  }
+}

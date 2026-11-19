@@ -37,8 +37,11 @@ def gather(case: Case) -> str:
         "mandate_id": m.mandate_id,
         "status": m.status,
         "amount_inr": m.amount_inr,
-        "bounce_date": m.bounce_date,
-        "bounce_reason": m.bounce_reason,
+        "last_return_date": m.last_return_date,
+        "last_return_reason": m.last_return_reason,
+        "last_return_code": m.last_return_code,
+        "overdue_amount_inr": m.overdue_amount_inr,
+        "days_past_due": m.days_past_due,
         "bounce_charge_inr": m.bounce_charge_inr,
         "is_default": False,
         "repayment_history": {
@@ -48,12 +51,12 @@ def gather(case: Case) -> str:
         "nbfc": case.ledger.loan.nbfc,
     }
 
-    if m.status != "BOUNCED":
-        return f"Read mandate {m.mandate_id}: {m.status}, nothing bounced"
+    if not m.needs_remedy:
+        return f"Read mandate {m.mandate_id}: {m.status}, nothing outstanding"
 
     return (
-        f"Read mandate {m.mandate_id}: {m.amount_inr} bounced on {m.bounce_date} "
-        f"({m.bounce_reason}); {m.on_time_rate_percent}% on time over "
+        f"Read mandate {m.mandate_id}: {m.amount_inr} presentment returned on "
+        f"{m.last_return_date} ({m.last_return_reason}); {m.on_time_rate_percent}% on time over "
         f"{m.history_months} months"
     )
 
@@ -64,9 +67,9 @@ def assess(case: Case) -> str:
     loan = case.ledger.loan
     data = case.data
 
-    if m.status != "BOUNCED":
+    if not m.needs_remedy:
         data["remedies"] = []
-        return "Nothing bounced, so there is nothing to remedy"
+        return "Nothing outstanding, so there is nothing to remedy"
 
     # Paying the missed instalment is always available: it is the merchant's own money
     # moving on their own instruction.
@@ -77,7 +80,7 @@ def assess(case: Case) -> str:
         "label": "Pay today's instalment by UPI link",
     }]
 
-    pauses_left = HARDSHIP_PAUSES_PER_WINDOW - m.hardship_pauses_used_90d
+    pauses_left = HARDSHIP_PAUSES_PER_WINDOW - m.hardship_pauses_used_in_window
     pause_eligible = (
         loan.edi_holiday_eligible and loan.status == "ACTIVE" and pauses_left > 0
     )
@@ -107,17 +110,17 @@ def assess(case: Case) -> str:
         # rather than the agent quietly refusing.
         case.escalate(
             "OUT_OF_SCOPE",
-            f"Mandate bounced and no hardship pause is available "
-            f"({m.hardship_pauses_used_90d} already used in "
+            f"Instalment unpaid and no hardship pause is available "
+            f"({m.hardship_pauses_used_in_window} already used in "
             f"{HARDSHIP_PAUSE_WINDOW_DAYS} days, or the EDI is {loan.status})",
         )
         return (
-            f"Bounced, but no pause left in {HARDSHIP_PAUSE_WINDOW_DAYS} days: "
+            f"Returned, but no pause left in {HARDSHIP_PAUSE_WINDOW_DAYS} days: "
             "offer the UPI link and let a person look at the account"
         )
 
     return (
-        f"Bounced once with {m.on_time_rate_percent}% on time: not a default, and a "
+        f"Returned once with {m.on_time_rate_percent}% on time and {m.days_past_due} days past due: not a default, and a "
         f"{loan.max_pause_days}-day pause is available under KFS {loan.kfs_clause}"
     )
 
@@ -127,14 +130,14 @@ def resolve(case: Case) -> str:
     m = case.ledger.mandate
     data = case.data
 
-    if m.status != "BOUNCED":
-        case.found = f"Mandate {m.mandate_id} is {m.status}"
+    if not m.needs_remedy:
+        case.found = f"Mandate {m.mandate_id} is {m.status} with nothing outstanding"
         case.action_taken = "None, explained only"
         case.template_text = templates.render("MANDATE_TROUBLESHOOT", data, case.status)
         return "Told the merchant the mandate is healthy"
 
     case.found = (
-        f"{m.mandate_id} bounced {m.amount_inr} on {m.bounce_date} ({m.bounce_reason}); "
+        f"{m.mandate_id} returned {m.amount_inr} on {m.last_return_date} ({m.last_return_reason}); "
         f"{m.on_time_rate_percent}% on time over {m.history_months} months"
     )
 

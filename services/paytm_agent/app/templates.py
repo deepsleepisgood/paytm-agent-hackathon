@@ -91,9 +91,13 @@ def _settlement_reconcile(data: dict[str, Any], status: str) -> str:
         f"The difference of {gap} is: {items}."
     )
     for up in data.get("upcoming", []):
+        # Says the instalment is due, not that the payout is reduced by it. The
+        # canonical loan data is explicit that the EDI is collected by eNACH from the
+        # bank account rather than netted from a settlement, so the narrower claim is
+        # the one that is true either way.
         text += (
-            f" Your next payout on {pretty_date(up['date'])} will also be "
-            f"{rupees(up['amount_inr'])} lower for your {up['label'].lower()}."
+            f" Your {rupees(up['amount_inr'])} {up['label'].lower()} is also due on "
+            f"{pretty_date(up['date'])}."
         )
     return text
 
@@ -125,6 +129,25 @@ def _utr_verify(data: dict[str, Any], status: str) -> str:
                 f"{rupees(data['amount_inr'])}, which is not what you were told."
             )
         return text
+
+    if lookup == "REVERSED":
+        return (
+            f"Reference {utr} for {rupees(data['amount_inr'])} did arrive, but it has "
+            "since been reversed and the money has gone back to your customer, so it is "
+            "not in your account now. Please do not treat this one as paid."
+        )
+
+    if lookup == "FAILED":
+        # Names the cause without blaming the customer: an MPIN slip or a declined
+        # confirmation is nobody's bad faith, and the merchant has to serve this person.
+        why = data.get("failure_reason")
+        return (
+            f"That payment did not go through. Reference {utr} for "
+            f"{rupees(data['amount_inr'])} was declined"
+            + (f" — {why.lower()} — " if why else " ")
+            + "so nothing was taken from your customer's account. Please ask them to "
+            "try again, and hold the goods until it shows as received."
+        )
 
     if lookup == "PENDING":
         return (
@@ -179,16 +202,20 @@ def _mandate_troubleshoot(data: dict[str, Any], status: str) -> str:
     A bounce notice reads like default, and that fear is the actual problem to solve
     before any remedy is useful.
     """
-    if data["status"] != "BOUNCED":
-        return f"Your instalment mandate {data['mandate_id']} is active. Nothing has bounced."
+    if not data.get("overdue_amount_inr"):
+        return (
+            f"Your instalment mandate {data['mandate_id']} is active and there is "
+            "nothing outstanding on it."
+        )
 
     amount = rupees(data["amount_inr"])
     history = data["repayment_history"]
     opener = (
         f"Your {amount} instalment could not be collected from your bank on "
-        f"{pretty_date(data['bounce_date'])}. This is not a default, and it is not a "
-        f"mark against you: you have paid {history['on_time_rate_percent']}% of your "
-        f"instalments on time over the last {history['months']} months."
+        f"{pretty_date(data['last_return_date'])}, because the balance was short. "
+        "This is not a default, and it is not a mark against you: you have paid "
+        f"{history['on_time_rate_percent']}% of your instalments on time over the last "
+        f"{history['months']} months, and your mandate is still active."
     )
 
     if status == "ESCALATED":
@@ -243,7 +270,7 @@ def _working_capital_advisory(data: dict[str, Any], status: str) -> str:
     sales = data["sales"]
     daily = rupees(sales["avg_daily_sales_inr"])
     weekend = rupees(data["weekend_daily_sales_inr"])
-    offer = data["credit_offer"]
+    loan = data["existing_loan"]
 
     pattern = (
         f"Over the last {sales['months']} months you have taken about {daily} a day, and "
@@ -265,10 +292,11 @@ def _working_capital_advisory(data: dict[str, Any], status: str) -> str:
 
     repay = data["share_of_daily_takings_repaid_percent"]
     return (
-        pattern + f" You have {rupees(offer['pre_approved_inr'])} pre-approved with "
-        f"{offer['nbfc']} if you want it. Before taking any of it you would get a Key "
-        f"Fact Statement with the full rate and term. For comparison, your current "
-        f"instalment takes about {repay}% of an average day's takings."
+        pattern + f" On the loan you already have with {loan['nbfc']}, "
+        f"{rupees(loan['balance_inr'])} is left at {loan['apr_percent']}% a year, and "
+        f"the {rupees(loan['edi_per_day_inr'])} daily instalment is about {repay}% of an "
+        "average day's takings. If you ever want more working capital, you would get a "
+        "Key Fact Statement with the full rate and term before taking any of it."
     )
 
 
@@ -302,6 +330,78 @@ def _cashflow_edi_switch(data: dict[str, Any], status: str) -> str:
     )
 
 
+def _fee_gst_loan(data: dict[str, Any], status: str) -> str:
+    topic = data["topic"]
+
+    if topic == "FEE":
+        parts = ", ".join(
+            f"{b['type'].lower()} {rupees(b['fee_inr'])} on {rupees(b['volume_inr'])} at {b['rate_percent']:g}%"
+            for b in data["breakdown"] if b["fee_inr"]
+        )
+        free = [b for b in data["breakdown"] if not b["fee_inr"]]
+        text = f"Your payment fees came to {rupees(data['mdr_total_inr'])}: {parts}."
+        if free:
+            text += (f" There was no fee at all on {rupees(free[0]['volume_inr'])} of "
+                     f"{free[0]['type'].lower()}.")
+        return text
+
+    if topic == "GST":
+        if status == "ESCALATED":
+            return (
+                f"{rupees(data['gst_inr'])} of GST was charged on your "
+                f"{rupees(data['base_inr'])} of fees. Whether you can claim that back "
+                "depends on your GST registration, which I cannot confirm from here, so "
+                "a Paytm colleague will check it with you."
+            )
+        return (
+            f"{rupees(data['gst_inr'])} is GST at {data['rate_percent']:g}% on the "
+            f"{rupees(data['base_inr'])} of payment fees. Because you are GST "
+            "registered, you can claim that back as input tax credit in your return, so "
+            "it is not a real cost to you."
+        )
+
+    due = data["edi_tomorrow_inr"]
+    text = (
+        f"Your loan instalment is {rupees(data['edi_per_day_inr'])} a day, collected by "
+        f"auto-debit from your bank account, and {rupees(data['balance_inr'])} is still "
+        f"to repay."
+    )
+    return text + (
+        f" The next one is on {pretty_date(data['next_deduction_date'])}." if due
+        else " Your instalments are paused at the moment, so nothing is due tomorrow."
+    )
+
+
+def _refund_manage(data: dict[str, Any], status: str) -> str:
+    order = data["order_id"]
+
+    if status == "ESCALATED":
+        if not data["found"]:
+            return (
+                f"I cannot find order {order} in your account, so I am not able to check "
+                "a refund against it. A Paytm colleague will look it up properly for you."
+            )
+        return (
+            f"I am not able to start that refund on order {order} myself. A Paytm "
+            "colleague will pick it up, and nothing has been sent to the customer yet."
+        )
+
+    if data["action"] == "STATUS":
+        state = {
+            "PROCESSED": f"has already been sent back to your customer, and it came out of your settlement",
+            "PENDING": "is on its way to your customer now",
+            "NONE": "has not been raised, so nothing has gone back to your customer",
+        }[data["refund_status"]]
+        amount = rupees(data["amount_inr"]) if data.get("amount_inr") else "The refund"
+        return f"{amount} on order {order} {state}."
+
+    return (
+        f"I have started the {rupees(data['requested_amount_inr'])} refund on order "
+        f"{order}. It will reach your customer shortly and will show against your next "
+        "settlement."
+    )
+
+
 RENDERERS = {
     "ESCALATE_HUMAN": _escalate_human,
     "SETTLEMENT_RECONCILE": _settlement_reconcile,
@@ -311,6 +411,8 @@ RENDERERS = {
     "DUPLICATE_PAYMENT_RECONCILE": _duplicate_payment_reconcile,
     "WORKING_CAPITAL_ADVISORY": _working_capital_advisory,
     "CASHFLOW_EDI_SWITCH": _cashflow_edi_switch,
+    "FEE_GST_LOAN": _fee_gst_loan,
+    "REFUND_MANAGE": _refund_manage,
 }
 
 

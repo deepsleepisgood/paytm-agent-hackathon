@@ -3,6 +3,7 @@
 Offline by default: every upstream call fails instantly, so the merchant-side mocks of 8001/8002 answer.
 """
 import json
+import re
 
 import httpx
 import pytest
@@ -10,7 +11,7 @@ import pytest
 import advisor
 import router
 import upstream
-from conftest import MID, NO_DATASET, ask, use_dataset
+from conftest import MID, NO_DATASET, REAL_DATASET, ask, use_dataset
 from schemas import Slots
 from state import STATE
 
@@ -77,7 +78,7 @@ def test_response_carries_the_full_loop(client):
     body = ask(client, "Mera ₹500 ka loan EDI mandate fail ho gaya").json()
     assert body["hindi_reply"] == body["reply_text"]
     ins = body["historical_insight"]
-    assert ins["classification"] == "PAYMENT_FRICTION" and ins["metrics"]["sales_dip_pct"] == 40
+    assert ins["classification"] == "PAYMENT_FRICTION" and ins["metrics"]["sales_dip_pct"] == 37
     assert ins["profile"]["daily_avg_sales"] == 32000 and ins["profile"]["weekend_multiplier"] == 2.3
     ev = body["intervention_evaluation"]
     assert [o["id"] for o in ev["options"]] == ["A", "B", "C"] and ev["selected"] == "B"
@@ -99,7 +100,7 @@ def test_willful_default_history_escalates_instead(client, tmp_path):
     (tmp_path / "seed").mkdir()
     (tmp_path / "seed/merchant_history.json").write_text(json.dumps({
         "daily_avg_sales": 32000, "past_edi_success_rate": "70%",
-        "recent_daily_sales": [{"date": "2026-11-15", "sales": 33000}, {"date": "2026-11-16", "sales": 31000}],
+        "recent_daily_sales": [{"date": "2026-11-17", "sales": 21000}, {"date": "2026-11-18", "sales": 20500}],  # normal weekdays
     }), encoding="utf-8")
     use_dataset(tmp_path)
     body = ask(client, "mera EDI mandate fail ho gaya").json()
@@ -142,8 +143,8 @@ def test_policy_blocks_are_respected(client):
 @pytest.mark.parametrize(
     "text,status,needle",
     [
-        ("Customer ne order 7310 ke liye do baar payment kar diya", "REFUND_INITIATED", "Vikas Gupta"),
-        ("Mere pichle 6 mahine ke data se business badhane ka suggestion do", "OFFER_PREAPPROVED", "₹50,000"),
+        ("Customer ne order 4489 ke liye do baar payment kar diya", "REFUND_INITIATED", "Sunita Yadav"),
+        ("Mere pichle 6 mahine ke data se business badhane ka suggestion do", "OFFER_PREAPPROVED", "₹1,50,000"),
         ("Soundbox wapas karna hai, uska bill abhi bhi kat raha hai", "RETURN_INITIATED", "PICKUP-"),
         ("Loan poora settle karna hai, NOC kab milega?", "FORECLOSURE_QUOTE_READY", "NOC"),
         ("Mujhe settlement ka bank account aur KYC change karna hai", "KYC_UPDATE_LINK_SENT", "Penny-drop"),
@@ -265,13 +266,13 @@ def test_khata_json_reconciles_and_tracks_actions(client):
         100000, 1450, 261, 1500, 95840)
     assert s["reconciled"] and s["gst_itc_logged"] == 0 and s["gst_itc_claimable"] == 261
     ask(client, "settlement kam kyun aaya")  # logs the ITC
-    ask(client, "Customer ne order 7310 ke liye do baar payment kar diya")
+    ask(client, "Customer ne order 4489 ke liye do baar payment kar diya")
     k = client.get("/merchant/khata-export").json()
     assert k["summary"]["gst_itc_logged"] == 261
     gst = next(v for v in k["vouchers"] if v["debit_ledger"] == "Input GST on MDR (ITC)")
     assert gst["status"] == "ITC LOGGED" and gst["gst_itc_eligible"]
     dup = next(v for v in k["vouchers"] if v["status"] == "DUPLICATE_REFUND")
-    assert dup["amount"] == 1850 and "7310" in dup["reference"]
+    assert dup["amount"] == 1180 and "4489" in dup["reference"]
     assert "KHATA_UPDATED" in [e["type"] for e in events(client)]
 
 
@@ -283,3 +284,156 @@ def test_khata_csv_is_tally_ready(client):
     assert lines[0] == "Date,Voucher Type,Voucher No,Debit Ledger,Credit Ledger,Amount,GST ITC Eligible,Reference,Status,Narration"
     assert lines[1].startswith("18-11-2026,Sales,") and ",100000.00," in lines[1]
     assert len(lines) == 1 + 7  # sales, 5 deductions, bank receipt
+
+
+# ----------------------------------------------------------------------------- voice digits + reply grounding
+
+def test_spoken_digits_become_a_utr_but_everyday_words_do_not():
+    import router
+    assert router.extract_slots("UTR छह तीन दो एक आठ चार नौ दो शून्य एक एक एक check karo").utr_number == "632184920111"
+    assert router.spoken_digits("PhonePe se ₹1,180 do baar kat gaya") == "PhonePe se ₹1,180 do baar kat gaya"
+    assert router.extract_slots("order ९९८१ ka kya hua").order_id == "9981"
+
+
+def test_llm_utr_not_in_the_words_is_dropped(client, monkeypatch):
+    """Live: 11 spoken digits + a mis-heard word came back from the LLM as a made-up 12-digit UTR -> false fraud."""
+    import router
+
+    async def fake_llm(system, user, response_format="json"):
+        if response_format == "json":
+            return {"intent": "UTR_VERIFY", "slots": {"utr_number": "632184920110"}}
+        return None
+    monkeypatch.setattr(router.upstream, "llm", fake_llm)
+    body = ask(client, "यूटीआर छह तीन दो एक आठ चार नौ दो शून्य एक एक कैप का पेमेंट चेक करो").json()
+    assert body["intent"] == "UTR_VERIFY" and body["slots"]["utr_number"] is None
+    assert not body.get("fraud_alert")
+
+
+def test_llm_reply_with_invented_amount_falls_back_to_template(client, monkeypatch):
+    import pipeline
+    monkeypatch.setattr(pipeline, "REPLY_LLM", True)
+
+    async def fake_llm(system, user, response_format="json"):
+        if response_format == "json":
+            return None
+        return "₹9,999 का settlement आज आपके bank में आ जाएगा, चिंता मत कीजिए।"
+    monkeypatch.setattr(pipeline.upstream, "llm", fake_llm)
+    body = ask(client, "Kal ₹1,00,000 sale tha, bank mein ₹95,840 aaya — ₹4,160 kahan kata?").json()
+    assert body["reply_source"] == "template" and "9,999" not in body["reply_text"]
+    assert pipeline.ungrounded_numbers("₹4,160 कटे, UTR 632184920111", '{"variance": 4160.0, "utr": "632184920111"}') == []
+    assert pipeline.ungrounded_numbers("₹4,160 का UTR", '{"utr": null}') == ["₹4,160"]
+
+
+def test_consent_offer_is_never_paraphrased_by_the_llm(client, monkeypatch):
+    """Live: the LLM said the EDI 'was paused' while the 1-tap consent was still pending."""
+    import pipeline
+    calls = []
+
+    async def fake_llm(system, user, response_format="json"):
+        calls.append(response_format)
+        return "Paytm ने EDI 2 दिन के लिए pause किया है।" if response_format == "text" else None
+    monkeypatch.setattr(pipeline.upstream, "llm", fake_llm)
+    body = client.post("/merchant/proactive-shield", json={"mid": MID, "scenario": "CASHFLOW_EDI_SWITCH",
+                                                            "consent_granted": True}).json()
+    assert body["proactive"]["awaiting_confirmation"] == "CONFIRM_EDI_PAUSE"
+    assert body["reply_source"] == "template" and "रोक दूँ?" in body["reply_text"] and "text" not in calls
+
+
+# ----------------------------------------------------------------------------- not understood -> ask, never guess
+
+@pytest.mark.parametrize("text", ["aaj cricket match kaun jeeta?", "mujhe ek pizza order karna hai", "haan theek hai", "hello"])
+def test_off_topic_or_vague_is_not_answered_as_business(client, text):
+    """LLM down (8001 unreachable in tests): keywords only. No match used to mean 'settlement'."""
+    body = ask(client, text).json()
+    assert body["intent"] == "UNCLEAR" and body["paytm_source"] == "none"
+    assert "समझ नहीं पाया" in body["reply_text"] and body["pending_action"]["type"] == "REPHRASE"
+    assert "MERCHANT_TO_PAYTM" not in [e["type"] for e in body["a2a_events"]]
+    assert body["verified_outcome"] == {}  # nothing learned from a non-answer
+
+
+def test_llm_unclear_is_respected(client, monkeypatch):
+    import router
+
+    async def fake_llm(system, user, response_format="json"):
+        return {"intent": "UNCLEAR", "slots": {}} if response_format == "json" else None
+    monkeypatch.setattr(router.upstream, "llm", fake_llm)
+    body = ask(client, "settlement wala game kab aayega bhai").json()  # has a keyword, but the LLM knows better
+    assert body["intent"] == "UNCLEAR" and body["intent_source"] == "llm"
+
+
+def test_business_questions_still_route_without_llm(client):
+    assert ask(client, "Kal ₹1,00,000 sale tha, bank mein ₹95,840 aaya — ₹4,160 kahan kata?").json()["intent"] == "SETTLEMENT_RECONCILE"
+
+
+def test_transcribe_returns_only_real_speech(client, monkeypatch):
+    async def fake_stt(audio, filename, content_type, language_code="hi-IN"):
+        return "UTR 632184920111 check karo", "live"
+    monkeypatch.setattr(upstream, "stt", fake_stt)
+    r = client.post("/merchant/transcribe", files={"audio": ("v.webm", b"x" * 2000, "audio/webm;codecs=opus")},
+                    data={"mid": MID, "consent_granted": "true"}).json()
+    assert r["transcript"] == "UTR 632184920111 check karo" and r["source"] == "live"
+
+    async def mock_stt(audio, filename, content_type, language_code="hi-IN"):
+        return None, "mock"
+    monkeypatch.setattr(upstream, "stt", mock_stt)
+    r = client.post("/merchant/transcribe", files={"audio": ("v.webm", b"x" * 2000, "audio/webm")},
+                    data={"mid": MID, "consent_granted": "true"}).json()
+    assert r["transcript"] is None and r["reason"] == "voice_off" and "टाइप" in r["message_hi"]
+
+
+def test_transcribe_needs_consent(client):
+    r = client.post("/merchant/transcribe", files={"audio": ("v.webm", b"x" * 2000, "audio/webm")},
+                    data={"mid": MID, "consent_granted": "false"})
+    assert r.status_code == 403
+
+
+# ----------------------------------------------------------------------------- language + questions about the books
+
+def _q(client, text, language="hi"):
+    return client.post("/merchant/query", json={"text": text, "mid": MID, "consent_granted": True,
+                                                "language": language}).json()
+
+
+def test_english_tab_gets_english_clarification(client):
+    body = _q(client, "who won the cricket match today?", "en")
+    assert body["intent"] == "UNCLEAR" and body["language_code"] == "en-IN"
+    assert body["reply_text"].startswith("Sorry") and not re.search("[ऀ-ॿ]", body["reply_text"])
+
+
+def test_english_consent_prompt_is_english(client):
+    body = client.post("/merchant/proactive-shield", json={"mid": MID, "scenario": "CASHFLOW_EDI_SWITCH",
+                                                            "consent_granted": True, "language": "en"}).json()
+    assert body["proactive"]["awaiting_confirmation"] == "CONFIRM_EDI_PAUSE"
+    assert "Shall I pause" in body["reply_text"] and not re.search("[ऀ-ॿ]", body["reply_text"])
+
+
+def _fake_llm(monkeypatch, intent, answer):
+    import router
+
+    async def fake(system, user, response_format="json"):
+        return {"intent": intent, "slots": {}} if response_format == "json" else answer
+    monkeypatch.setattr(router.upstream, "llm", fake)
+
+
+def test_next_settlement_question_is_answered_from_the_books(client, monkeypatch):
+    use_dataset(REAL_DATASET)
+    client.post("/reset")
+    _fake_llm(monkeypatch, "INFO_QUERY", "आपका अगला settlement 2026-11-20 को सुबह 08:00 के आसपास आएगा, आज की बिक्री के लिए।")
+    body = _q(client, "मेरा अगला settlement कब आएगा?")
+    assert body["intent"] == "INFO_QUERY" and body["paytm_source"] == "none" and body["reply_source"] == "llm"
+    assert "20 नवंबर" in body["reply_text"]  # ISO dates are humanised for reading and TTS
+    assert "MERCHANT_TO_PAYTM" not in [e["type"] for e in body["a2a_events"]]  # read-only
+
+
+def test_info_answer_with_invented_number_is_rejected(client, monkeypatch):
+    _fake_llm(monkeypatch, "INFO_QUERY", "आपका अगला settlement ₹77,777 का होगा।")
+    body = _q(client, "agla settlement kitna aayega?")
+    assert body["intent"] == "UNCLEAR" and "77,777" not in body["reply_text"]
+
+
+def test_llm_answers_the_actual_question_by_default(client, monkeypatch):
+    import pipeline
+    monkeypatch.setattr(pipeline, "REPLY_LLM", True)  # the default; don't depend on the developer's .env
+    _fake_llm(monkeypatch, "SETTLEMENT_RECONCILE", "₹4,160 MDR, GST, refund, rental और hold में कटे।")
+    body = _q(client, "Kal ₹1,00,000 sale tha, bank mein ₹95,840 aaya — ₹4,160 kahan kata?")
+    assert body["reply_source"] == "llm" and body["reply_text"].startswith("₹4,160 MDR")
