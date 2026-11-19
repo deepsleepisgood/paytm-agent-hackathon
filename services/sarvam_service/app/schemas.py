@@ -44,6 +44,8 @@ class DocExtractResponse(BaseModel):
     extracted_fields: dict[str, Any]  # CONTRACT
     confidence: float  # CONTRACT (0..1, see confidence.py for how it is computed)
     warnings: list[str] = []
+    # Set when use_sample_connector=true: where the document came from.
+    connector: Optional[dict[str, Any]] = None
     source: Source
 
 
@@ -55,6 +57,9 @@ class LLMRequest(BaseModel):
     json_schema: Optional[dict[str, Any]] = None  # enforce an exact JSON shape (needs response_format="json")
     temperature: Optional[float] = Field(None, ge=0, le=2)
     max_tokens: Optional[int] = Field(None, ge=1, le=8000)
+    # Default is "none" (fastest). Ask for "low" on multi-step prompts such as
+    # Option A/B/C intervention evaluation. Must still finish inside the 5 s budget.
+    reasoning_effort: Optional[Literal["none", "low", "medium", "high"]] = None
 
 
 class LLMResponse(BaseModel):
