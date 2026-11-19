@@ -34,5 +34,17 @@ export function summarize(run, reply, lang = 'hi') {
   }
 
   const parts = reply.text.split(/(?<=[.।!?])\s+/).filter(Boolean)
-  return { kind, chip, headline: parts[0] || reply.text, detail: parts.slice(1).join(' '), facts }
+  let headline = parts[0] || reply.text
+  // "₹4,160 was deducted: MDR ₹1,450, GST ₹261, …" → short headline + one clean row per item
+  const m = headline.match(/^([^:]{4,60}):\s*(.+?)[.।]?$/)
+  if (m) {
+    const items = m[2].split(/,\s+(?:and\s+|aur\s+|और\s+)?/).map((t) => {
+      const a = t.match(/^(.*?)\s*(₹\s?[\d,]+(?:\.\d+)?)\s*(.*)$/)
+      if (!a) return null
+      const label = `${a[1]} ${a[3]}`.replace(/^(a|an|the|और|aur)\s+/i, '').replace(/\s+/g, ' ').trim()
+      return label ? { k: label.charAt(0).toUpperCase() + label.slice(1), v: a[2].replace(/\s/g, '') } : null
+    })
+    if (items.length >= 3 && items.every(Boolean)) { headline = m[1]; facts.length = 0; facts.push(...items) }
+  }
+  return { kind, chip, headline, detail: parts.slice(1).join(' '), facts }
 }

@@ -1274,3 +1274,9 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .tr-k.done{border:1.5px solid #1f9d6b;background:#fff}.tr-k.done .tr-up{background:#1f9d6b}
 .tr-tick{position:absolute;top:-6px;right:-4px;width:16px;height:16px;border-radius:50%;background:#1f9d6b;color:#fff;display:none;align-items:center;justify-content:center}
 .tr-k.done .tr-tick{display:flex}
+
+/* cleaner answer: short headline, itemised rows */
+.a-head{font-size:24px;letter-spacing:-.02em;margin:8px 0 14px}
+.facts div{padding:12px 0;font-size:15.5px}
+.facts b{font-variant-numeric:tabular-nums}
+.a-detail{margin-top:14px}
