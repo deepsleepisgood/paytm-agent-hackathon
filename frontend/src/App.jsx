@@ -2,11 +2,12 @@ import React, { useEffect, useRef, useState } from 'react'
 import { I, PaytmLogo } from './icons.jsx'
 import { inr } from './data.js'
 import { MERCHANTS, MERCHANT_LIST, DEFAULT_MERCHANT } from './merchants.js'
-import { SCENARIOS, runScenario, routeText, initLedger, applyEffects } from './engine.js'
+import { SCENARIOS, runScenario, routeText, initLedger, applyEffects, liveOk } from './engine.js'
 import Buddy from './Buddy.jsx'
 import Center from './Center.jsx'
 import Right from './Right.jsx'
-import { getLedger } from './api.js'
+import { checkServices, getLedger, resetLive } from './api.js'
+import { callLive, responseToRun, overlayLedger } from './live.js'
 
 const TABS = [
   { id: 'home', label: 'Home', icon: I.Home },
@@ -311,12 +312,15 @@ function Header({ title, back }) {
 const STEP_MS = 700
 const welcome = (m) => [{ who: 'ai', text: `Namaste ${m.profile.owner.split(' ')[0]} ji! Main ${m.profile.name} ka AI Buddy hoon. Settlement, UTR, chargeback, refund, loan EDI — kuch bhi poochiye.` }]
 
+const LIVE_MERCHANT = 'sharma_electronics' // real backends only know PAYTM_MERCH_8821
+
 export default function App() {
   const [mkey, setMkey] = useState(DEFAULT_MERCHANT)
   const m = MERCHANTS[mkey]
   const [tab, setTab] = useState('buddy')
   const [sub, setSub] = useState(null)
-  const [live, setLive] = useState(false)
+  const [svc, setSvc] = useState({ merchant: false, paytm: false })
+  const [mode, setMode] = useState('local') // 'local' | 'live'
   const [ledger, setLedger] = useState(() => initLedger(m))
   const [chat, setChat] = useState(() => welcome(m))
   const [run, setRun] = useState(null)
@@ -326,44 +330,88 @@ export default function App() {
   const [queue, setQueue] = useState([])
   const timers = useRef([])
   const scroller = useRef(null)
+  const modeRef = useRef(mode)
+  modeRef.current = mode
 
   useEffect(() => { scroller.current?.scrollTo(0, 0) }, [tab, sub])
-  // Pull live state from the Paytm agent (8002) when it's running; the demo itself runs on the local engine.
+  // Poll which backends are reachable (8003 needed for live mode; 8002 optional — 8003 mocks Paytm if it is down).
   useEffect(() => {
     let off = false
-    getLedger(m.mid).then((l) => { if (!off) setLive(!!l) })
-    return () => { off = true }
-  }, [m.mid])
+    const poll = () => checkServices().then((s) => { if (!off) { setSvc(s); if (!s.merchant && modeRef.current === 'live') setMode('local') } })
+    poll()
+    const t = setInterval(poll, 6000)
+    return () => { off = true; clearInterval(t) }
+  }, [])
 
   const clear = () => { timers.current.forEach(clearTimeout); timers.current = [] }
   useEffect(() => clear, [])
 
-  const reset = (key = mkey) => {
+  const reset = (key = mkey, resetServices = false) => {
     clear()
     const nm = MERCHANTS[key]
     setLedger(initLedger(nm)); setChat(welcome(nm)); setRun(null); setReveal(0); setBusy(false); setTab('buddy'); setSub(null)
+    if (resetServices && modeRef.current === 'live') resetLive()
   }
-  const pickMerchant = (key) => { setMkey(key); reset(key) }
+  const pickMerchant = (key) => {
+    setMkey(key)
+    if (mode === 'live' && key !== LIVE_MERCHANT) setMode('local')
+    reset(key)
+  }
+  const switchMode = (next) => {
+    if (next === 'live') {
+      if (!svc.merchant) return
+      setMode('live'); modeRef.current = 'live'
+      setMkey(LIVE_MERCHANT); reset(LIVE_MERCHANT, true)
+    } else { setMode('local'); modeRef.current = 'local'; reset(mkey) }
+  }
 
-  const start = (sc, ctx = {}) => {
-    if (busy) return
-    const r = runScenario(sc, m, ctx)
+  // Plays a run (local or live) step by step: reveals trace cards, applies ledger effects, posts the reply.
+  const play = (r, gap) => {
     setTab('buddy'); setSub(null)
     setRun(r); setReveal(0); setBusy(true)
-    setChat((c) => [...c, { who: 'me', text: r.utterance }])
     r.steps.forEach((s, i) => {
       timers.current.push(setTimeout(() => {
         setReveal(i + 1)
         if (s.effects) setLedger((L) => applyEffects(L, s.effects))
         if (s.key === 'reply') {
-          setChat((c) => [...c, { who: 'ai', text: s.reply, tone: s.tone }])
+          setChat((c) => [...c, { who: 'ai', text: s.reply, tone: s.tone, confirm: s.confirm }])
           setBusy(false)
-          if (speak && 'speechSynthesis' in window) {
+          if (r.live) getLedger(m.mid).then((led) => led && setLedger((L) => overlayLedger(L, led)))
+          if (r.audio) { try { new Audio('data:audio/wav;base64,' + r.audio).play() } catch { /* ignore */ } }
+          else if (speak && 'speechSynthesis' in window) {
             const u = new SpeechSynthesisUtterance(s.reply); u.lang = 'hi-IN'; window.speechSynthesis.speak(u)
           }
         }
-      }, STEP_MS * (i + 1)))
+      }, gap * (i + 1)))
     })
+  }
+
+  const startLocal = (sc, ctx) => {
+    const r = runScenario(sc, m, ctx)
+    setChat((c) => (ctx.silent ? c : [...c, { who: 'me', text: r.utterance }]))
+    play(r, STEP_MS)
+  }
+
+  const startLive = async (sc, ctx) => {
+    const utterance = ctx.utterance || sc.utterance(m)
+    setChat((c) => [...c, { who: 'me', text: utterance }])
+    setBusy(true); setRun(null); setReveal(0)
+    const t0 = performance.now()
+    try {
+      const resp = await callLive(sc, m, { ...ctx, utterance })
+      play(responseToRun(sc, m, resp, utterance, performance.now() - t0), 320)
+    } catch (e) {
+      const missing = e.status === 404
+      setChat((c) => [...c, { who: 'ai', text: missing ? 'Ye live endpoint abhi us service par available nahi hai — local demo engine se chala raha hoon.' : `Live service error (${e.message}). Local demo engine se chala raha hoon.`, tone: 'bad' }])
+      setBusy(false)
+      if (sc.build) startLocal(sc, { ...ctx, silent: true })
+    }
+  }
+
+  const start = (sc, ctx = {}) => {
+    if (busy) return
+    if (modeRef.current === 'live' && liveOk(sc)) startLive(sc, ctx)
+    else startLocal(sc, ctx)
   }
 
   // Guided demo: plays the golden path one scenario after another.
@@ -373,33 +421,43 @@ export default function App() {
       const [id, ...rest] = queue
       setQueue(rest)
       const sc = SCENARIOS.find((s) => s.id === id)
-      if (sc && (!sc.available || sc.available(m))) start(sc)
+      if (sc && (!sc.available || sc.available(m)) && (mode !== 'live' || liveOk(sc))) start(sc)
     }, 1100)
     return () => clearTimeout(t)
   }, [busy, queue])
   const playDemo = () => {
     if (queue.length) return setQueue([])
-    reset()
-    setQueue(['settle', 'cb', 'fake', 'hold', 'edi'])
+    reset(mkey, true)
+    setQueue(mode === 'live' ? ['settle', 'cb', 'fake', 'shield_edi'] : ['settle', 'cb', 'fake', 'shield_cb', 'shield_edi'])
   }
 
   const onPreset = (id) => start(SCENARIOS.find((s) => s.id === id))
   const onText = (text) => {
     const id = routeText(text)
     const sc = SCENARIOS.find((s) => s.id === id)
+    if (mode === 'live' && !id) { // let the real router classify free text
+      start({ id: 'free', intent: 'ESCALATE_HUMAN', utterance: () => text, build: null }, { utterance: text })
+      return
+    }
     if (!sc || (sc.available && !sc.available(m))) {
       setChat((c) => [...c, { who: 'me', text }, { who: 'ai', text: 'Maaf kijiye, samajh nahi aaya. Neeche ke quick scenarios try kijiye.' }])
       return
     }
     start(sc, { utterance: text })
   }
-  const onUpload = (kind, file) => {
+  const onUpload = (kind, f) => {
     const sc = SCENARIOS.find((s) => s.id === (kind === 'pod' ? 'cb' : 'fake'))
     if (sc.available && !sc.available(m)) {
       setChat((c) => [...c, { who: 'ai', text: 'Is merchant ka koi chargeback hold nahi hai, PoD ki zaroorat nahi.' }])
       return
     }
-    start(sc, { file, utterance: kind === 'pod' ? `📄 ${file} (Proof of Delivery)` : `📱 ${file} (UPI screenshot)` })
+    start(sc, { file: f.name, fileObj: f, utterance: kind === 'pod' ? `📄 ${f.name} (Proof of Delivery)` : `📱 ${f.name} (UPI screenshot)` })
+  }
+  const onConfirm = (item, k) => {
+    if (busy) return
+    setChat((c) => c.map((x, i) => (i === k ? { ...x, done: true } : x)))
+    const cf = item.confirm
+    start(SCENARIOS.find((s) => s.id === (cf.kind === 'dispute' ? 'confirm_cb' : 'confirm_edi')), cf.kind === 'dispute' ? { packet: cf.packet } : { offer_id: cf.offer_id, pause_days: cf.pause_days, saved: cf.saved })
   }
 
   const d = m.d
@@ -417,7 +475,7 @@ export default function App() {
     settlements: <Settlement d={d} />,
     loans: <Loans d={d} />,
     account: <Account d={d} />,
-    buddy: <Buddy m={m} L={ledger} chat={chat} busy={busy} onPreset={onPreset} onText={onText} onUpload={onUpload} speak={speak} setSpeak={setSpeak} />,
+    buddy: <Buddy m={m} L={ledger} chat={chat} busy={busy} mode={mode} onPreset={onPreset} onText={onText} onUpload={onUpload} onConfirm={onConfirm} speak={speak} setSpeak={setSpeak} />,
   }
   const body = (sub && subs[sub]) || tabs[tab]
 
@@ -430,9 +488,14 @@ export default function App() {
           <select value={mkey} onChange={(e) => pickMerchant(e.target.value)} aria-label="Merchant">
             {MERCHANT_LIST.map((x) => <option key={x.slug} value={x.slug}>{x.name}</option>)}
           </select>
-          <span className={`conn ${live ? 'on' : ''}`}>{live ? 'Paytm agent live' : 'Local demo engine'}</span>
+          <div className="mode">
+            <button className={mode === 'local' ? 'on' : ''} onClick={() => switchMode('local')}>Local demo</button>
+            <button className={mode === 'live' ? 'on' : ''} disabled={!svc.merchant} onClick={() => switchMode('live')} title={svc.merchant ? 'Use the real services (merchant 8003' + (svc.paytm ? ' + Paytm 8002)' : ', Paytm mocked)') : 'Start the merchant agent on :8003 to enable'}>
+              <i className={`dot-s ${svc.merchant ? 'up' : ''}`} />Live services
+            </button>
+          </div>
           <button className="play" onClick={playDemo}>{queue.length ? '■ Stop demo' : '▶ Play guided demo'}</button>
-          <button className="reset" onClick={() => { setQueue([]); reset() }}>Reset</button>
+          <button className="reset" onClick={() => { setQueue([]); reset(mkey, true) }}>Reset</button>
         </div>
       </header>
       <main className="cc-grid">
@@ -453,7 +516,7 @@ export default function App() {
           </div>
         </section>
         <Center run={run} reveal={reveal} busy={busy} onTry={onPreset} />
-        <Right m={m} L={ledger} />
+        <Right m={m} L={ledger} mode={mode} />
       </main>
     </div>
   )

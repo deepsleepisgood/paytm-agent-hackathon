@@ -27,14 +27,14 @@ function Waterfall({ m, L }) {
   )
 }
 
-export default function Right({ m, L }) {
+export default function Right({ m, L, mode }) {
   const lo = L.loan
   const stat = { ACTIVE: 'ok', PAUSED: 'warn', MANDATE_FIXED: 'info', NOC_ISSUED: 'ok' }[lo.status]
   return (
     <div className="col right">
       <div className="col-h">
         <div><b>What changed in Paytm’s books</b><div className="muted xs">{m.profile.name} · {m.mid}</div></div>
-        <span className="state done"><i className="live" /> Live ledger</span>
+        <span className="state done"><i className="live" /> {mode === 'live' ? 'Live ledger' : 'Demo ledger'}</span>
       </div>
 
       <div className="sec">Impact so far</div>
@@ -64,6 +64,7 @@ export default function Right({ m, L }) {
         <div className="steps3">
           {['ACTIVE', 'PAUSED', 'MANDATE_FIXED', 'NOC_ISSUED'].map((k) => <span key={k} className={lo.status === k ? 'on ' + k : ''}>{k.replace('_', ' ')}</span>)}
         </div>
+        {lo.note && <div className="learn">⏸ {lo.note}</div>}
         <div className="kv2"><span>Daily EDI</span><b>{inr(lo.edi)}</b><span>Balance</span><b>{inr(lo.balance)}</b></div>
       </div>
 

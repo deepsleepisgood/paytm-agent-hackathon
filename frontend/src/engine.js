@@ -12,6 +12,9 @@ const HOLD_AMT = { PAYTM_MERCH_1101: 3200, PAYTM_MERCH_1102: 18500, PAYTM_MERCH_
 
 const opt = (id, label, score, why) => ({ id, label, score, why })
 
+export const CONTRACT_INTENTS = ['SETTLEMENT_RECONCILE', 'UTR_VERIFY', 'CHARGEBACK_RESOLVE', 'REFUND_MANAGE', 'FEE_GST_LOAN', 'ESCALATE_HUMAN']
+export const liveOk = (sc) => CONTRACT_INTENTS.includes(sc.intent)
+
 export const SCENARIOS = [
   {
     id: 'settle', chip: '₹ kahan kata?', intent: 'SETTLEMENT_RECONCILE',
@@ -280,6 +283,102 @@ export const SCENARIOS = [
       }
     },
   },
+  {
+    id: 'shield_cb', chip: 'Chargeback incoming', intent: 'CHARGEBACK_RESOLVE', proactive: 'CHARGEBACK_INCOMING',
+    available: (m) => !!m.d.chargeback,
+    utterance: (m) => `⚠️ Paytm alert: chargeback incoming on order ${m.d.chargeback.order}`,
+    build(m) {
+      const c = m.d.chargeback, packet = 'DISPUTE-' + c.order.replace(/\D/g, '')
+      return {
+        purpose: 'proactive_chargeback_shield', scope: 'connector:shiprocket_sync:read',
+        payload: { scenario: 'CHARGEBACK_INCOMING', order_id: c.order },
+        options: [opt('A', 'Wait until the merchant notices', 14, 'Risk of missing the 48h deadline'), opt('B', 'Auto-pull PoD from consented Shiprocket, prepare dispute, ask 1-tap sign-off', 95, 'Nothing is sent without the merchant’s approval'), opt('C', 'Ask merchant to upload PoD manually', 52, 'Works, but slow and error-prone')],
+        selected: 'B',
+        response: { status: 'ALERT_RAISED', dispute_packet: { packet_id: packet, status: 'READY_FOR_SIGNOFF' }, awaiting_confirmation: 'CONFIRM_DISPUTE' },
+        agents: {
+          intelligence: { say: `Paytm webhook: dispute ${inr(c.amount)} on ${c.order}, 48h deadline` },
+          risk: { say: 'SHIPROCKET_SYNC consent GRANTED · signed PoD pulled (stays on merchant side)' },
+          resolution: { say: `Dispute packet ${packet} is READY_FOR_SIGNOFF` },
+          ledger: { say: 'Waiting for merchant’s 1-tap sign-off · nothing sent to Paytm yet' },
+        },
+        reply: `${c.order} par ${inr(c.amount)} ka chargeback aaya hai. Shiprocket se delivery proof mil gaya, dispute taiyaar hai. Bhej doon?`,
+        confirm: { kind: 'dispute', packet, label: '✅ Haan, delivery proof bhej do' },
+        win: false,
+      }
+    },
+  },
+  {
+    id: 'confirm_cb', hidden: true, intent: 'CHARGEBACK_RESOLVE',
+    utterance: () => '✅ Haan, delivery proof bhej do',
+    build(m, ctx) {
+      const c = m.d.chargeback
+      return {
+        purpose: 'chargeback_resolution', scope: 'chargeback:write',
+        payload: { order_id: c.order, txn_id: c.txn, pod_submitted: true, pod_source: 'SHIPROCKET_SYNC', packet_id: ctx.packet },
+        options: [opt('A', 'Keep waiting', 10, 'Deadline risk'), opt('B', 'Submit signed dispute packet to Paytm', 97, 'Merchant approved'), opt('C', 'Escalate', 20, 'Not needed')],
+        selected: 'B',
+        response: { status: 'RELEASED', order_id: c.order, release_eta: 'T+1' },
+        agents: {
+          intelligence: { say: `Merchant signed off packet ${ctx.packet}` },
+          risk: { say: 'Consent valid · PoD inside the 48h window' },
+          resolution: { say: `Dispute won — release ${inr(c.amount)}`, effects: [{ t: 'CB_RELEASE' }] },
+          ledger: { say: `Hold ${c.order} HELD → RELEASED (T+1)`, effects: [{ t: 'DEFLECT' }] },
+        },
+        reply: `Dispute bhej diya. ${inr(c.amount)} ka hold RELEASED — T+1 mein bank mein aa jayega.`,
+        win: true,
+      }
+    },
+  },
+  {
+    id: 'shield_edi', chip: 'Cashflow gap', intent: 'FEE_GST_LOAN', proactive: 'CASHFLOW_EDI_SWITCH',
+    utterance: () => '⚠️ Paytm alert: high refund request, payout may fall short',
+    build(m) {
+      const net = m.d.settlement.net, edi = m.d.loan.edi
+      const ov = m.mid === 'PAYTM_MERCH_8821' ? { refund: 3500, proj: 1200, stock: 4500 } : null
+      const refund = ov?.refund ?? Math.round((net * 0.8) / 100) * 100
+      const proj = ov?.proj ?? net - refund
+      const stock = ov?.stock ?? Math.round((net * 0.7) / 100) * 100
+      const short = stock - proj, saved = edi * 2
+      return {
+        purpose: 'proactive_cashflow_edi', scope: 'connector:vyapar_pos_sync:read',
+        payload: { scenario: 'CASHFLOW_EDI_SWITCH', refund_request: refund },
+        options: [opt('A', 'Do nothing', 20, 'Merchant may miss tomorrow’s stock payment'), opt('B', 'Offer 2-day EDI pause (KFS clause 4.2) with merchant consent', 94, 'Frees cash, no penalty'), opt('C', 'Suggest an emergency loan', 38, 'Adds debt for a 2-day gap')],
+        selected: 'B',
+        response: { status: 'ALERT_RAISED', projected_net_payout: proj, edi_pause_offer: { offer_id: 'EDIOFFER-0001', eligible: true, pause_days: 2, edi_saved_inr: saved }, awaiting_confirmation: 'CONFIRM_EDI_PAUSE' },
+        agents: {
+          intelligence: { say: `Refund request ${inr(refund)} → projected payout only ${inr(proj)}` },
+          risk: { say: `Tomorrow’s stock payable ${inr(stock)} (Vyapar sync) → shortfall ${inr(short)}`, tone: 'warn' },
+          resolution: { say: `KFS clause 4.2 allows a 2-day EDI pause → saves ${inr(saved)}` },
+          ledger: { say: 'Offer EDIOFFER-0001 ready · waiting for merchant consent' },
+        },
+        reply: `Kal ${inr(refund)} ka refund jayega to payout sirf ${inr(proj)} bachega, jabki ${inr(stock)} ka stock dena hai. Loan EDI 2 din ke liye pause kar doon? ${inr(saved)} bachenge.`,
+        confirm: { kind: 'edi', offer_id: 'EDIOFFER-0001', pause_days: 2, saved, label: `✅ Haan, EDI 2 din pause karo` },
+        win: false,
+      }
+    },
+  },
+  {
+    id: 'confirm_edi', hidden: true, intent: 'FEE_GST_LOAN',
+    utterance: () => '✅ Haan, EDI 2 din pause karo',
+    build(m, ctx) {
+      const saved = ctx.saved ?? m.d.loan.edi * 2
+      return {
+        purpose: 'edi_pause', scope: 'lending_ledger:write',
+        payload: { offer_id: ctx.offer_id, pause_days: 2 },
+        options: [opt('A', 'Skip', 10, 'Shortfall remains'), opt('B', 'Execute 2-day EDI pause and log KFS consent artifact', 97, 'Merchant approved'), opt('C', 'Escalate', 15, 'Not needed')],
+        selected: 'B',
+        response: { status: 'EDI_PAUSED', loan_edi_status: 'PAUSED_2_DAYS', edi_saved_inr: saved },
+        agents: {
+          intelligence: { say: `Merchant approved offer ${ctx.offer_id}` },
+          risk: { say: 'Pause ≤ 2 days · KFS clause 4.2 consent artifact logged' },
+          resolution: { say: 'EDI paused for 2 days' },
+          ledger: { say: `EDI ACTIVE → PAUSED_2_DAYS · saved ${inr(saved)}`, effects: [{ t: 'LOAN', status: 'PAUSED', note: `Paused 2 days · saved ${inr(saved)}` }] },
+        },
+        reply: `EDI 2 din ke liye pause ho gaya. ${inr(saved)} bache, koi penalty nahi.`,
+        win: true,
+      }
+    },
+  },
 ]
 
 export function runScenario(sc, m, ctx = {}) {
@@ -297,7 +396,7 @@ export function runScenario(sc, m, ctx = {}) {
     { key: 'resolution', title: 'Resolution', ...A.resolution, ms: 310 },
     { key: 'ledger', title: 'Ledger Ops', ...A.ledger, ms: 150 },
     {
-      key: 'reply', title: 'Reply to merchant', reply: b.reply, tone: b.tone, ms: 95,
+      key: 'reply', title: 'Reply to merchant', reply: b.reply, tone: b.tone, confirm: b.confirm, ms: 95,
       effects: b.win ? [{ t: 'OUTCOME' }, { t: 'LEARN', text: `${sc.intent}: option ${b.selected} reinforced` }] : [],
     },
   ]
@@ -339,7 +438,7 @@ export function applyEffects(L, effects = []) {
   for (const e of effects) {
     if (e.t === 'ITC') s.itc += e.amount
     if (e.t === 'CB_RELEASE' && s.chargeback) s.chargeback = { ...s.chargeback, status: 'RELEASED' }
-    if (e.t === 'LOAN') s.loan = { ...s.loan, status: e.status, ...(e.balance !== undefined ? { balance: e.balance } : {}) }
+    if (e.t === 'LOAN') s.loan = { ...s.loan, status: e.status, note: e.note, ...(e.balance !== undefined ? { balance: e.balance } : {}) }
     if (e.t === 'HOLD_RELEASE') s.hold = { ...s.hold, status: 'RELEASED' }
     if (e.t === 'SOUNDBOX_FIX') s.soundbox = { ...s.soundbox, status: 'REFUNDED' }
     if (e.t === 'BANK_UPDATE') s.bank = { acct: e.to, status: 'UPDATED' }

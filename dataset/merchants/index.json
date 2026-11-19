@@ -2,6 +2,18 @@
   "default_mid": "PAYTM_MERCH_1103",
   "merchants": [
     {
+      "slug": "sharma_electronics",
+      "mid": "PAYTM_MERCH_8821",
+      "name": "Sharma Electronics",
+      "type": "Electronics retail (contract seed)",
+      "gross": 100000,
+      "net": 95840,
+      "variance": 4160,
+      "mdr": 1450,
+      "gst": 261,
+      "chargeback": true
+    },
+    {
       "slug": "raju_chai_tapri",
       "mid": "PAYTM_MERCH_1101",
       "name": "Raju Chai Tapri",

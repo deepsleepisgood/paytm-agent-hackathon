@@ -37,7 +37,7 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
   const stageNow = run ? STAGES.findIndex((st) => st.keys.includes(cur?.key)) : -1
   const consent = get('consent'), ev = get('eval'), disp = get('dispatch')
   const escalated = ev && ev.selected === 'C' && shown('eval')
-  const totalMs = steps.reduce((a, s) => a + (s.ms || 0), 0)
+  const totalMs = run?.live ? run.elapsed || 0 : steps.reduce((a, s) => a + (s.ms || 0), 0)
 
   return (
     <div className="col center">
@@ -75,7 +75,18 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
         </div>
       )}
 
-      {shown('eval') && ev && (
+      {shown('eval') && ev && ev.live && (
+        <div className="tcard in">
+          <div className="t-h"><span className="n">1</span><b>Merchant Buddy understood the request</b><span className="chip-i sel">{ev.route.source === 'llm' ? 'Sarvam LLM' : ev.route.source === 'document' ? 'Document' : 'Keyword fallback'}</span></div>
+          <div className="kv">
+            <span>Intent</span><code>{ev.route.intent}</code>
+            {Object.entries(ev.route.slots || {}).filter(([, v]) => v !== null && v !== undefined).map(([k, v]) => (<React.Fragment key={k}><span>{k}</span><code>{String(v)}</code></React.Fragment>))}
+            {ev.route.transcript && (<><span>Heard</span><code>{ev.route.transcript}</code></>)}
+          </div>
+        </div>
+      )}
+
+      {shown('eval') && ev && !ev.live && (
         <div className="tcard in">
           <div className="t-h"><span className="n">1</span><b>Merchant Buddy compares 3 options</b><span className="chip-i sel">Chose {ev.selected}</span></div>
           {ev.options.map((o) => (
@@ -132,10 +143,24 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
         <div className={`tcard in result ${get('reply').tone === 'bad' ? 'bad' : escalated ? 'esc' : 'good'}`}>
           <div className="res-h">
             <span className="res-b">{get('reply').tone === 'bad' ? '🚫 Fraud blocked' : escalated ? '🎫 Handed to a human' : '✅ Resolved by AI'}</span>
-            <span className="muted xs">{(totalMs / 1000).toFixed(1)}s of agent time</span>
+            <span className="muted xs">{run.live ? `${(totalMs / 1000).toFixed(1)}s live round trip` : `${(totalMs / 1000).toFixed(1)}s of agent time`}</span>
           </div>
           <div className="sm">“{get('reply').reply}”</div>
+          {run.live && run.sources && (
+            <div className="srcs">
+              <span className="chip-i">Paytm: {run.sources.paytm}</span><span className="chip-i">Intent: {run.sources.intent}</span><span className="chip-i">Reply: {run.sources.reply}</span>
+            </div>
+          )}
           <div className="muted xs">Check the right column — the ledger already changed.</div>
+        </div>
+      )}
+
+      {done && run.live && run.events.length > 0 && (
+        <div className="tcard in">
+          <div className="t-h"><b>A2A & DPDP compliance log</b><span className="muted xs">real events from :8003</span></div>
+          {run.events.map((e) => (
+            <div key={e.seq} className="evt"><code>{e.type}</code><span className="muted xs">{e.actor}</span><div className="sm">{e.summary}</div></div>
+          ))}
         </div>
       )}
 

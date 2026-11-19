@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { I, PaytmLogo } from './icons.jsx'
-import { SCENARIOS } from './engine.js'
+import { SCENARIOS, liveOk } from './engine.js'
 import { inr } from './data.js'
 import Khata from './Khata.jsx'
 
@@ -13,11 +13,14 @@ const GROUPS = [
     { id: 'utr', ic: '🔎', t: 'UTR pending', s: 'Is this payment real?' },
     { id: 'fake', ic: '🚫', t: 'Fake screenshot', s: 'Catch a tampered UPI proof' },
     { id: 'refund', ic: '↩️', t: 'Refund karna hai', s: 'Auto up to ₹5,000, else human' } ] },
-  { id: 'loan', label: 'Loan & growth', items: [
+  { id: 'loan', label: 'Loan', items: [
     { id: 'edi', ic: '🏦', t: 'Loan EDI fail', s: 'Mandate failed, fix it' },
     { id: 'noc', ic: '📄', t: 'Loan NOC', s: 'Paid negotiated settlement' },
     { id: 'growth', ic: '📈', t: 'Business badhao', s: 'Ideas from my 6-month data' } ] },
-  { id: 'help', label: 'Disputes & help', items: [
+  { id: 'pro', label: 'Proactive', items: [
+    { id: 'shield_cb', ic: '🛡️', t: 'Chargeback incoming', s: 'AI pulls PoD, you sign off' },
+    { id: 'shield_edi', ic: '💸', t: 'Cashflow gap', s: 'AI offers a 2-day EDI pause' } ] },
+  { id: 'help', label: 'Help', items: [
     { id: 'cb', ic: '⚖️', t: 'Chargeback proof', s: 'Send delivery proof, free the hold' },
     { id: 'bank', ic: '🏛️', t: 'Bank account update', s: 'Change settlement account' },
     { id: 'soundbox', ic: '🛠️', t: 'Soundbox kharab', s: 'Hardware issue → human ticket' } ] },
@@ -60,7 +63,7 @@ function Insights({ m }) {
   )
 }
 
-export default function Buddy({ m, L, chat, busy, onPreset, onText, onUpload, speak, setSpeak }) {
+export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUpload, onConfirm, speak, setSpeak }) {
   const [text, setText] = useState('')
   const [rec, setRec] = useState(false)
   const [micNote, setMicNote] = useState('')
@@ -107,11 +110,12 @@ export default function Buddy({ m, L, chat, busy, onPreset, onText, onUpload, sp
         <div className="rows">
           {GROUPS.find((g) => g.id === cat).items.map((it) => {
             const s = SCENARIOS.find((x) => x.id === it.id)
-            const ok = !s.available || s.available(m)
+            const ok = (!s.available || s.available(m)) && (mode !== 'live' || liveOk(s))
+            const why = mode === 'live' && !liveOk(s) ? 'Local demo only (not in contract yet)' : 'Not applicable for this merchant'
             return (
-              <button key={it.id} className="row-btn" disabled={busy || !ok} onClick={() => onPreset(it.id)} title={ok ? s.utterance(m) : 'No active chargeback for this merchant'}>
+              <button key={it.id} className="row-btn" disabled={busy || !ok} onClick={() => onPreset(it.id)} title={ok ? s.utterance(m) : why}>
                 <span className="r-ic">{it.ic}</span>
-                <span className="r-t"><b>{it.t}</b><em>{ok ? it.s : 'Not applicable for this merchant'}</em></span>
+                <span className="r-t"><b>{it.t}</b><em>{ok ? it.s : why}</em></span>
                 <span className="r-go">›</span>
               </button>
             )
@@ -124,7 +128,9 @@ export default function Buddy({ m, L, chat, busy, onPreset, onText, onUpload, sp
           {chat.map((c, k) => (
             <div key={k} className={`msg ${c.who}`}>
               {c.who === 'ai' && <span className="ai-dot sm"><I.Spark size={11} /></span>}
-              <div className={`bubble ${c.tone || ''}`}>{c.text}</div>
+              <div className={`bubble ${c.tone || ''}`}>{c.text}{c.confirm && (
+                <button className="confirm-btn" disabled={busy || c.done} onClick={() => onConfirm(c, k)}>{c.done ? '✓ Sign-off sent' : c.confirm.label}</button>
+              )}</div>
             </div>
           ))}
           {busy && <div className="msg ai"><span className="ai-dot sm"><I.Spark size={11} /></span><div className="bubble typing"><i /><i /><i /></div></div>}
@@ -138,8 +144,8 @@ export default function Buddy({ m, L, chat, busy, onPreset, onText, onUpload, sp
         <div className="upl">
           <button disabled={busy} onClick={() => podRef.current.click()}>📄 PoD upload</button>
           <button disabled={busy} onClick={() => shotRef.current.click()}>📱 UPI screenshot</button>
-          <input ref={podRef} type="file" hidden accept="image/*,.pdf" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('pod', f.name); e.target.value = '' }} />
-          <input ref={shotRef} type="file" hidden accept="image/*" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('shot', f.name); e.target.value = '' }} />
+          <input ref={podRef} type="file" hidden accept="image/*,.pdf" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('pod', f); e.target.value = '' }} />
+          <input ref={shotRef} type="file" hidden accept="image/*" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('shot', f); e.target.value = '' }} />
         </div>
         {micNote && <div className="mic-note">{micNote}</div>}
         <div className="inp">
