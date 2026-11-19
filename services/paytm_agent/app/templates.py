@@ -330,6 +330,78 @@ def _cashflow_edi_switch(data: dict[str, Any], status: str) -> str:
     )
 
 
+def _fee_gst_loan(data: dict[str, Any], status: str) -> str:
+    topic = data["topic"]
+
+    if topic == "FEE":
+        parts = ", ".join(
+            f"{b['type'].lower()} {rupees(b['fee_inr'])} on {rupees(b['volume_inr'])} at {b['rate_percent']:g}%"
+            for b in data["breakdown"] if b["fee_inr"]
+        )
+        free = [b for b in data["breakdown"] if not b["fee_inr"]]
+        text = f"Your payment fees came to {rupees(data['mdr_total_inr'])}: {parts}."
+        if free:
+            text += (f" There was no fee at all on {rupees(free[0]['volume_inr'])} of "
+                     f"{free[0]['type'].lower()}.")
+        return text
+
+    if topic == "GST":
+        if status == "ESCALATED":
+            return (
+                f"{rupees(data['gst_inr'])} of GST was charged on your "
+                f"{rupees(data['base_inr'])} of fees. Whether you can claim that back "
+                "depends on your GST registration, which I cannot confirm from here, so "
+                "a Paytm colleague will check it with you."
+            )
+        return (
+            f"{rupees(data['gst_inr'])} is GST at {data['rate_percent']:g}% on the "
+            f"{rupees(data['base_inr'])} of payment fees. Because you are GST "
+            "registered, you can claim that back as input tax credit in your return, so "
+            "it is not a real cost to you."
+        )
+
+    due = data["edi_tomorrow_inr"]
+    text = (
+        f"Your loan instalment is {rupees(data['edi_per_day_inr'])} a day, collected by "
+        f"auto-debit from your bank account, and {rupees(data['balance_inr'])} is still "
+        f"to repay."
+    )
+    return text + (
+        f" The next one is on {pretty_date(data['next_deduction_date'])}." if due
+        else " Your instalments are paused at the moment, so nothing is due tomorrow."
+    )
+
+
+def _refund_manage(data: dict[str, Any], status: str) -> str:
+    order = data["order_id"]
+
+    if status == "ESCALATED":
+        if not data["found"]:
+            return (
+                f"I cannot find order {order} in your account, so I am not able to check "
+                "a refund against it. A Paytm colleague will look it up properly for you."
+            )
+        return (
+            f"I am not able to start that refund on order {order} myself. A Paytm "
+            "colleague will pick it up, and nothing has been sent to the customer yet."
+        )
+
+    if data["action"] == "STATUS":
+        state = {
+            "PROCESSED": f"has already been sent back to your customer, and it came out of your settlement",
+            "PENDING": "is on its way to your customer now",
+            "NONE": "has not been raised, so nothing has gone back to your customer",
+        }[data["refund_status"]]
+        amount = rupees(data["amount_inr"]) if data.get("amount_inr") else "The refund"
+        return f"{amount} on order {order} {state}."
+
+    return (
+        f"I have started the {rupees(data['requested_amount_inr'])} refund on order "
+        f"{order}. It will reach your customer shortly and will show against your next "
+        "settlement."
+    )
+
+
 RENDERERS = {
     "ESCALATE_HUMAN": _escalate_human,
     "SETTLEMENT_RECONCILE": _settlement_reconcile,
@@ -339,6 +411,8 @@ RENDERERS = {
     "DUPLICATE_PAYMENT_RECONCILE": _duplicate_payment_reconcile,
     "WORKING_CAPITAL_ADVISORY": _working_capital_advisory,
     "CASHFLOW_EDI_SWITCH": _cashflow_edi_switch,
+    "FEE_GST_LOAN": _fee_gst_loan,
+    "REFUND_MANAGE": _refund_manage,
 }
 
 

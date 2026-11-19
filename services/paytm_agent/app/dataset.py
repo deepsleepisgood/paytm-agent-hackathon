@@ -17,12 +17,16 @@ from __future__ import annotations
 
 import csv
 import logging
+import os
 from pathlib import Path
 
 log = logging.getLogger("paytm_agent.dataset")
 
-# services/paytm_agent/app/ -> repo root
-PAYTM_DATA = Path(__file__).resolve().parents[3] / "data" / "paytm"
+# services/paytm_agent/app/ -> repo root. PAYTM_DATA_DIR overrides it, because a
+# deployed container may hold the data somewhere other than three levels up.
+PAYTM_DATA = Path(
+    os.getenv("PAYTM_DATA_DIR") or Path(__file__).resolve().parents[3] / "data" / "paytm"
+)
 UTR_LOG = PAYTM_DATA / "npci_utr_log.csv"
 
 # NPCI's status, as our lookup reports it. FAILED is a real outcome and not the same as
