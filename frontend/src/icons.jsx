@@ -87,3 +87,11 @@ export const AIMark = ({ size = 48 }) => {
     </svg>
   )
 }
+
+// Merchant logo (image) with initials fallback.
+export function MerchantLogo({ d, size = 44 }) {
+  const [bad, setBad] = React.useState(false)
+  const initials = d.merchant.split(' ').map((w) => w[0]).slice(0, 2).join('')
+  if (d.logo && !bad) return <img className="m-logo" src={d.logo} alt={d.merchant} width={size} height={size} onError={() => setBad(true)} />
+  return <div className="avatar" style={{ width: size, height: size }}>{initials}</div>
+}

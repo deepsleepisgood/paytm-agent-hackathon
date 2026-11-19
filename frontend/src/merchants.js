@@ -2,6 +2,8 @@
 import index from '../../dataset/merchants/index.json'
 import { buildSharma } from './seedSharma.js'
 
+const LOGO = { sharma_electronics: '/merchants/sharma_electronics.webp', raju_chai_tapri: '/merchants/raju_chai_tapri.svg', gupta_kirana_store: '/merchants/gupta_kirana_store.svg', bikaner_misthan_bhandar: '/merchants/bikaner_misthan_bhandar.svg' }
+
 const files = import.meta.glob('../../dataset/merchants/*/*.json', { eager: true })
 
 const NOTES = {
@@ -31,6 +33,7 @@ function load(slug) {
     // shape used by the Paytm-clone screens
     d: {
       mid: profile.mid,
+      logo: LOGO[slug],
       merchant: profile.name,
       settlement: {
         date: settlement.date,

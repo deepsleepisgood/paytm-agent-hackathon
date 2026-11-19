@@ -104,6 +104,7 @@ export function buildSharma() {
     policies: strategy.learned_policies,
     d: {
       mid: profile.mid,
+      logo: '/merchants/sharma_electronics.webp',
       merchant: profile.name,
       settlement: { date: brk.settlement_date, gross: brk.gross, mix, net: brk.net_credit, variance: brk.variance, deductions: ded },
       loan: {

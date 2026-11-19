@@ -1,5 +1,6 @@
 import React from 'react'
 import { inr } from './data.js'
+import { MerchantLogo } from './icons.jsx'
 
 function Waterfall({ m, L }) {
   const s = m.d.settlement
@@ -33,7 +34,7 @@ export default function Right({ m, L, mode }) {
   return (
     <div className="col right">
       <div className="col-h">
-        <div><b>What changed in Paytm’s books</b><div className="muted xs">{m.profile.name} · {m.mid}</div></div>
+        <div className="rh-m"><MerchantLogo d={m.d} size={34} /><div><b>What changed in Paytm’s books</b><div className="muted xs">{m.profile.name} · {m.mid}</div></div></div>
         <span className="state done"><i className="live" /> {mode === 'live' ? 'Live ledger' : 'Demo ledger'}</span>
       </div>
 

@@ -571,3 +571,9 @@ img[alt="Paytm for Business"]{mix-blend-mode:multiply}
 .msg.me .bubble{border-bottom-right-radius:7px;box-shadow:0 2px 8px rgba(10,42,99,.18);background:linear-gradient(135deg,#12347a 0%,#1b4a9c 100%)}
 .msg.ai .bubble{border-bottom-left-radius:7px;box-shadow:0 0 0 1px rgba(20,62,143,.08),0 2px 8px rgba(10,42,99,.05)}
 .confirm-btn{border-radius:12px}
+
+/* merchant logos */
+.m-logo{display:block;border-radius:50%;object-fit:cover;flex:none;background:#1f2427;box-shadow:0 0 0 1px rgba(0,0,0,.08),0 3px 8px rgba(0,0,0,.18)}
+.greet .m-logo{margin-right:0}
+.center-card .m-logo{box-shadow:0 0 0 3px #fff,0 6px 16px rgba(0,0,0,.22)}
+.rh-m{display:flex;align-items:center;gap:10px}

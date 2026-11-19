@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { I, PaytmLogo, AIMark } from './icons.jsx'
+import { I, PaytmLogo, AIMark, MerchantLogo } from './icons.jsx'
 import { inr } from './data.js'
 import { MERCHANTS, MERCHANT_LIST, DEFAULT_MERCHANT } from './merchants.js'
 import { SCENARIOS, runScenario, routeText, initLedger, applyEffects, liveOk } from './engine.js'
@@ -68,7 +68,7 @@ function Home({ d, go }) {
         </div>
       </div>
       <div className="greet">
-        <div className="avatar">SE</div>
+        <MerchantLogo d={d} size={48} />
         <div><div className="m-name">{d.merchant}</div><div className="muted sm">Business Owner · {d.mid}</div></div>
       </div>
 
@@ -269,7 +269,7 @@ function Account({ d }) {
   return (
     <div className="screen">
       <Header title="Account" />
-      <div className="card center-card"><div className="avatar lg">SE</div><b>{d.merchant}</b><div className="muted sm">{d.mid}</div></div>
+      <div className="card center-card"><MerchantLogo d={d} size={84} /><b>{d.merchant}</b><div className="muted sm">{d.mid}</div></div>
       <div className="card">
         {rows.map(([a, b]) => (
           <div key={a} className="row between line"><span>{a}</span><span className="muted">{b} <I.Chev size={14} /></span></div>
