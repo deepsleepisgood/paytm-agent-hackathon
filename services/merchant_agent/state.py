@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 import dataset_loader as dl
+import repository
 
 
 def order_sheet() -> dict[str, Any]:
@@ -37,12 +38,23 @@ class MerchantState:
         # CONTRACT.md V2 proactive flows awaiting the merchant's 1-tap confirmation
         self.dispute_packets: dict[str, dict[str, Any]] = {}
         self.edi_offers: dict[str, dict[str, Any]] = {}
-        self.loan_edi_status = "ACTIVE"  # last EDI status Paytm reported (EDI_PAUSED flips it)
+        self._loan_edi_status = "ACTIVE"  # last EDI status Paytm reported (EDI_PAUSED flips it)
         self.session_id = f"SESS_{uuid.uuid4().hex[:8].upper()}"  # one per demo run; /reset starts a new one
         self._seq = 0
 
+    @property
+    def loan_edi_status(self) -> str:
+        return self._loan_edi_status
+
+    @loan_edi_status.setter
+    def loan_edi_status(self, value: str) -> None:
+        if value != self._loan_edi_status:
+            repository.set_state("loan_edi_status", value)  # no-op unless USE_SUPABASE=true
+        self._loan_edi_status = value
+
     def reset(self) -> None:
         self.__init__()
+        repository.reset()  # restores the merchant schema too (no-op unless USE_SUPABASE=true)
 
     def log(
         self,
@@ -65,6 +77,8 @@ class MerchantState:
             "payload": copy.deepcopy(payload or {}),
         }
         self.a2a_events.append(event)
+        # Mirrored to merchant.a2a_events, which drives the console's Realtime feed.
+        repository.log_event(type_, actor, summary, event["payload"], request_id, self.session_id)
         return event
 
     def add_gst_itc(self, entry: dict[str, Any]) -> Optional[dict[str, Any]]:
@@ -74,6 +88,7 @@ class MerchantState:
             if (existing.get("settlement_date"), existing.get("amount")) == key:
                 return None
         self.local_gst_itc_log.append(entry)
+        repository.add_gst_itc(entry)
         return entry
 
     @property

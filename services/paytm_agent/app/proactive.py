@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from . import clock, store
+from . import clock, repository, store
 from .errors import error_body
 
 TRIGGERS = ("CHARGEBACK_INCOMING", "HIGH_REFUND_CASHFLOW")
@@ -157,6 +157,15 @@ def execute_edi_pause(mid: str, consent_token: str | None,
         ), 409
     if pause_days < 1:
         return error_body("EDI_PAUSE_NOT_ELIGIBLE", "pause_days must be at least 1"), 409
+
+    # The database re-checks the KFS rules and writes the pause, lender approval and consent
+    # artifact in one transaction. It runs first, so a rejection there leaves memory untouched.
+    try:
+        repository.pause_edi(mid, pause_days, loan.kfs_clause, offer_id, consent_token)
+    except repository.DbRuleError as exc:
+        if exc.code == "CONSENT_INVALID":
+            return error_body("DPDP_CONSENT_REQUIRED", f"consent token is {exc.detail.lower()}"), 403
+        return error_body("EDI_PAUSE_NOT_ELIGIBLE", exc.detail), 409
 
     # --- the mutation ------------------------------------------------------------------
     resume = date.fromisoformat(loan.next_deduction_date) + timedelta(days=pause_days)

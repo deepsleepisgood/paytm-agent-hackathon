@@ -24,7 +24,7 @@ from __future__ import annotations
 import logging
 import time
 
-from . import clock, mesh, store, templates
+from . import clock, mesh, repository, store, templates
 from .errors import PayloadError, error_body
 from .escalation import create_ticket
 from .intents import MODULES
@@ -56,8 +56,13 @@ def dispatch(req: DispatchRequest) -> tuple[dict, int]:
 
     # --- 2. consent ---------------------------------------------------------------------
     # Checked before anything is read: no consent, no look at the merchant's money.
+    # With USE_SUPABASE every check (missing ones included) is logged to paytm.consent_checks.
+    consent = repository.check_consent(req.mid, req.consent_token, req.request_id)
     if not (req.consent_token or "").strip():
         return error_body("CONSENT_MISSING", "consent_token is required"), 400
+    if consent is not None and not consent.get("valid"):
+        return error_body("DPDP_CONSENT_REQUIRED",
+                          f"consent token is {str(consent.get('reason')).lower()}"), 403
 
     # --- 3. the merchant ----------------------------------------------------------------
     if req.mid != store.ledger.mid:
@@ -156,6 +161,8 @@ def dispatch(req: DispatchRequest) -> tuple[dict, int]:
         "_request_fingerprint": _fingerprint(req),
     }
     store.idempotency[req.request_id] = body
+    # Mirror into Supabase (no-op unless USE_SUPABASE=true; never raises).
+    repository.after_dispatch(req, intent, result, summary, agent_trace, ticket, store.ledger)
     return _public(body), 200
 
 

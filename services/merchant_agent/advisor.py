@@ -16,6 +16,7 @@ from datetime import date
 from typing import Any, Optional
 
 import dataset_loader as dl
+import repository
 import upstream
 from schemas import Slots
 from state import STATE
@@ -555,6 +556,7 @@ def verify_and_learn(intent: str, evaluation: dict[str, Any], resp: dict[str, An
     }
     if resolved is not None:
         STATE.strategy_memory.append(record)
+        repository.record_strategy(record)  # no-op unless USE_SUPABASE=true
     return {**record, "learned": resolved is not None,
             "strategy_success_rate": history_stats(intent, str(sel.get("action")))["success_rate"]}
 
