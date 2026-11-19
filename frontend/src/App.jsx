@@ -388,6 +388,8 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   const [speak, setSpeak] = useState(true)
   const [dark, setDark] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const scrolledRef = useRef(false)
   const [lang, setLangState] = useState(loadLang)
   const setLang = (l) => { setLangState(l); saveLang(l) }
   const [queue, setQueue] = useState([])
@@ -397,7 +399,7 @@ export default function App() {
   const autoLive = useRef(false)
   modeRef.current = mode
 
-  useEffect(() => { scroller.current?.scrollTo(0, 0) }, [tab, sub])
+  useEffect(() => { scroller.current?.scrollTo(0, 0); scrolledRef.current = false; setScrolled(false) }, [tab, sub])
   // Poll which backends are reachable (8003 needed for live mode; 8002 optional — 8003 mocks Paytm if it is down).
   useEffect(() => {
     let off = false
@@ -585,10 +587,10 @@ export default function App() {
       </header>
       <main className="cc-grid">
         <section className="col left">
-          <div className={`phone ${dark ? 'dark' : ''}`}>
+          <div className={`phone ${dark ? 'dark' : ''} ${scrolled ? 'scrolled' : ''}`}>
             <div className="notch" />
             <StatusBar />
-            <div className={`content ${tab === 'buddy' && !sub ? 'flex' : ''}`} ref={scroller}>{body}</div>
+            <div className={`content ${tab === 'buddy' && !sub ? 'flex' : ''}`} ref={scroller} onScroll={(e) => { const s = e.currentTarget.scrollTop > 6; if (s !== scrolledRef.current) { scrolledRef.current = s; setScrolled(s) } }}>{body}</div>
             <nav className="tabs">
               {TABS.map((t) => (
                 <button key={t.id} aria-label={t.label} className={`${tab === t.id && !sub ? 'on' : ''} ${t.center ? 'ctr' : ''}`} onClick={() => go(t.id)}>
