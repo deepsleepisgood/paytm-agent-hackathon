@@ -77,7 +77,7 @@ def assess(case: Case) -> str:
         "label": "Pay today's instalment by UPI link",
     }]
 
-    pauses_left = HARDSHIP_PAUSES_PER_WINDOW - m.hardship_pauses_used_90d
+    pauses_left = HARDSHIP_PAUSES_PER_WINDOW - m.hardship_pauses_used_in_window
     pause_eligible = (
         loan.edi_holiday_eligible and loan.status == "ACTIVE" and pauses_left > 0
     )
@@ -108,7 +108,7 @@ def assess(case: Case) -> str:
         case.escalate(
             "OUT_OF_SCOPE",
             f"Mandate bounced and no hardship pause is available "
-            f"({m.hardship_pauses_used_90d} already used in "
+            f"({m.hardship_pauses_used_in_window} already used in "
             f"{HARDSHIP_PAUSE_WINDOW_DAYS} days, or the EDI is {loan.status})",
         )
         return (

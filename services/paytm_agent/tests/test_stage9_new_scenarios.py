@@ -95,7 +95,7 @@ def test_the_mandate_intent_pauses_nothing_by_itself(client):
 
 
 def test_no_pause_left_goes_to_a_person(client):
-    store.ledger.mandate.hardship_pauses_used_90d = 1
+    store.ledger.mandate.hardship_pauses_used_in_window = 1
     out = client.post("/a2a/dispatch", json=body("MANDATE_TROUBLESHOOT")).json()
 
     assert out["status"] == "ESCALATED"
@@ -112,16 +112,16 @@ def test_a_double_charge_is_found_and_the_later_one_returned(client):
 
     assert out["status"] == "RESOLVED"
     data = out["data"]
-    assert data["order_id"] == "4455"
+    assert data["order_id"] == "4489"
     assert len(data["payments"]) == 2
     # The first payment keeps its place; the later one goes back.
-    assert data["keep"]["utr"] == "632184925001"
-    assert data["refund"]["utr"] == "632184925002"
-    assert data["refund"]["amount_inr"] == 3200
+    assert data["keep"]["utr"] == "632299206882"
+    assert data["refund"]["utr"] == "632230725895"
+    assert data["refund"]["amount_inr"] == 1180
     assert data["refund_status"] == "PROCESSED"
 
-    assert store.ledger.utrs["632184925002"].refunded is True
-    assert store.ledger.utrs["632184925001"].refunded is False
+    assert store.ledger.utrs["632230725895"].refunded is True
+    assert store.ledger.utrs["632299206882"].refunded is False
 
 
 def test_the_closed_settlement_is_not_disturbed(client):
@@ -156,18 +156,18 @@ def test_ledger_ops_is_the_one_that_moves_the_money(client):
     ops = trace_of(out)["LedgerOpsAgent"]
 
     assert ops["acted"] is True
-    assert "632184925002" in ops["note"]
+    assert "632230725895" in ops["note"]
 
 
 def test_a_duplicate_over_the_limit_goes_to_a_person(client):
-    store.ledger.utrs["632184925001"].amount_inr = DUPLICATE_AUTO_LIMIT_INR + 1
-    store.ledger.utrs["632184925002"].amount_inr = DUPLICATE_AUTO_LIMIT_INR + 1
+    store.ledger.utrs["632299206882"].amount_inr = DUPLICATE_AUTO_LIMIT_INR + 1
+    store.ledger.utrs["632230725895"].amount_inr = DUPLICATE_AUTO_LIMIT_INR + 1
 
     out = client.post("/a2a/dispatch", json=body("DUPLICATE_PAYMENT_RECONCILE")).json()
 
     assert out["status"] == "ESCALATED"
     assert out["escalation_ticket"]["reason_code"] == "REFUND_OVER_LIMIT"
-    assert store.ledger.utrs["632184925002"].refunded is False
+    assert store.ledger.utrs["632230725895"].refunded is False
     assert trace_of(out)["LedgerOpsAgent"]["acted"] is False
 
 
@@ -244,14 +244,19 @@ def test_asking_whether_to_borrow_goes_to_a_human(client, asked):
 def test_no_credit_pricing_is_ever_invented(client):
     """Rate and tenure belong in the NBFC's Key Fact Statement, not in a demo fixture."""
     out = client.post("/a2a/dispatch", json=body("WORKING_CAPITAL_ADVISORY")).json()
-    offer = out["data"]["credit_offer"]
 
-    assert offer["pre_approved_inr"] == 150_000
-    assert offer["kfs_required"] is True
-    assert "rate" not in offer or offer.get("rate") is None
-    assert "interest" not in out["template_text"].lower()
-    assert "% p.a" not in out["template_text"]
-    # And the merchant is told where the real terms come from.
+    # No new facility is offered at all: the canonical dataset has no pre-approved
+    # limit, so an earlier invented one was removed rather than kept as a placeholder.
+    assert out["data"]["new_facility_offered"] is False
+    assert "credit_offer" not in out["data"]
+
+    # The loan they already have is quoted on its real terms from the dataset.
+    loan = out["data"]["existing_loan"]
+    assert loan["apr_percent"] == 31.89
+    assert loan["balance_inr"] == 42_000
+    assert loan["loan_id"] == "CLX-ML-26-008821"
+
+    # And the merchant is told where the terms of anything further would come from.
     assert "Key Fact Statement" in out["template_text"]
 
 

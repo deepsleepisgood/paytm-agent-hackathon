@@ -33,7 +33,7 @@ def test_the_five_lines_explain_the_whole_gap():
 
 def test_mdr_bands_add_up_to_the_fee_line():
     led = store.ledger
-    assert [b.fee_inr for b in led.mdr_bands] == [900, 550, 0]
+    assert [b.fee_inr for b in led.mdr_bands] == [1252, 198, 0]
     assert led.mdr_total_inr == 1_450
 
 
@@ -127,7 +127,7 @@ def test_get_ledger_returns_the_live_state(client):
     assert {t["utr"] for t in body["transactions"]} == {
         "632184920111", "632184920999",
         # The duplicate pair: one order, two settled payments.
-        "632184925001", "632184925002",
+        "632299206882", "632230725895",
     }
     assert body["counters"] == {"tickets_deflected": 0, "fraud_blocked": 0}
 

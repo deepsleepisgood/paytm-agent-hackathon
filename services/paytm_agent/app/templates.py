@@ -91,9 +91,13 @@ def _settlement_reconcile(data: dict[str, Any], status: str) -> str:
         f"The difference of {gap} is: {items}."
     )
     for up in data.get("upcoming", []):
+        # Says the instalment is due, not that the payout is reduced by it. The
+        # canonical loan data is explicit that the EDI is collected by eNACH from the
+        # bank account rather than netted from a settlement, so the narrower claim is
+        # the one that is true either way.
         text += (
-            f" Your next payout on {pretty_date(up['date'])} will also be "
-            f"{rupees(up['amount_inr'])} lower for your {up['label'].lower()}."
+            f" Your {rupees(up['amount_inr'])} {up['label'].lower()} is also due on "
+            f"{pretty_date(up['date'])}."
         )
     return text
 
@@ -243,7 +247,7 @@ def _working_capital_advisory(data: dict[str, Any], status: str) -> str:
     sales = data["sales"]
     daily = rupees(sales["avg_daily_sales_inr"])
     weekend = rupees(data["weekend_daily_sales_inr"])
-    offer = data["credit_offer"]
+    loan = data["existing_loan"]
 
     pattern = (
         f"Over the last {sales['months']} months you have taken about {daily} a day, and "
@@ -265,10 +269,11 @@ def _working_capital_advisory(data: dict[str, Any], status: str) -> str:
 
     repay = data["share_of_daily_takings_repaid_percent"]
     return (
-        pattern + f" You have {rupees(offer['pre_approved_inr'])} pre-approved with "
-        f"{offer['nbfc']} if you want it. Before taking any of it you would get a Key "
-        f"Fact Statement with the full rate and term. For comparison, your current "
-        f"instalment takes about {repay}% of an average day's takings."
+        pattern + f" On the loan you already have with {loan['nbfc']}, "
+        f"{rupees(loan['balance_inr'])} is left at {loan['apr_percent']}% a year, and "
+        f"the {rupees(loan['edi_per_day_inr'])} daily instalment is about {repay}% of an "
+        "average day's takings. If you ever want more working capital, you would get a "
+        "Key Fact Statement with the full rate and term before taking any of it."
     )
 
 

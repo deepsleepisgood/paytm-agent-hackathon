@@ -46,18 +46,22 @@ def gather(case: Case) -> str:
     """IntelligenceAgent: the merchant's own trading pattern and what is pre-approved."""
     led = case.ledger
     sales = led.sales
-    offer = led.credit_offer
+    loan = led.loan
 
     weekend_daily = int(round(sales.avg_daily_sales_inr * sales.weekend_multiplier))
-    daily_repayment = led.loan.edi_per_day_inr
+    daily_repayment = loan.edi_per_day_inr
 
     case.data = {
         "sales": sales.as_dict(),
         "weekend_daily_sales_inr": weekend_daily,
-        "credit_offer": offer.as_dict(),
+        # The loan they already have, on its real terms. There is no pre-approved new
+        # facility in the dataset, so none is offered or implied.
         "existing_loan": {
-            "nbfc": led.loan.nbfc,
-            "balance_inr": led.loan.balance_inr,
+            "loan_id": loan.loan_id,
+            "nbfc": loan.nbfc,
+            "sanctioned_inr": loan.sanctioned_inr,
+            "balance_inr": loan.balance_inr,
+            "apr_percent": loan.apr_percent,
             "edi_per_day_inr": daily_repayment,
         },
         # The number that actually matters to a shopkeeper, and the one a glossy offer
@@ -65,12 +69,13 @@ def gather(case: Case) -> str:
         "share_of_daily_takings_repaid_percent": round(
             daily_repayment / sales.avg_daily_sales_inr * 100, 2
         ),
+        "new_facility_offered": False,
         "is_recommendation": False,
     }
     return (
         f"Read {sales.months} months of trading: {sales.avg_daily_sales_inr} a day on "
-        f"average, {sales.weekend_multiplier}x at weekends, and a pre-approved limit of "
-        f"{offer.pre_approved_inr}"
+        f"average, {sales.weekend_multiplier}x at weekends, against a "
+        f"{loan.balance_inr} balance at {loan.apr_percent}% APR"
     )
 
 
@@ -111,11 +116,12 @@ def resolve(case: Case) -> str:
     case.found = (
         f"{sales['avg_daily_sales_inr']} average daily takings over {sales['months']} "
         f"months, {sales['weekend_multiplier']}x at weekends; restock by "
-        f"{sales['restock_by']}; {data['credit_offer']['pre_approved_inr']} pre-approved"
+        f"{sales['restock_by']}; existing balance "
+        f"{data['existing_loan']['balance_inr']} at {data['existing_loan']['apr_percent']}% APR"
     )
     case.action_taken = "None, explained only"
     case.template_text = templates.render("WORKING_CAPITAL_ADVISORY", data, "RESOLVED")
     return (
         f"Explained the weekend pattern and to restock by {sales['restock_by']}, and "
-        "stated the pre-approved limit without recommending it"
+        "stated the existing loan's real cost without recommending anything further"
     )
