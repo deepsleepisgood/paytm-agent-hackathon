@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { I, AIMark } from './icons.jsx'
 
 const AGENTS = [
@@ -298,8 +298,36 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
   )
 }
 
+// Collapsible section: header always visible, body opens on click (or automatically when it becomes relevant).
+function Section({ title, sub, badge, tone, open, onToggle, children }) {
+  return (
+    <div className={`acc ${open ? 'open' : ''} ${tone || ''}`}>
+      <button className="acc-h" onClick={onToggle} aria-expanded={open}>
+        <span className="acc-t"><b>{title}</b><em>{sub}</em></span>
+        {badge && <i className="acc-b">{badge}</i>}
+        <span className="acc-chev">›</span>
+      </button>
+      <div className="acc-body"><div>{children}</div></div>
+    </div>
+  )
+}
+
+function flowInfo(run, reveal) {
+  const at = (key) => run.steps.findIndex((s) => s.key === key)
+  const states = FLOW.map((n) => {
+    const i = at(n.key)
+    if (i < 0) return 'idle'
+    if (reveal > i) return 'done'
+    if (reveal >= (n.from ?? i)) return 'work'
+    return 'idle'
+  })
+  return { states, doneN: states.filter((s) => s === 'done').length, cur: states.findIndex((s) => s === 'work') }
+}
+
 export default function Center({ run, reveal, busy, onTry, demoActive }) {
   const [tech, setTech] = useState(false)
+  const [openSet, setOpenSet] = useState({})
+  const pinned = useRef(false)
   const steps = run?.steps || []
   const idx = (key) => steps.findIndex((s) => s.key === key)
   const shown = (key) => idx(key) >= 0 && idx(key) < reveal
@@ -307,10 +335,96 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
   const done = run && reveal >= steps.length
   const cur = run && reveal > 0 ? steps[Math.min(reveal, steps.length) - 1] : null
   const stageNow = run ? STAGES.findIndex((st) => st.keys.includes(cur?.key)) : -1
-  const consent = get('consent'), ev = get('eval'), disp = get('dispatch'), ins = get('insight')
+  const ev = get('eval'), disp = get('dispatch'), ins = get('insight')
   const escalated = run?.live ? !!run.escalated : ev && ev.selected === 'C' && shown('eval')
   const awaiting = shown('reply') && !!get('reply')?.confirm
   const totalMs = run?.live ? run.elapsed || 0 : steps.reduce((a, s) => a + (s.ms || 0), 0)
+
+  // A new run starts with the agent team open; sections open by themselves when they become relevant,
+  // and everything folds away once the answer is ready. Clicking a section takes over for that run.
+  useEffect(() => { pinned.current = false; setOpenSet(run ? { agents: true } : {}) }, [run])
+  useEffect(() => {
+    if (!run || pinned.current) return
+    if (shown('reply')) setOpenSet({ result: true })
+    else if (shown('eval')) setOpenSet({ agents: true, decision: true })
+  }, [reveal, run])
+  const toggle = (k) => { pinned.current = true; setOpenSet((s) => ({ ...s, [k]: !s[k] })) }
+
+  const fi = run ? flowInfo(run, reveal) : null
+  const resBadge = run && shown('reply') ? (get('reply').tone === 'bad' ? 'Fraud blocked' : awaiting ? 'Needs your OK' : escalated ? 'Human handoff' : 'Resolved by AI') : ''
+  const sections = run ? [
+    { k: 'agents', show: true, title: 'Agent team', sub: done ? `${fi.doneN}/${FLOW.length} agents finished · ${escalated ? '1 human handoff' : '0 humans in the loop'}` : fi.cur >= 0 ? `Working now: ${FLOW[fi.cur].name}` : 'Getting ready…', badge: `${fi.doneN}/${FLOW.length}` },
+    { k: 'decision', show: shown('insight') || shown('eval'), title: 'What the AI knew and chose', sub: ev && shown('eval') ? (ev.options ? `Chose option ${ev.selected}: ${(ev.options.find((o) => o.id === ev.selected) || {}).label || ''}` : `Intent ${ev.route?.intent}`) : 'Recalling this merchant’s history…', badge: ev && ev.options && shown('eval') ? `Option ${ev.selected}` : '' },
+    { k: 'result', show: shown('reply'), title: 'Result', sub: `${(totalMs / 1000).toFixed(1)}s · the ledger already changed`, badge: resBadge, tone: get('reply')?.tone === 'bad' ? 'bad' : awaiting || escalated ? 'esc' : 'good' },
+    { k: 'log', show: !!(done && run.live && run.events?.length), title: 'Compliance log', sub: 'Real agent-to-agent and DPDP events', badge: run?.events?.length ? String(run.events.length) : '' },
+    { k: 'tech', show: !!(run && shown('dispatch') && disp), title: 'Technical details', sub: 'A2A request and response (JSON)', badge: '' },
+  ].filter((s) => s.show) : []
+  if (done) sections.sort((a, b) => (a.k === 'result' ? -1 : b.k === 'result' ? 1 : 0))
+
+  const body = {
+    agents: <AgentFlow run={run} reveal={reveal} done={done} escalated={escalated} totalMs={totalMs} />,
+    decision: (
+      <>
+        {shown('insight') && ins && (
+          <div className="tcard in">
+            <div className="t-h"><span className="n">0</span><b>What the AI remembered about this merchant</b></div>
+            <div className="plain">{ins.insight.summary}</div>
+            {ins.insight.evidence?.length > 0 && <ul className="ev">{ins.insight.evidence.map((e, i) => <li key={i}>{e}</li>)}</ul>}
+          </div>
+        )}
+        {shown('eval') && ev && ev.live && (
+          <div className="tcard in">
+            <div className="t-h"><span className="n">1</span><b>Merchant Buddy understood the request</b><span className="chip-i sel">{ev.route.source === 'llm' ? 'Sarvam LLM' : ev.route.source === 'document' ? 'Document' : 'Keyword fallback'}</span></div>
+            <div className="kv">
+              <span>Intent</span><code>{ev.route.intent}</code>
+              {Object.entries(ev.route.slots || {}).filter(([, v]) => v !== null && v !== undefined).map(([k, v]) => (<React.Fragment key={k}><span>{k}</span><code>{String(v)}</code></React.Fragment>))}
+              {ev.route.transcript && (<><span>Heard</span><code>{ev.route.transcript}</code></>)}
+            </div>
+          </div>
+        )}
+        {shown('eval') && ev && !ev.live && (
+          <div className="tcard in">
+            <div className="t-h"><span className="n">1</span><b>Merchant Buddy compares 3 options</b><span className="chip-i sel">Chose {ev.selected}</span></div>
+            {ev.options.map((o) => (
+              <div key={o.id} className={`opt ${o.id === ev.selected ? 'sel' : ''}`}>
+                <span className="o-id">{o.id}</span>
+                <div className="o-mid"><div className="o-l">{o.label}</div><div className="muted xs">{o.why}</div><div className="o-bar"><i style={{ width: o.score + '%' }} /></div></div>
+                <span className="o-sc" title="Fit score out of 100">{o.score}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </>
+    ),
+    result: shown('reply') && (
+      <div className={`tcard in result ${get('reply').tone === 'bad' ? 'bad' : awaiting || escalated ? 'esc' : 'good'}`}>
+        <div className="res-h">
+          <span className="res-b">{resBadge}</span>
+          <span className="muted xs">{run.live ? `${(totalMs / 1000).toFixed(1)}s live round trip` : `${(totalMs / 1000).toFixed(1)}s of agent time`}</span>
+        </div>
+        <div className="sm">“{get('reply').reply}”</div>
+        {run.live && run.sources && (
+          <div className="srcs">
+            <span className="chip-i">Paytm: {run.sources.paytm}</span><span className="chip-i">Intent: {run.sources.intent}</span><span className="chip-i">Reply: {run.sources.reply}</span>
+          </div>
+        )}
+        <div className="muted xs">Check the right column — the ledger already changed.</div>
+      </div>
+    ),
+    log: done && run.live && run.events?.length > 0 && (
+      <div className="tcard in">
+        {run.events.map((e) => (
+          <div key={e.seq} className="evt"><code>{e.type}</code><span className="muted xs">{e.actor}</span><div className="sm">{e.summary}</div></div>
+        ))}
+      </div>
+    ),
+    tech: disp && (
+      <div className="json">
+        <div><span className="muted xs">REQUEST · :8003 → :8002 /a2a/dispatch</span><pre>{JSON.stringify(disp.request, null, 1)}</pre></div>
+        <div><span className="muted xs">RESPONSE</span><pre>{JSON.stringify(disp.response, null, 1)}</pre></div>
+      </div>
+    ),
+  }
 
   return (
     <div className="col center">
@@ -329,11 +443,9 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
               </div>
             ))}
           </div>
-          <div className={`caption ${done ? 'ok' : ''}`}>{done ? 'Done — see the result below' : `${CAPTION[cur?.key] || 'Starting…'}…`}</div>
+          <div className={`caption ${done ? 'ok' : ''}`}>{done ? 'Done — open any section below for details' : `${CAPTION[cur?.key] || 'Starting…'}…`}</div>
         </>
       )}
-
-      {run && <AgentFlow run={run} reveal={reveal} done={done} escalated={escalated} totalMs={totalMs} />}
 
       {!run && (
         <div className="empty">
@@ -350,74 +462,11 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
         </div>
       )}
 
-      {shown('insight') && ins && (
-        <div className="tcard in">
-          <div className="t-h"><span className="n">0</span><b>What the AI remembered about this merchant</b></div>
-          <div className="plain">{ins.insight.summary}</div>
-          {ins.insight.evidence?.length > 0 && <ul className="ev">{ins.insight.evidence.map((e, i) => <li key={i}>{e}</li>)}</ul>}
-        </div>
-      )}
-
-      {shown('eval') && ev && ev.live && (
-        <div className="tcard in">
-          <div className="t-h"><span className="n">1</span><b>Merchant Buddy understood the request</b><span className="chip-i sel">{ev.route.source === 'llm' ? 'Sarvam LLM' : ev.route.source === 'document' ? 'Document' : 'Keyword fallback'}</span></div>
-          <div className="kv">
-            <span>Intent</span><code>{ev.route.intent}</code>
-            {Object.entries(ev.route.slots || {}).filter(([, v]) => v !== null && v !== undefined).map(([k, v]) => (<React.Fragment key={k}><span>{k}</span><code>{String(v)}</code></React.Fragment>))}
-            {ev.route.transcript && (<><span>Heard</span><code>{ev.route.transcript}</code></>)}
-          </div>
-        </div>
-      )}
-
-      {shown('eval') && ev && !ev.live && (
-        <div className="tcard in">
-          <div className="t-h"><span className="n">1</span><b>Merchant Buddy compares 3 options</b><span className="chip-i sel">Chose {ev.selected}</span></div>
-          {ev.options.map((o) => (
-            <div key={o.id} className={`opt ${o.id === ev.selected ? 'sel' : ''}`}>
-              <span className="o-id">{o.id}</span>
-              <div className="o-mid"><div className="o-l">{o.label}</div><div className="muted xs">{o.why}</div><div className="o-bar"><i style={{ width: o.score + '%' }} /></div></div>
-              <span className="o-sc" title="Fit score out of 100">{o.score}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {shown('reply') && (
-        <div className={`tcard in result ${get('reply').tone === 'bad' ? 'bad' : awaiting || escalated ? 'esc' : 'good'}`}>
-          <div className="res-h">
-            <span className="res-b">{get('reply').tone === 'bad' ? 'Fraud blocked' : awaiting ? 'Waiting for your sign-off' : escalated ? 'Handed to a human' : 'Resolved by AI'}</span>
-            <span className="muted xs">{run.live ? `${(totalMs / 1000).toFixed(1)}s live round trip` : `${(totalMs / 1000).toFixed(1)}s of agent time`}</span>
-          </div>
-          <div className="sm">“{get('reply').reply}”</div>
-          {run.live && run.sources && (
-            <div className="srcs">
-              <span className="chip-i">Paytm: {run.sources.paytm}</span><span className="chip-i">Intent: {run.sources.intent}</span><span className="chip-i">Reply: {run.sources.reply}</span>
-            </div>
-          )}
-          <div className="muted xs">Check the right column — the ledger already changed.</div>
-        </div>
-      )}
-
-      {done && run.live && run.events.length > 0 && (
-        <div className="tcard in">
-          <div className="t-h"><b>A2A & DPDP compliance log</b><span className="muted xs">real events from :8003</span></div>
-          {run.events.map((e) => (
-            <div key={e.seq} className="evt"><code>{e.type}</code><span className="muted xs">{e.actor}</span><div className="sm">{e.summary}</div></div>
-          ))}
-        </div>
-      )}
-
-      {run && shown('dispatch') && disp && (
-        <div className="tech">
-          <button onClick={() => setTech(!tech)}>{tech ? '▾' : '▸'} Technical details (A2A request / response)</button>
-          {tech && (
-            <div className="json">
-              <div><span className="muted xs">REQUEST · :8003 → :8002 /a2a/dispatch</span><pre>{JSON.stringify(disp.request, null, 1)}</pre></div>
-              <div><span className="muted xs">RESPONSE</span><pre>{JSON.stringify(disp.response, null, 1)}</pre></div>
-            </div>
-          )}
-        </div>
-      )}
+      {sections.map((s) => (
+        <Section key={s.k} title={s.title} sub={s.sub} badge={s.badge} tone={s.tone} open={!!openSet[s.k]} onToggle={() => toggle(s.k)}>
+          {body[s.k]}
+        </Section>
+      ))}
     </div>
   )
 }
