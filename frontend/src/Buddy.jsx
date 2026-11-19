@@ -27,6 +27,7 @@ const GROUPS = [
 ]
 
 function Insights({ m }) {
+  const [open, setOpen] = useState(false)
   const i = m.insights
   const ms = i.monthly_sales
   const max = Math.max(...ms), min = Math.min(...ms)
@@ -35,6 +36,16 @@ function Insights({ m }) {
   const wmax = Math.max(...i.weekday_avg_sales)
   const top = [...i.weekday_avg_sales].sort((a, b) => b - a).slice(0, 2)
   const h = i.cashflow_health
+  if (!open) {
+    return (
+      <button className="ins-min" onClick={() => setOpen(true)}>
+        <span><b>Aapka business</b></span>
+        <span className={`trend ${pct >= 0 ? 'up' : 'dn'}`}>{pct >= 0 ? '▲' : '▼'} {Math.abs(pct)}%</span>
+        <span className="chip-i">Cash health {h.score} · {h.label}</span>
+        <span className="r-go">⌄</span>
+      </button>
+    )
+  }
   return (
     <div className="ins">
       <div className="ins-h"><b>Aapka business, ek nazar mein</b><span className="muted xs">{i.period}</span></div>
@@ -59,6 +70,7 @@ function Insights({ m }) {
         </div>
       </div>
       <div className="ins-note">{i.peak_note}</div>
+      <button className="ins-close" onClick={() => setOpen(false)}>Hide ⌃</button>
     </div>
   )
 }

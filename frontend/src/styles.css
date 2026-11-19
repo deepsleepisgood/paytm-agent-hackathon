@@ -306,3 +306,25 @@ body{background:#eef3fa}
 .srcs{display:flex;gap:6px;flex-wrap:wrap}
 .evt{padding:6px 0;border-bottom:1px dashed #e6edf6;display:flex;flex-direction:column;gap:2px}.evt:last-child{border:0}.evt code{font-size:11px;color:var(--navy);font-weight:700;margin-right:8px}
 .live-note{font-size:11.5px;background:#eef7ff;color:#0a5d94;border-radius:10px;padding:8px 10px}
+
+/* ===== Cleaner phone UI ===== */
+.tabs{padding:6px 8px 20px;align-items:flex-end;background:#fff}
+.tabs button{font-size:10px;letter-spacing:.01em}
+.tabs button.ctr{margin-top:0;flex:0 0 76px;height:44px;justify-content:flex-start}
+.qr-fab{position:relative;top:-26px;width:56px;height:56px;border:5px solid #fff;box-shadow:0 6px 16px rgba(0,46,110,.28),0 0 0 1px #e8eef6;background:linear-gradient(145deg,#012a72,#0a56b5)}
+.tabs button.on:before{top:-8px}
+.ins-min{width:100%;display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:10px 12px;font-size:13px;color:var(--navy);box-shadow:0 0 0 1px #e8eef6}
+.ins-min .chip-i{margin-left:auto}.ins-min .r-go{font-size:14px}
+.ins-close{display:block;margin:8px auto 0;font-size:11px;color:var(--mu);font-weight:600}
+.b-title{padding:2px 16px 10px}
+.b-scroll{padding:0 14px 10px}
+.pk-h{margin-top:16px}
+.row-btn{box-shadow:0 0 0 1px #edf1f7;padding:11px 12px}
+.row-btn:hover:not(:disabled){box-shadow:0 0 0 1.5px var(--blue)}
+.khata-btn{margin-top:10px;box-shadow:0 0 0 1px #d9eaf7}
+.composer{box-shadow:0 -6px 16px rgba(0,30,80,.04);border-top:0}
+.upl button{background:#f1f6fb}
+/* calmer columns */
+.col.center,.col.right{box-shadow:0 1px 2px rgba(16,37,80,.05),0 8px 24px rgba(16,37,80,.05)}
+.tcard,.rcard{border-color:#eef2f8}
+.cc-top{box-shadow:0 1px 0 #e9eff7;border-bottom:0}

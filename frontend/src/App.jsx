@@ -506,9 +506,9 @@ export default function App() {
             <div className={`content ${tab === 'buddy' && !sub ? 'flex' : ''}`} ref={scroller}>{body}</div>
             <nav className="tabs">
               {TABS.map((t) => (
-                <button key={t.id} className={`${tab === t.id && !sub ? 'on' : ''} ${t.center ? 'ctr' : ''}`} onClick={() => go(t.id)}>
+                <button key={t.id} aria-label={t.label} className={`${tab === t.id && !sub ? 'on' : ''} ${t.center ? 'ctr' : ''}`} onClick={() => go(t.id)}>
                   {t.center ? <span className="qr-fab"><t.icon size={24} /></span> : <t.icon size={22} />}
-                  <span>{t.label}</span>
+                  {!t.center && <span>{t.label}</span>}
                 </button>
               ))}
             </nav>
