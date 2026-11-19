@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { AIMark } from './icons.jsx'
 import Voice from './Voice.jsx'
-import { SCENARIOS, liveOk } from './engine.js'
+import { t } from './i18n.js'
+import { SCENARIOS, liveOk, sayText } from './engine.js'
 import { inr } from './data.js'
 import Khata from './Khata.jsx'
 
@@ -100,7 +101,7 @@ function Insights({ m, always }) {
   )
 }
 
-export default function Buddy({ m, L, chat, busy, mode, run, reveal, onPreset, onText, onAudio, onUpload, onConfirm, speak, setSpeak, onTheme }) {
+export default function Buddy({ m, L, chat, busy, mode, run, reveal, onPreset, onText, onAudio, onUpload, onConfirm, speak, setSpeak, onTheme, lang, setLang }) {
   const [view, setView] = useState('voice') // 'voice' | 'menu' | 'khata'
   const [attach, setAttach] = useState(false)
   const podRef = useRef(null)
@@ -114,17 +115,16 @@ export default function Buddy({ m, L, chat, busy, mode, run, reveal, onPreset, o
   const promptIds = ['settle', 'utr', okFor('cb') ? 'cb' : 'hold', 'edi', 'dup', 'growth']
   const prompts = promptIds.map((id) => {
     const s = SCENARIOS.find((x) => x.id === id)
-    return { id, t: SUGGEST[id] ? SUGGEST[id][0] : (GROUPS.flatMap((g) => g.items).find((it) => it.id === id) || {}).t, say: s.utterance(m), ok: okFor(id) }
+    return { id, t: SUGGEST[id] ? SUGGEST[id][0] : (GROUPS.flatMap((g) => g.items).find((it) => it.id === id) || {}).t, say: sayText(s, m, lang), ok: okFor(id) }
   })
-  const HI = { settle: 'पैसा कहाँ कटा?', utr: 'UTR जाँचें', cb: 'डिलीवरी प्रूफ भेजें', hold: 'सेटलमेंट होल्ड', edi: 'लोन EDI फेल', dup: 'दो बार पैसा कटा', growth: 'धंधा कैसे बढ़ाएँ' }
-  prompts.forEach((p) => { p.hi = HI[p.id] || p.t })
+  prompts.forEach((p) => { p.label = t(lang, 'p_' + p.id) || p.t })
   // Smart nudge: the single most urgent thing for this merchant today, from their own data.
   const cb = m.d.chargeback
   const edi = m.d.loan.edi
   const nudge = cb && cb.status === 'HELD'
-    ? { id: 'shield_cb', title: `${cb.order} का ₹${cb.amount} रुका हुआ है`, text: 'डिलीवरी का सबूत भेजिए, पैसा 48 घंटे में छूट जाएगा।', say: SCENARIOS.find((s) => s.id === 'cb')?.utterance(m) || '' , run: okFor('cb') ? 'cb' : 'settle' }
-    : { id: 'settle', title: 'आज का हिसाब देखें', text: 'सेटलमेंट में कितना कटा, एक बटन में जानिए।', say: '', run: 'settle' }
-  const nudgeP = { ...nudge, id: nudge.run, say: SCENARIOS.find((s) => s.id === nudge.run).utterance(m) }
+    ? { title: t(lang, 'nTitleCb', cb.order, cb.amount), text: t(lang, 'nTextCb'), run: okFor('cb') ? 'cb' : 'settle' }
+    : { title: t(lang, 'nTitleSt'), text: t(lang, 'nTextSt'), run: 'settle' }
+  const nudgeP = { ...nudge, id: nudge.run, say: sayText(SCENARIOS.find((s) => s.id === nudge.run), m, lang) }
   const run1 = (id) => { setView('voice'); onPreset(id) }
 
   const Back = ({ title }) => (
@@ -178,21 +178,21 @@ export default function Buddy({ m, L, chat, busy, mode, run, reveal, onPreset, o
 
   return (
     <div className="screen buddy voice-screen">
-      <Voice m={m} chat={chat} busy={busy} run={run} reveal={reveal} speak={speak} setSpeak={setSpeak} mode={mode} prompts={prompts} nudge={nudgeP}
+      <Voice m={m} chat={chat} busy={busy} run={run} reveal={reveal} speak={speak} setSpeak={setSpeak} mode={mode} prompts={prompts} nudge={nudgeP} lang={lang} setLang={setLang}
         onText={onText} onAudio={onAudio} onPreset={onPreset} onConfirm={onConfirm}
         onMenu={() => setView('menu')} onKhata={() => setView('khata')} onAttach={(k) => (k === 'pod' ? podRef.current.click() : k === 'shot' ? shotRef.current.click() : setAttach(true))} />
       {attach && (
         <div className="attach-sheet" onClick={() => setAttach(false)}>
           <div className="as-card" onClick={(e) => e.stopPropagation()}>
-            <div className="as-h">क्या भेजना है?</div>
+            <div className="as-h">{t(lang, 'asH')}</div>
             <button className="as-opt" disabled={busy} onClick={() => { setAttach(false); podRef.current.click() }}>
-              <b>डिलीवरी का सबूत</b><span>ग्राहक को सामान मिल गया — रसीद या फ़ोटो</span>
+              <b>{t(lang, 'asPodT')}</b><span>{t(lang, 'asPodS')}</span>
             </button>
             <button className="as-opt" disabled={busy} onClick={() => { setAttach(false); shotRef.current.click() }}>
-              <b>UPI पेमेंट का स्क्रीनशॉट</b><span>ग्राहक ने पेमेंट दिखाया — असली है या नकली जाँचें</span>
+              <b>{t(lang, 'asShotT')}</b><span>{t(lang, 'asShotS')}</span>
             </button>
-            <div className="as-note">कैमरा से फ़ोटो लें या गैलरी से चुनें</div>
-            <button className="as-cancel" onClick={() => setAttach(false)}>रद्द करें</button>
+            <div className="as-note">{t(lang, 'asNote')}</div>
+            <button className="as-cancel" onClick={() => setAttach(false)}>{t(lang, 'cancel')}</button>
           </div>
         </div>
       )}
