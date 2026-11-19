@@ -47,9 +47,9 @@ export function PaytmLogo({ size = 30 }) {
   )
 }
 
-// AI assistant mark, option B "Neural node": navy rounded square, white core node linked to three cyan agent nodes.
-// Nodes pulse while the AI is working. (Option C "aura ring" is kept as AIMarkAura if we want to switch back.)
-export const AIMark = ({ size = 48 }) => (
+// Option B "Neural node" (alternate, not used right now): navy rounded square, white core node linked to three cyan agent nodes.
+// Nodes pulse while the AI is working. Active mark is AIMark below (option C aura ring).
+export const AIMarkNeural = ({ size = 48 }) => (
   <svg width={size} height={size} viewBox="0 0 120 120" role="img" aria-label="AI assistant" style={{ display: 'block' }}>
     <rect x="12" y="12" width="96" height="96" rx="30" fill="#002E6E" />
     <g stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round">
@@ -62,7 +62,7 @@ export const AIMark = ({ size = 48 }) => (
   </svg>
 )
 
-export const AIMarkAura = ({ size = 48 }) => (
+export const AIMark = ({ size = 48 }) => (
   <svg width={size} height={size} viewBox="0 0 120 120" role="img" aria-label="AI assistant" style={{ display: 'block' }}>
     <circle className="aura-ring" cx="60" cy="60" r="54" fill="none" stroke="#00BAF2" strokeWidth="6" strokeDasharray="46 9" strokeLinecap="round" />
     <circle cx="60" cy="60" r="41" fill="#002E6E" />

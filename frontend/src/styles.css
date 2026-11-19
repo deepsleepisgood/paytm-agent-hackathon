@@ -454,3 +454,8 @@ img[alt="Paytm for Business"]{mix-blend-mode:multiply}
 .qr-fab{border-radius:17px;background:transparent;box-shadow:none;padding:0;width:48px;height:48px;min-width:48px;top:-18px;filter:drop-shadow(0 4px 8px rgba(0,30,80,.25))}
 .qr-fab svg{width:48px;height:48px}
 .tabs button.ctr.on .qr-fab{background:transparent;box-shadow:none;filter:drop-shadow(0 4px 10px rgba(0,186,242,.55))}
+
+/* ===== back to option C (aura ring): round button ===== */
+.qr-fab{border-radius:50%;width:54px;height:54px;min-width:54px;top:-22px;background:#f9f9f9;padding:4px;filter:none;box-shadow:0 3px 10px rgba(0,30,80,.18)}
+.qr-fab svg{width:46px;height:46px}
+.tabs button.ctr.on .qr-fab{background:#f9f9f9;filter:none;box-shadow:0 3px 12px rgba(0,186,242,.4)}
