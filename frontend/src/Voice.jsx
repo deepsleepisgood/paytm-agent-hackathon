@@ -110,9 +110,9 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
     }
     // One consistent voice: Sarvam's natural Indian voice when the service is up, otherwise the best Indian voice this device has.
     if (msg.audio && playAudio(msg.audio)) return
-    if (mode === 'live') {
+    {
       ttsSarvam(msg.text, /[\u0900-\u097F]/.test(msg.text) ? 'hi-IN' : 'en-IN').then((b64) => { if (seen.current !== chat.length) return; if (!(b64 && playAudio(b64))) browserSpeak() })
-    } else browserSpeak()
+    }
   }, [chat.length])
   useEffect(() => () => { stopSpeaking(); cleanup() }, [])
 

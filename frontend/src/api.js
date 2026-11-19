@@ -77,9 +77,12 @@ export function queryAudio(blob, mid = MID) {
 }
 
 // Natural Indian voice from the project's Sarvam service (only when it is reachable); returns base64 audio or null.
+let sarvamDownUntil = 0 // after a failed try, skip Sarvam for a minute so the demo never waits on it
 export async function ttsSarvam(text, language_code = 'en-IN') {
+  if (Date.now() < sarvamDownUntil) return null
   try {
     const r = await req(`${SARVAM_URL}/tts`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, language_code }) }, 8000)
+    if (!r?.audio_base64) sarvamDownUntil = Date.now() + 60000
     return r?.audio_base64 || null
-  } catch { return null }
+  } catch { sarvamDownUntil = Date.now() + 60000; return null }
 }
