@@ -151,6 +151,152 @@ A FastAPI service on **port 8003** that acts as the merchant-side AI teammate an
 
 ---
 
+## Phase 3: Team dataset integration + Person 1 compatibility
+
+**Context:**
+- The team agreed on a `dataset/` structure: `seed/*.json`, `intents/utterances.json`, `golden/golden_paths.json`, `test_files/pod_9981.png` and `fake_upi.png`, plus `generate_test_files.py` and a README.
+- It isn't on any branch or anywhere on this machine yet. A teammate is building it.
+- So the merchant agent **reads** it, and **no files were created outside `services/merchant_agent`**.
+- Meanwhile Person 1's `sarvam_service` was merged to `main`, which made it possible to test against their real code.
+
+| # | Decision | Why |
+|---|---|---|
+| D42 | **New `dataset_loader.py`.** It reads `<repo root>/dataset` (override with `DATASET_DIR`), and **each file falls back separately** to the built-in CONTRACT.md seed if it is missing, not valid JSON, or has no recognisable fields. | The service must never fail to start or crash mid-demo because a teammate's file is late or malformed. |
+| D43 | **Field names are matched tolerantly**, ignoring case and separators and trying several likely names: `utr`/`utr_number`/`rrn`, `gross` or a summed `gross_mix`, deductions as a list or as `{label: amount}`, rates as `0.02` / `2` / `"2%"`. Partly usable files report `dataset (builtin for: <fields>)`. Optional fields (e.g. `loan.next_deduction`) default silently. | The schema isn't frozen. Being tolerant means fewer fixes at integration time, and the per-file status says exactly what to fix when something isn't recognised. |
+| D44 | **`GET /health` → `dataset`** shows the folder, each file's status, the counts, and consistency checks: gross − net = variance = sum of deductions. **`POST /reset` reloads the dataset from disk.** | Integration hour: a teammate edits a JSON file, you hit Reset, and you see the change without a restart. |
+| D45 | **The dataset now drives** the merchant order sheet; the mock Paytm answers (every UTR including the extra ones, refunds, chargebacks, the refund limit, loan and fees); the mock document fields; the reply templates (the settlement reply is itemised from the deductions list); order-id keywords and slot ids; and ITC entries (`gstin`, and `basis` from the GST rate and MDR). | One source of truth. A changed number in the dataset flows through without code changes. |
+| D46 | **The mock Paytm keeps chargeback state.** It starts from `initial_state.json` (#9981 HELD). A PoD upload sets it to RELEASED until `/reset`. | Keeps the demo consistent: asking about the settlement after Step 2 shows the hold released, and drops the "send delivery proof" nudge. |
+| D47 | **Utterance-bank routing:** an exact match takes a fast path that skips the LLM; otherwise the LLM runs with few-shot examples from the bank; if the LLM fails, a close match (≥ 70% word overlap) is used; keywords come last. `intent_source: "utterance_bank"`. Set `UTTERANCE_FAST_PATH=0` to always ask the LLM first. | Preset chips are the judges' demo path, so they should be instant and deterministic. This matches PLAN.md's "System-1 routing" story. **Trade-off:** preset chips show `utterance_bank`, not `llm`, in the event log. |
+| D48 | **Hardware escalations** (Soundbox fault) send `issue_type: "HARDWARE_SOUNDBOX"` plus the Soundbox `device` from `merchant.json`. Nothing else gets device data. | A pre-filled L2 ticket (PLAN.md) while keeping data minimisation (D10). |
+| D49 | **Added `GET /presets`**, an extra endpoint not in the contract: the preset chips flagged in `utterances.json`. The mock STT transcript is now the settlement preset. | Lets Person 4 build chips from the same dataset. Optional for them. |
+| D50 | **Person 1 compatibility: `/doc-extract` returns `utr`, not `utr_number`.** Slots now read both. | **Demo Step 3 breaker.** With 8001 up, `fake_upi.png` lost its UTR, so the merchant heard "please tell me the UTR" instead of a fraud alert. |
+| D51 | **Person 1's `source: "mock"` is honoured.** It's passed through as `*_source`, and **their mock `/llm` is ignored**, falling back to our routing and templates. | **Demo Step 2 breaker.** Their canned mock reply after a PoD upload said "upload your PoD within 48h", and it was mislabelled `llm`. |
+| D52 | **`DOC_EXTRACT_TIMEOUT_S=30`** for `/doc-extract` only; every other call stays at 6s. | Person 1 lets Sarvam Vision run for up to 25s. A 6s cut-off threw away every real extraction in favour of our mock. **This deviates from the original 6s rule; set it to 6 to revert.** |
+| D53 | **Added `audio_source`** (`live`/`mock`/`unavailable`) to the response. | Person 1's mock TTS is a placeholder tone, not speech, so the frontend can choose to show text only. |
+| D54 | **`.env` is read inside `dataset_loader`.** | It's imported first and loads data immediately. Previously a `DATASET_DIR` set in `.env` was ignored until the first `/reset`. |
+
+**Bugs found and fixed during verification:**
+- The settlement reply said **"MDR ₹261"** for the GST line, because `GST_ON_MDR` contains "MDR" and MDR was matched first. The end-to-end run caught it, and a test now checks every line's label.
+- A hardware fault with no device on file got the generic "your case" reply. It now names the Soundbox.
+- The `.env` import-order issue (D54).
+
+**Verification:**
+- `pytest -q` → **52 passed, 5 skipped**. The 5 skipped are `test_real_*`, which switch on once `dataset/` exists. New tests cover:
+  - two fixture datasets with **different schemas** normalising to identical values
+  - a broken file and a partly usable file
+  - dataset-driven mock answers, routing and ITC entries
+  - `/presets`, reload on `/reset`, and chargeback state
+  - five Person 1 compatibility tests using their exact response shapes
+- The `test_real_*` tests were also run against a fixture dataset via `DATASET_DIR` → **5 passed** (golden paths, test files, utterances).
+- **End to end with Person 1's actual service** (`services/sarvam_service`, `SARVAM_MODE=mock`, own venv) on 8001 and the merchant agent on 8003, with 8002 down. All of these behave correctly:
+  - golden Step 1
+  - free text
+  - PoD → RELEASED
+  - `fake_upi.png` → fraud (UTR `632184920555`)
+  - voice
+  - hardware escalation
+  - consent 403
+
+  Both ports were freed afterwards.
+
+---
+
+## Phase 4: V3 plan — All-in-One Merchant AI Buddy
+
+### What was built
+- **6-month historical memory.** Added `history` (`dataset/seed/merchant_history.json`, or a `historical_profile` block inside `merchant.json`) to `dataset_loader.py`, with a built-in seed. It covers:
+  - the plan's headline numbers (₹32,000/day, 2.3x Fri–Sun, 96% EDI success, ₹4,500 payable tomorrow, Clix Capital)
+  - 6 months of sales, the last 8 days of sales, the eNACH mandate, 5 recent customers, a duplicate payment, past disputes
+  - connectors, bank account, Soundbox diagnostics, a growth offer, the cashflow forecast
+- **`advisor.py`** implements the plan's closed loop on the merchant side:
+  - `diagnose()` gives the root cause, a classification, evidence and a Hinglish tip for all 14 intents.
+  - `evaluate()` scores options A/B/C.
+  - `verify_and_learn()` writes to `strategy_memory`.
+- **`pipeline.run()`** now runs: consent → intent → `ROOT_CAUSE_DIAGNOSED` → `INTERVENTIONS_EVALUATED` → dispatch (with `selected_intervention`) → `PAYTM_TO_MERCHANT` (with `agent_trace`) → ITC/fraud/khata → `OUTCOME_VERIFIED` → reply (resolution + tip, ≤35 words) → TTS.
+- **New intents:**
+  - from the plan: `MANDATE_TROUBLESHOOT`, `DUPLICATE_RECONCILE`, `GROWTH_ADVISORY`, `CASHFLOW_EDI_SWITCH`
+  - from the brief: `SOUNDBOX_RETURN`, `LOAN_CLOSURE_NOC`, `BANK_KYC_UPDATE`, `SETTLEMENT_HOLD_BANK`
+  - `REFUND_MANAGE` and `FEE_GST_LOAN` stay supported, for 14 intents in total
+- **Routing:** keyword rules for all 14 intents, an updated LLM prompt, and built-in example utterances for intents the dataset doesn't cover yet.
+- **`proactive.py`** adds:
+  - `POST /merchant/proactive-shield` with scenarios `CHARGEBACK_INCOMING`, `CASHFLOW_EDI_SWITCH` and `MANDATE_FAILED`
+  - `POST /merchant/confirm-dispute`
+  - `POST /merchant/confirm-edi-pause`
+- **`khata.py`:** `GET /merchant/khata-export` (JSON) and `?format=csv` (Tally journal).
+- **Other endpoints:** `GET /merchant/profile` (for the insights banner) and `GET /merchant/strategy-memory`.
+- **Mock 8002:** answers for all 14 intents, each with a 4-step `agent_trace` (Intelligence → RiskPolicy → Resolution → LedgerOps) and a `verified_outcome`. Also mock `/a2a/proactive-alert` and `/a2a/execute-edi-pause`, with a mock loan EDI state.
+
+### Decisions and why
+- **D55 — Old response fields kept, plan fields added.**
+  - `hindi_reply` == `reply_text`.
+  - New fields: `historical_insight`, `intervention_evaluation`, `verified_outcome`, `pending_action`, `paytm_agent_trace`, `proactive`.
+  - Why: Person 1's tests and the existing frontend read `reply_text`, and the plan asks for `hindi_reply`. Supporting both breaks nobody.
+- **D56 — Score = value × historical success rate**, where value = 0.4 policy + 0.3 cost + 0.3 UX.
+  - Why: I first tried a weighted sum with history as one term. A test showed that 20 straight failures of the chosen strategy still didn't change the choice, because the static scores dominated. Multiplying by P(success) makes learning visible: the buddy switches after repeated failures.
+  - The merchant's own verified outcomes count 2× against population priors (Laplace-smoothed).
+- **D57 — Policy is a hard block, not a penalty.**
+  - Examples: a KFS grace for a likely wilful default, a refund above ₹5,000, releasing goods on a screenshot, an EDI pause when the EDI is already paused or the loan isn't eligible.
+  - A blocked option scores 0, shows `blocked_by_policy` with the reason, and is never selected.
+  - Why: a soft penalty still let the grace option win for a wilful-default profile, which caught in a test.
+- **D58 — Friction vs default.**
+  - Friction: sales dip ≥ 25% vs the daily average, on days flagged rain/holiday/`dip`, combined with an EDI success rate ≥ 90%.
+  - Wilful-default risk: success rate < 80% with no dip.
+  - Anything else: `NEEDS_REVIEW`.
+  - The seed has rain on 14–16 Nov (−40%), an eNACH bounce on 16 Nov, then ₹1,00,000 on 17 Nov. That ₹1,00,000 is the gross settled on 18 Nov, so the plan's Act 1 (rain dip) and the settlement story (₹1L sale) are consistent.
+- **D59 — Only terminal outcomes are learned.**
+  - Learned: success or failure, taken from 8002's `verified_outcome.resolved` if present, otherwise from the status.
+  - Not learned: `HELD`, `PENDING`, `NEEDS_INFO` and `ALERT_RAISED`.
+  - `/reset` clears learned outcomes; priors stay.
+- **D60 — Asking to pause the EDI makes an offer; it does not pause.**
+  - A query like "EDI ruk sakti hai?" runs the same eligibility check as the proactive flow (8002 `/a2a/proactive-alert` `HIGH_REFUND_CASHFLOW`). It returns `pending_action: CONFIRM_EDI_PAUSE`.
+  - The pause happens only on `/merchant/confirm-edi-pause`.
+  - Why: a KFS pause needs an explicit consent artifact. A question is not consent.
+- **D61 — Proactive chargeback sends nothing to Paytm before sign-off.**
+  - The PoD is pulled from `SHIPROCKET_SYNC`; the file is `dataset/test_files/pod_9981.png`, falling back to a built-in PoD.
+  - The PoD is extracted (8001) and packed as `DISPUTE-9981`.
+  - `MERCHANT_TO_PAYTM` happens only in `/merchant/confirm-dispute`, through the existing `/a2a/dispatch`. The `pod_source` there is `SHIPROCKET_SYNC`.
+- **D62 — `MANDATE_FAILED` proactive scenario.** I added this because the plan names `MANDATE_FAILED_ALERT`.
+  - It dispatches immediately, without a confirm step.
+  - Why: a 1-tap UPI link is non-binding (the merchant still pays it themselves), and the merchant consented on the call.
+- **D63 — Names for the brief's 4 new intents:** `SOUNDBOX_RETURN`, `LOAN_CLOSURE_NOC`, `BANK_KYC_UPDATE`, `SETTLEMENT_HOLD_BANK`.
+  - The brief didn't name them, so 8002 may name them differently.
+  - Safety net: if a live 8002 returns `UNSUPPORTED_INTENT` (or a similar status) or an HTTP error, 8003 answers from its mock, so the demo never breaks.
+- **D64 — Routing order for the new intents.**
+  - Soundbox return comes before hardware fault, and before refund (`wapas`).
+  - "Loan settle" means NOC, not settlement.
+  - Settlement hold/bank inactive comes before chargeback (`hold`) and before KYC.
+  - "bill abhi bhi kat raha" (still being charged) is a return. "rental kitna kata" (how much was charged) stays `FEE_GST_LOAN`.
+- **D65 — Khata is double-entry, with one voucher per row.**
+  - Vouchers: Sales (gross), Journal per deduction (MDR, Input GST/ITC, refunds, rental, chargeback hold), and Receipt (bank credit).
+  - The buddy's completed actions are added too: chargeback released, duplicate refunded, refund initiated, and the EDI pause as a Memorandum voucher (no cash moved).
+  - The CSV has Tally-friendly `DD-MM-YYYY` dates and a UTF-8 BOM so ₹ and Hindi names survive Excel/Tally import.
+  - `summary.reconciled` checks gross − deductions = bank credit.
+  - `local_gst_itc_log` is unchanged, for compatibility.
+- **D66 — Reply = resolution + tip, kept within 35 words.**
+  - The template replies give the resolution, and `compose()` appends `historical_insight.tip_hi` only if the total stays ≤ 35 words. This is why the long settlement itemisation has no tip.
+  - The fraud warning never gets a tip.
+  - The LLM prompt asks for the same combination.
+- **D67 — Hardware escalations carry the Soundbox diagnostics** (battery 9%, weak 2G, speaker self-test failed) in the A2A payload, so L2 asks "zero repeat questions" (plan scenario 8).
+
+### Verification
+- `pytest -q`: **89 passed, 5 skipped**. The 5 skipped are the real-dataset tests, which wait for `dataset/`.
+- The new `test_buddy.py` (37 tests) covers:
+  - routing
+  - the full loop on one response
+  - friction vs wilful-default choices
+  - learning that changes a later choice
+  - policy blocks
+  - all new intents within the 35-word budget
+  - proactive chargeback, cashflow and mandate flows, including 403, 404 and 409
+  - live-8002 pass-through, and the mock fallback for unsupported intents
+  - khata JSON and CSV
+- Live run: real uvicorn on 8003 + Person 1's real service on 8001 (`SARVAM_MODE=mock`), with 8002 down:
+  - 4 queries; proactive chargeback → confirm → RELEASED; cashflow offer → confirm → `PAUSED_2_DAYS`; khata CSV; CORS for :3000
+  - Result: **E2E OK**.
+  - Ports 8001 and 8003 were freed afterwards.
+
+---
+
 ## Open items for integration (6:30 PM)
 1. **Person 4:** share the response shape and event types (README + D1–D5). There is no frontend contract for these yet.
 2. **Person 2:** confirm two things:
@@ -168,3 +314,28 @@ A FastAPI service on **port 8003** that acts as the merchant-side AI teammate an
    - `uvicorn main:app --port 8003`
 
    The command must be run from inside this folder.
+7. **When `dataset/` lands:**
+   - Run `pytest -q`.
+   - Check `GET /health` → `dataset.files`. Every file should say `dataset`.
+   - If a file says `builtin (unusable…)` or `dataset (builtin for: …)`, add its field names to the key lists in `dataset_loader.py`.
+8. **Dataset teammate:** make sure `transactions.json` does **not** contain `632184920555`. Person 1's mock reads `fake_upi.png` as that UTR, and if it is in the ledger the fraud demo shows "payment successful".
+9. **Person 4:** `audio_source` (`mock` means a placeholder tone), the new `intent_source` value `utterance_bank`, and the optional `GET /presets`.
+10. **Person 2 (V3):** confirm the following:
+    - `/a2a/dispatch` accepts `selected_intervention: {option_id, action, label, score}`.
+    - The names of the 4 new intents (D63).
+    - `MANDATE_TROUBLESHOOT` reads `selected_intervention.action`: `SEND_REMINDER`, `UPI_LINK_48H_GRACE` or `ESCALATE_SPECIALIST`.
+    - Statuses for the mock-only intents, and that `verified_outcome.resolved` is a boolean.
+    - `/a2a/proactive-alert` supports `MANDATE_FAILED_ALERT`.
+11. **Contract (CONTRACT.md V2 vs plan V3):**
+    - The contract maps `CASHFLOW_EDI_SWITCH` to the intent `FEE_GST_LOAN`, but V3 makes it its own intent. 8003 uses `CASHFLOW_EDI_SWITCH`.
+    - The contract has no `MANDATE_FAILED` scenario.
+    - The contract doesn't list the 8 new intents or the new response fields.
+    - Needs a V3 section, written only if the user asks.
+12. **Data inconsistency:** the plan's scenario 7 says a "₹8,500 refund", but CONTRACT.md V2 says ₹3,500 (`ORDER #4490`). The payout of ₹1,200 is the same in both. 8003 uses the contract's ₹3,500, from the alert data when 8002 is live. Pick one for the pitch.
+13. **Dataset teammate:** `seed/merchant_history.json` needs these fields:
+    - the headline fields
+    - `recent_daily_sales` with the rain-flagged dip days
+    - `mandate`, `recent_customers`, `duplicate_payments` (order 7310 with 2 UTRs), `past_disputes`, `connectors`
+    - `bank_account`, `soundbox_diagnostics`, `growth_offer`, `cashflow`
+
+    Every field falls back to the built-in seed. `GET /health` → `dataset.files.history` shows what loaded.

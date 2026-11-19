@@ -6,14 +6,22 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-MERCHANT_ORDER_SHEET: dict[str, Any] = {
-    "mid": "PAYTM_MERCH_8821",
-    "merchant_name": "Sharma Electronics",
-    "settlement_date": "2026-11-18",
-    "expected_gross": 100000,
-    "bank_credit_received": 95840,
-    "variance": 4160,
-}
+import dataset_loader as dl
+
+
+def order_sheet() -> dict[str, Any]:
+    """Merchant's own books for the settlement, from dataset/seed (merchant.json + settlement.json)."""
+    d = dl.DATA
+    s = d.settlement
+    return {
+        "mid": d.merchant["mid"],
+        "merchant_name": d.merchant["name"],
+        "gstin": d.merchant.get("gstin"),
+        "settlement_date": s["settlement_date"],
+        "expected_gross": s["gross"],
+        "bank_credit_received": s["net_bank_credit"],
+        "variance": s["variance"],
+    }
 
 
 class MerchantState:
@@ -21,6 +29,14 @@ class MerchantState:
         self.a2a_events: list[dict[str, Any]] = []
         self.local_gst_itc_log: list[dict[str, Any]] = []
         self.fraud_alerts: list[dict[str, Any]] = []
+        # PLAN.md step 5: verified outcomes learned this session (priors live in advisor.STRATEGY_PRIORS)
+        self.strategy_memory: list[dict[str, Any]] = []
+        # Khata entries created by resolved actions (refunds, releases, EDI pauses) on top of the settlement
+        self.khata_entries: list[dict[str, Any]] = []
+        # CONTRACT.md V2 proactive flows awaiting the merchant's 1-tap confirmation
+        self.dispute_packets: dict[str, dict[str, Any]] = {}
+        self.edi_offers: dict[str, dict[str, Any]] = {}
+        self.loan_edi_status = "ACTIVE"  # last EDI status Paytm reported (EDI_PAUSED flips it)
         self._seq = 0
 
     def reset(self) -> None:
