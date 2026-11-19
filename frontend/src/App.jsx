@@ -44,12 +44,15 @@ function Badge({ status }) {
 }
 
 /* ---------------- Home ---------------- */
-function Attention({ m, L, lang, onAlert }) {
+function Attention({ m, L, lang, onAlert, onUpload }) {
   const [all, setAll] = useState(false)
+  const [later, setLater] = useState([])
+  const file = useRef(null)
   const items = buildAlerts(m, L, lang)
-  const open = items.filter((x) => !x.done)
+  const open = items.filter((x) => !x.done && !later.includes(x.id))
   const done = items.filter((x) => x.done)
   const shown = all ? open : open.slice(0, 2)
+  const hi = lang === 'hi'
   return (
     <section className="attn">
       <div className="attn-h">
@@ -58,18 +61,28 @@ function Attention({ m, L, lang, onAlert }) {
       </div>
       {shown.map((x) => (
         <div key={x.id} className={`attn-card ${x.level}`}>
-          <div className="ac-top"><span className="ac-dot" /><b>{x.title}</b><em>{x.chip}</em></div>
-          <p>{x.text}</p>
-          <button className="ac-cta" onClick={() => onAlert(x.run)}>{x.cta} <span>›</span></button>
+          <span className="ac-chip">{x.chip}</span>
+          <b className="ac-title">{x.title}</b>
+          <p className="ac-text">{x.text}</p>
+          <div className="ac-act">
+            <button className="ac-cta" onClick={() => (x.photo ? file.current.click() : onAlert(x.run))}>
+              {x.photo && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.2-2h6.2l1.2 2h2.2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="13" r="3.4" /></svg>}
+              {x.cta}
+            </button>
+            {x.photo
+              ? <button className="ac-alt" onClick={() => onAlert(x.run)}>{hi ? 'डेमो देखें' : 'See demo'}</button>
+              : <button className="ac-alt" onClick={() => setLater([...later, x.id])}>{hi ? 'बाद में' : 'Later'}</button>}
+          </div>
         </div>
       ))}
+      <input ref={file} type="file" hidden accept="image/*,.pdf" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('pod', f); e.target.value = '' }} />
       {open.length > 2 && <button className="attn-more" onClick={() => setAll(!all)}>{all ? tr(lang, 'showLess') : `${tr(lang, 'showAll')} (${open.length})`}</button>}
       {done.length > 0 && <div className="attn-done">{done.map((x) => <span key={x.id}>✓ {x.title}</span>)}</div>}
     </section>
   )
 }
 
-function Home({ d, go, m, L, lang, onAlert }) {
+function Home({ d, go, m, L, lang, onAlert, onUpload }) {
   const [hide, setHide] = useState(false)
   const paid = d.transactions.filter((t) => t.status !== 'REFUNDED')
   const refunds = d.transactions.filter((t) => t.status === 'REFUNDED')
@@ -99,7 +112,7 @@ function Home({ d, go, m, L, lang, onAlert }) {
         <div><div className="m-name">{d.merchant}</div><div className="muted sm">Business Owner · {d.mid}</div></div>
       </div>
 
-      <Attention m={m} L={L} lang={lang} onAlert={onAlert} />
+      <Attention m={m} L={L} lang={lang} onAlert={onAlert} onUpload={onUpload} />
 
       <div className="promos">
         <div className="promo-card navy" onClick={() => go('settlements')}>
@@ -545,7 +558,7 @@ export default function App() {
     qr: <QR d={d} back={back} />,
   }
   const tabs = {
-    home: <Home d={d} go={go} m={m} L={ledger} lang={lang} onAlert={(id) => onPreset(id)} />,
+    home: <Home d={d} go={go} m={m} L={ledger} lang={lang} onAlert={(id) => onPreset(id)} onUpload={onUpload} />,
     settlements: <Settlement d={d} />,
     loans: <Loans d={d} />,
     account: <Account d={d} />,

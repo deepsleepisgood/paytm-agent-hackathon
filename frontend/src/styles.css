@@ -892,3 +892,24 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .urgent .ac-cta{background:#0a2a63;color:#fff}
 .ac-cta:active{transform:scale(.97)}
 .attn-card{display:flex;flex-direction:column;align-items:stretch}
+
+/* ===== attention cards: same card style as the voice nudge, one size for all ===== */
+.attn{gap:12px}
+.attn-card{display:flex;flex-direction:column;align-items:flex-start;gap:0;min-height:178px;padding:16px;border-radius:20px;background:linear-gradient(180deg,#fffaf3 0%,#fff 58%);border:1px solid #f1e3d0;box-shadow:0 8px 24px rgba(10,42,99,.07)}
+.attn-card.soon,.attn-card.info{background:#fff;border-color:#e6edf6}
+.ac-chip{display:inline-block;background:#fff1e0;color:#a15c00;font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px;letter-spacing:.01em}
+.attn-card.soon .ac-chip,.attn-card.info .ac-chip{background:#eaf1fb;color:#1b4f9c}
+.ac-title{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:18px;line-height:1.28;font-weight:700;color:#0a2a63;margin:9px 0 5px;letter-spacing:-.01em}
+.ac-text{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:14px;line-height:1.45;color:#4a5a73;margin:0}
+.ac-act{margin-top:auto;padding-top:14px;display:flex;align-items:center;gap:6px}
+.ac-cta{margin:0;display:inline-flex;align-items:center;gap:8px;background:#0a2a63;color:#fff;font-size:14.5px;font-weight:700;padding:11px 18px;border-radius:99px;box-shadow:0 6px 16px rgba(10,42,99,.2)}
+.ac-alt{font-size:14px;font-weight:600;color:#2a6bb8;padding:10px 10px}
+.attn-card:before,.ac-dot,.ac-top{display:none}
+
+.attn-card{width:100%;min-height:206px;margin:0}
+.attn-card.attn:before{display:none}
+.soon .ac-dot{background:#fff1e0}
+.attn-card .ac-title{min-height:46px}
+.attn-card{height:236px;min-height:0}
+.attn-card .ac-title{min-height:0}
+.ac-text{-webkit-line-clamp:3}
