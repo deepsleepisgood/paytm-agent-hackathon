@@ -58,14 +58,24 @@ const LEAD = {
   risk: ['UTR_VERIFY', 'SETTLEMENT_HOLD_BANK', 'BANK_KYC_UPDATE'],
   resolution: ['CHARGEBACK_RESOLVE', 'REFUND_MANAGE', 'MANDATE_TROUBLESHOOT', 'CASHFLOW_EDI_SWITCH', 'SOUNDBOX_RETURN', 'LOAN_CLOSURE_NOC', 'ESCALATE_HUMAN'],
 }
-// Some requests also need a second specialist ("if needed, the others run too").
+// Merchant-side child agents (they work for the Merchant Buddy) and Paytm-side child agents (they work for the Paytm AI Agent).
+const MKIDS = [
+  { id: 'memory', glyph: 'memory', key: 'insight', name: 'Memory Agent', short: 'Memory', side: 'Merchant side', role: 'Remembers what happened before', tone: 'indigo', link: 'History',
+    now: 'Recalling this merchant’s past cases', tasks: ['Searching the merchant’s past cases', 'Picking out what is relevant now'], tools: ['Strategy memory', 'History'] },
+  { id: 'intent', glyph: 'intent', key: 'eval', name: 'Intent & Options Agent', short: 'Intent', side: 'Merchant side', role: 'Understands the request and compares options', tone: 'blue', link: 'Decision',
+    now: 'Understanding the request and scoring options', tasks: ['Understanding what the merchant said', 'Scoring options A, B and C', 'Picking the best action'], tools: ['Intent router', 'Option scorer'] },
+  { id: 'consent', key: 'consent', name: 'DPDP Consent Gate', short: 'Consent', side: 'Merchant side', role: 'Nothing is shared without permission', tone: 'teal', link: 'Signed request',
+    now: 'Making sure the merchant allowed this', tasks: ['Minting a consent token', 'Checking purpose and scope', 'Signing the request for Paytm'], tools: ['DPDP ledger', 'Token service'] },
+]
+const MPARENT = { id: 'buddy', key: 'input', name: 'Merchant Buddy (parent)', short: 'Buddy', side: 'Merchant side', role: 'Parent agent: hears the merchant and runs the merchant-side team', tone: 'blue', link: 'Request', brand: true,
+  now: 'Listening and deciding who to involve', tasks: ['Hearing what the merchant said', 'Handing the work to its own helpers', 'Preparing the request for Paytm'], tools: ['Voice', 'Helpers'] }
 const SUPPORT = {
   REFUND_MANAGE: ['risk'], CHARGEBACK_RESOLVE: ['risk'], MANDATE_TROUBLESHOOT: ['risk'], LOAN_CLOSURE_NOC: ['risk'],
   CASHFLOW_EDI_SWITCH: ['intelligence'], SETTLEMENT_HOLD_BANK: ['intelligence'], DUPLICATE_RECONCILE: ['resolution'],
 }
 const KIDS = ['intelligence', 'risk', 'resolution', 'ledger']
-const PAYTM = { id: 'paytm', pt: true, key: 'dispatch', name: 'Paytm AI Agent (parent)', short: 'Paytm', side: 'Paytm side', role: 'Receives the signed request and picks the right specialist', tone: 'sky', link: 'Picks a specialist',
-  now: 'Reading the request and choosing the specialist', tasks: ['Receiving the signed request from the merchant’s agent', 'Verifying the consent token', 'Deciding which specialist handles it', 'Collecting the answers and replying'], tools: ['A2A endpoint', 'Specialist router'] }
+const PAYTM = { id: 'paytm', pt: true, key: 'dispatch', name: 'Paytm AI Agent (parent)', short: 'Paytm', side: 'Paytm side', role: 'Parent agent: receives the request and picks the right specialist', tone: 'sky', link: 'Picks a specialist',
+  now: 'Reading the request and choosing the specialist', tasks: ['Receiving the signed request', 'Verifying the consent token', 'Deciding which specialist handles it'], tools: ['A2A endpoint', 'Specialist router'] }
 
 // Builds the run plan: which agents are used for this request, in what order, and what state each is in.
 function plan(run, reveal) {
@@ -76,27 +86,27 @@ function plan(run, reveal) {
   const idx = (k) => steps.findIndex((s) => s.key === k)
   const used = (id) => id === 'ledger' || id === lead || support.includes(id)
   const role = (id) => (id === lead ? 'lead' : support.includes(id) ? 'support' : id === 'consent' ? 'gate' : 'ops')
-  const buddy = TEAM.find((a) => a.id === 'buddy')
   const kid = (id) => ({ ...TEAM.find((a) => a.id === id), key: id, role2: role(id) })
   const seq = [
-    { ...buddy, key: 'eval', uid: 'buddy-1', name: 'Merchant Buddy (parent)', short: 'Buddy', link: 'Asks Paytm', role: 'Merchant-side agent: understands the request and asks Paytm', now: 'Understanding the request and deciding to ask Paytm', tasks: ['Understanding what the merchant said', 'Recalling this merchant’s history', 'Scoring the options and picking one', 'Asking for permission before sharing anything'], start: 0 },
-    { ...TEAM.find((a) => a.id === 'consent'), key: 'consent', role2: 'gate' },
+    { ...MPARENT, uid: 'buddy-1' },
+    ...MKIDS.filter((m) => idx(m.key) >= 0),
     { ...PAYTM },
     ...KIDS.filter(used).map(kid),
-    { ...buddy, id: 'buddy', art: 'buddy', key: 'reply', uid: 'buddy-2', name: 'Merchant Buddy (parent)', short: 'Buddy', side: 'Merchant side', link: '', role: 'Merchant-side agent: takes the answer and updates the app', now: 'Turning the answer into a reply and updating the app', tasks: ['Receiving the answer from Paytm', 'Updating the ledger and the app', 'Speaking the reply to the merchant'], tools: ['Voice reply', 'App state'] },
+    { ...MPARENT, key: 'reply', uid: 'buddy-2', art: 'buddy', link: '', role: 'Parent agent: takes the answer and updates the app', now: 'Turning the answer into a reply and updating the app', tasks: ['Receiving the answer from Paytm', 'Updating the ledger and the app', 'Speaking the reply to the merchant'], tools: ['Voice reply', 'App state'] },
   ]
   // each used agent works from its own step until the next used agent's step (skipped agents' time is absorbed)
   seq.forEach((n, k) => {
     const own = idx(n.key)
     const nextOwn = k < seq.length - 1 ? idx(seq[k + 1].key) : own
     n.start = k === 0 ? 0 : Math.max(own, 0)
-    n.end = k === 0 ? Math.max(own, 0) : k === seq.length - 1 ? own : Math.max(nextOwn - 1, own)
+    n.end = k === seq.length - 1 ? Math.max(own, 0) : Math.max(nextOwn - 1, n.start)
   })
   const stOf = (n) => (idx(n.key) < 0 ? 'idle' : reveal > n.end ? 'done' : reveal >= n.start ? 'work' : 'idle')
   const states = seq.map(stOf)
   const byId = {}
-  seq.forEach((n, k) => { byId[n.id === 'buddy' && n.uid === 'buddy-2' ? 'buddy2' : n.id] = states[k] })
-  return { seq, states, byId, lead, support, usedCount: new Set(seq.map((n) => n.id).filter((x) => x !== 'consent')).size, role }
+  seq.forEach((n, k) => { byId[n.uid === 'buddy-2' ? 'buddy2' : n.id] = states[k] })
+  const allIds = new Set([...seq.map((n) => n.id)])
+  return { seq, states, byId, lead, support, usedCount: allIds.size, role }
 }
 
 // Cyberpunk cartoon AI faces: one character per agent (skin, neon hair/gear, expression).
@@ -212,6 +222,7 @@ function Robot({ id, size }) {
 }
 
 function Avatar({ n, size = 44 }) {
+  if (n.glyph) return <div className="ag-av" style={{ '--s': size + 'px' }}><span className="pt-av gl" style={{ width: size * .94, height: size * .94 }}>{ico(n.glyph === 'memory' ? <><ellipse cx="12" cy="6" rx="7" ry="2.8" /><path d="M5 6v6c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8V6" /><path d="M5 12v6c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-6" /></> : <><path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 16h-7l-4.5 3.5V16H5a1.5 1.5 0 0 1-1.5-1.5v-8A1.5 1.5 0 0 1 5 5z" /><path d="M8 9.5h8M8 12.3h5" /></>, Math.round(size * .5))}</span></div>
   if (n.pt) return <div className="ag-av" style={{ '--s': size + 'px' }}><span className="pt-av" style={{ width: size * .94, height: size * .94, fontSize: size * .3 }}><b>pay</b><i>tm</i></span></div>
   return (
     <div className="ag-av" style={{ '--s': size + 'px' }}>
@@ -234,68 +245,84 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
     const s = get(n.key)
     if (!s) return ''
     if (n.key === 'reply') return 'Reply spoken · app and ledger updated'
+    if (n.key === 'input') return 'Passed the request to its helpers'
+    if (n.key === 'insight') return s.insight?.summary || 'Found relevant history'
     if (n.key === 'eval') {
-      if (s.options) { const o = s.options.find((x) => x.id === s.selected); return `Option ${s.selected}: ${o ? o.label : ''} · asked Paytm` }
-      return 'Sent a signed request to the Paytm AI Agent'
+      if (s.options) { const o = s.options.find((x) => x.id === s.selected); return `Option ${s.selected}: ${o ? o.label : ''}` }
+      return `Understood: ${s.route?.intent || 'the request'}`
     }
-    if (n.id === 'paytm') return `Picked ${lead.name}${P.support.length ? ' + ' + P.support.map((x) => TEAM.find((a) => a.id === x).name).join(', ') + ' to help' : ''}`
     if (n.id === 'consent') return `Token ${s.consent.token.slice(0, 18)}… · ${s.consent.purpose.replace(/_/g, ' ')}`
+    if (n.id === 'paytm') return `Picked ${lead.name}${P.support.length ? ' + ' + P.support.map((x) => TEAM.find((a) => a.id === x).name).join(', ') + ' to help' : ''}`
     return s.say
   }
   const windowMs = (n) => { let ms = 0; for (let k = n.start; k <= n.end; k++) ms += durs[k] || 1200; return ms }
   const next = spot >= 0 ? FLOW[spot + 1] : null
-  const rootSt = P.byId.buddy === 'work' || P.byId.buddy2 === 'work' ? 'work' : P.byId.buddy2 === 'done' ? 'done' : P.byId.buddy === 'done' ? 'wait' : 'idle'
-  const kidSt = (id) => {
-    const k = FLOW.findIndex((n) => n.id === id && n.key !== 'reply' && n.key !== 'eval')
+  const anySpec = KIDS.some((id) => P.byId[id] === 'work')
+  const mSt = P.byId.buddy === 'work' || P.byId.buddy2 === 'work' ? 'work' : P.byId.buddy2 === 'done' ? 'done' : P.byId.buddy === 'done' ? 'wait' : 'idle'
+  const pSt = P.byId.paytm === 'work' ? 'work' : anySpec ? 'wait' : P.byId.buddy2 === 'done' || (P.byId.paytm === 'done' && !anySpec && P.byId.ledger === 'done') ? 'done' : P.byId.paytm === 'done' ? 'wait' : 'idle'
+  const stateOfId = (id) => {
+    const k = FLOW.findIndex((n) => n.id === id && n.key !== 'reply')
     return k < 0 ? 'standby' : states[k]
+  }
+  const lbl = { work: 'Working', wait: 'Waiting for helpers', done: 'Done', idle: 'Ready' }
+  const Kid = ({ n, sub }) => {
+    const st = stateOfId(n.id)
+    return (
+      <div className={`tr-k ${st} t-${n.tone}`}>
+        <i className="tr-up" />
+        <Avatar n={n} size={40} />
+        <b>{n.short === 'Intel' ? 'Intelligence' : n.short === 'Fix' ? 'Resolution' : n.short}</b>
+        <em>{st === 'standby' ? 'Standing by' : sub}</em>
+        <span className="tr-tick"><I.Check size={9} /></span>
+      </div>
+    )
   }
 
   return (
     <div className="af">
       <div className="af-h">
-        <div><b>Agent tree</b><span>Merchant agent asks, Paytm agent picks a specialist. Only needed ones work</span></div>
+        <div><b>Agent tree</b><span>Each side has a parent and its helpers. Only the needed ones work</span></div>
         <div className="af-chips">
-          <i>{P.usedCount} of 6 agents used</i>
+          <i>{P.usedCount} of 9 agents used</i>
           <i className={escalated ? 'esc' : 'auto'}>{escalated ? '1 human handoff' : '0 humans in the loop'}</i>
           {done && <i>{(totalMs / 1000).toFixed(1)}s</i>}
         </div>
       </div>
 
-      {/* tree: merchant-side agent and Paytm-side agent on top, Paytm's specialists below */}
+      {/* two teams: each has a parent agent (centred) with its own child agents (centred) below */}
       <div className="tr">
-        <div className="tr-top">
-          <div className={`tr-root ${rootSt} t-blue`}>
-            <span className="tr-side">Merchant side</span>
+        <div className="tr-team">
+          <div className="tr-lab">Merchant side</div>
+          <div className={`tr-root ${mSt} t-blue`}>
             <Avatar n={TEAM.find((a) => a.id === 'buddy')} size={46} />
-            <b>Merchant Buddy</b>
-            <span className="tr-st">{rootSt === 'work' ? 'Working' : rootSt === 'wait' ? 'Waiting for Paytm' : rootSt === 'done' ? 'Done' : 'Ready'}</span>
+            <b>Merchant Buddy</b><em>Parent agent</em>
+            <span className="tr-st">{lbl[mSt]}</span>
           </div>
-          <div className={`tr-link ${P.byId.consent || 'idle'} ${P.byId.paytm === 'work' || P.byId.paytm === 'done' ? 'sent' : ''}`}>
-            <i className="tr-wire" /><span>Signed request · consent</span><i className="tr-wire" />
-          </div>
-          <div className={`tr-root pt ${P.byId.paytm || 'idle'} t-sky`}>
-            <span className="tr-side">Paytm side</span>
-            <Avatar n={FLOW.find((n) => n.id === 'paytm')} size={46} />
-            <b>Paytm AI Agent</b>
-            <span className="tr-st">{P.byId.paytm === 'work' ? 'Choosing specialist' : P.byId.paytm === 'done' ? 'Done' : 'Ready'}</span>
+          <div className="tr-stem" />
+          <div className="tr-kids c3">
+            {MKIDS.map((n) => <Kid key={n.id} n={n} sub={n.id === 'consent' ? 'Asks permission' : n.id === 'memory' ? 'Recalls history' : 'Understands & decides'} />)}
           </div>
         </div>
-        <div className="tr-stem pt" />
-        <div className="tr-kids">
-          {KIDS.map((id) => {
-            const n = TEAM.find((a) => a.id === id)
-            const st = kidSt(id)
-            const r = P.role(id)
-            return (
-              <div key={id} className={`tr-k ${st} t-${n.tone}`}>
-                <i className="tr-up" />
-                <Avatar n={n} size={40} />
-                <b>{n.short === 'Intel' ? 'Intelligence' : n.short === 'Fix' ? 'Resolution' : n.short}</b>
-                <em>{st === 'standby' ? 'Standing by' : r === 'lead' ? 'Chosen specialist' : r === 'support' ? 'Called in to help' : 'Writes the books'}</em>
-                <span className="tr-tick"><I.Check size={9} /></span>
-              </div>
-            )
-          })}
+
+        <div className={`tr-link ${P.byId.consent === 'done' ? 'done' : P.byId.consent === 'work' ? 'work' : ''}`}>
+          <i className="tr-wire" /><span>Signed request goes to Paytm · answer comes back</span><i className="tr-wire" />
+        </div>
+
+        <div className="tr-team pt">
+          <div className="tr-lab">Paytm side</div>
+          <div className={`tr-root pt ${pSt} t-sky`}>
+            <Avatar n={FLOW.find((n) => n.id === 'paytm')} size={46} />
+            <b>Paytm AI Agent</b><em>Parent agent</em>
+            <span className="tr-st">{pSt === 'work' ? 'Choosing specialist' : lbl[pSt]}</span>
+          </div>
+          <div className="tr-stem" />
+          <div className="tr-kids c4">
+            {KIDS.map((id) => {
+              const n = TEAM.find((a) => a.id === id)
+              const r = P.role(id)
+              return <Kid key={id} n={n} sub={r === 'lead' ? 'Chosen specialist' : r === 'support' ? 'Called in to help' : 'Writes the books'} />
+            })}
+          </div>
         </div>
       </div>
 
@@ -333,7 +360,7 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
       {spot < 0 && done && (
         <div className="sp fin">
           <div className="fin-ic"><I.Check size={26} /></div>
-          <div><b>{escalated ? 'Handed to a human' : 'Solved by the parent and its team'}</b><span>{P.usedCount} of 6 agents used · {(totalMs / 1000).toFixed(1)}s · {escalated ? 'a person takes it from here' : 'no human needed'}</span></div>
+          <div><b>{escalated ? 'Handed to a human' : 'Solved by the parent and its team'}</b><span>{P.usedCount} of 9 agents used · {(totalMs / 1000).toFixed(1)}s · {escalated ? 'a person takes it from here' : 'no human needed'}</span></div>
         </div>
       )}
       {spot < 0 && !done && lastDone >= 0 && <div className="sp wait"><span>Passing the baton…</span></div>}
@@ -406,7 +433,7 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
   const FLOW = fi ? fi.FLOW : []
   const resBadge = run && shown('reply') ? (get('reply').tone === 'bad' ? 'Fraud blocked' : awaiting ? 'Needs your OK' : escalated ? 'Human handoff' : 'Resolved by AI') : ''
   const sections = run ? [
-    { k: 'agents', show: true, title: 'Agent team', sub: done ? `${fi.P.usedCount} of 6 agents used · ${escalated ? '1 human handoff' : '0 humans in the loop'}` : fi.cur >= 0 ? `Working now: ${FLOW[fi.cur].name}` : 'Getting ready…', badge: `${fi.P.usedCount}/6` },
+    { k: 'agents', show: true, title: 'Agent team', sub: done ? `${fi.P.usedCount} of 9 agents used · ${escalated ? '1 human handoff' : '0 humans in the loop'}` : fi.cur >= 0 ? `Working now: ${FLOW[fi.cur].name}` : 'Getting ready…', badge: `${fi.P.usedCount}/9` },
     { k: 'decision', show: shown('insight') || shown('eval'), title: 'What the AI knew and chose', sub: ev && shown('eval') ? (ev.options ? `Chose option ${ev.selected}: ${(ev.options.find((o) => o.id === ev.selected) || {}).label || ''}` : `Intent ${ev.route?.intent}`) : 'Recalling this merchant’s history…', badge: ev && ev.options && shown('eval') ? `Option ${ev.selected}` : '' },
     { k: 'result', show: shown('reply'), title: 'Result', sub: `${(totalMs / 1000).toFixed(1)}s · the ledger already changed`, badge: resBadge, tone: get('reply')?.tone === 'bad' ? 'bad' : awaiting || escalated ? 'esc' : 'good' },
     { k: 'log', show: !!(done && run.live && run.events?.length), title: 'Compliance log', sub: 'Real agent-to-agent and DPDP events', badge: run?.events?.length ? String(run.events.length) : '' },
