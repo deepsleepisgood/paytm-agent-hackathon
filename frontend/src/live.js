@@ -12,12 +12,13 @@ async function demoFile(url, name) {
 }
 
 export async function callLive(sc, m, ctx = {}) {
-  if (sc.id === 'shield_cb' || sc.id === 'shield_edi') return proactiveShield(m.mid, sc.proactive)
-  if (sc.id === 'confirm_cb') return confirmDispute(m.mid, ctx.packet)
-  if (sc.id === 'confirm_edi') return confirmEdi(m.mid, ctx.offer_id, ctx.pause_days || 2)
-  if (sc.id === 'fake') return uploadDoc(ctx.fileObj || (await demoFile(fakeUrl, 'fake_upi.png')), 'upi_screenshot', m.mid)
-  if (sc.id === 'cb') return uploadDoc(ctx.fileObj || (await demoFile(podUrl, 'pod_9981.png')), 'pod', m.mid)
-  return merchantQuery(ctx.utterance || sc.utterance(m), m.mid)
+  const lang = ctx.lang || 'hi' // reply language follows the app's हि / EN tab
+  if (sc.id === 'shield_cb' || sc.id === 'shield_edi') return proactiveShield(m.mid, sc.proactive, lang)
+  if (sc.id === 'confirm_cb') return confirmDispute(m.mid, ctx.packet, lang)
+  if (sc.id === 'confirm_edi') return confirmEdi(m.mid, ctx.offer_id, ctx.pause_days || 2, lang)
+  if (sc.id === 'fake') return uploadDoc(ctx.fileObj || (await demoFile(fakeUrl, 'fake_upi.png')), 'upi_screenshot', m.mid, lang)
+  if (sc.id === 'cb') return uploadDoc(ctx.fileObj || (await demoFile(podUrl, 'pod_9981.png')), 'pod', m.mid, lang)
+  return merchantQuery(ctx.utterance || sc.utterance(m), m.mid, null, lang)
 }
 
 // Confirm button info for proactive responses (contract: proactive.awaiting_confirmation).
@@ -45,6 +46,19 @@ function evalFrom(ie) {
 }
 
 export function responseToRun(sc, m, r, utterance, elapsed) {
+  // Not understood (UNCLEAR) or answered from the merchant's own books (INFO_QUERY): nothing went to Paytm.
+  if (r.intent === 'UNCLEAR' || r.intent === 'INFO_QUERY') {
+    return {
+      sc: { ...sc, intent: r.intent }, utterance, live: true, elapsed, unclear: r.intent === 'UNCLEAR', info: r.intent === 'INFO_QUERY', reply: r.reply_text,
+      events: r.a2a_events || [], audio: r.audio_base64, verified: null, escalated: false,
+      sources: { paytm: 'none', intent: r.intent_source, reply: r.reply_source },
+      steps: [
+        { key: 'input', title: 'Input understood', say: `intent=${r.intent}`, ms: 0 },
+        { key: 'eval', title: 'Intent routing', live: true, route: { intent: r.intent, source: r.intent_source, slots: {}, transcript: r.transcript }, ms: 0 },
+        { key: 'reply', title: 'Reply to merchant', reply: r.reply_text, ms: 0, effects: [] },
+      ],
+    }
+  }
   const pr = r.paytm_response || {}
   const pd = pr.data || {}
   const status = pr.status
@@ -95,7 +109,8 @@ export function responseToRun(sc, m, r, utterance, elapsed) {
     { key: 'reply', title: 'Reply to merchant', reply: r.reply_text, tone: fraud ? 'bad' : undefined, confirm, ms: 0, effects: [] },
   ]
   return {
-    sc, utterance, steps, reply: r.reply_text, live: true, elapsed,
+    sc: { ...sc, intent: r.intent || sc.intent }, // free text: show what the router decided, not the placeholder
+    utterance, steps, reply: r.reply_text, live: true, elapsed,
     events: r.a2a_events || [], audio: r.audio_base64, verified: r.verified_outcome, escalated: !!ticket,
     sources: { paytm: r.paytm_source, intent: r.intent_source, reply: r.reply_source },
   }

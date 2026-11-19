@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse, Response
 
 import advisor
 import dataset_loader as dl
+import facts
 import khata
 import pipeline
 import proactive
@@ -27,13 +28,8 @@ from state import STATE, order_sheet
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("merchant_agent")
 
-DEFAULT_MOCK_TRANSCRIPT = "मेरा कल का settlement ₹4,160 कम क्यों आया?"
-
-
-def _mock_transcript() -> str:
-    """Used only when STT is unreachable: the dataset's settlement preset chip, else a canned question."""
-    chip = next((u["text"] for u in dl.DATA.presets() if u["intent"] == "SETTLEMENT_RECONCILE"), None)
-    return chip or DEFAULT_MOCK_TRANSCRIPT
+# (A canned "settlement kam kyun aaya" transcript used to stand in when STT failed, so every unheard voice
+# note was answered as a settlement question. Removed: see pipeline.clarify.)
 
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
@@ -80,7 +76,9 @@ async def upstream_rejected(_: Request, exc: upstream.UpstreamRejected) -> JSONR
 @app.get("/health")
 async def health() -> dict[str, Any]:
     return {"status": "ok", "service": "merchant_agent", "port": 8003, "sarvam_url": upstream.SARVAM_URL, "paytm_url": upstream.PAYTM_URL,
-            "upstreams": upstream.upstream_status(), "dataset": dl.DATA.status()}
+            "upstreams": upstream.upstream_status(), "dataset": dl.DATA.status(),
+            # live | mock | down. mock = 8001 has no SARVAM_API_KEY: voice recognition and Sarvam voice are off.
+            "sarvam_mode": await upstream.sarvam_mode()}
 
 
 @app.get("/presets")
@@ -95,6 +93,18 @@ async def presets() -> dict[str, Any]:
 async def _query(text: str, mid: str, request_id: str, consent_token: str, doc_context: dict[str, Any] | None,
                  transcript: str | None = None, transcript_source: str | None = None) -> dict[str, Any]:
     cls = await router.classify(text)
+    if cls.intent == "UNCLEAR" and not doc_context:
+        STATE.log("INTENT_CLASSIFIED", pipeline.ACTOR_MERCHANT, f"Intent: UNCLEAR ({cls.source})",
+                  {"intent": cls.intent, "source": cls.source}, request_id)
+        return await pipeline.clarify(request_id=request_id, mid=mid, consent_token=consent_token, reason="unclear",
+                                      merchant_text=text, transcript=transcript, transcript_source=transcript_source,
+                                      intent_source=cls.source)
+    if cls.intent == "INFO_QUERY" and not doc_context:
+        STATE.log("INTENT_CLASSIFIED", pipeline.ACTOR_MERCHANT, f"Intent: INFO_QUERY ({cls.source})",
+                  {"intent": cls.intent, "source": cls.source}, request_id)
+        return await pipeline.answer_info(request_id=request_id, mid=mid, consent_token=consent_token,
+                                          merchant_text=text, transcript=transcript,
+                                          transcript_source=transcript_source, intent_source=cls.source)
     if cls.intent == "CASHFLOW_EDI_SWITCH" and not doc_context:
         STATE.log("INTENT_CLASSIFIED", pipeline.ACTOR_MERCHANT, f"Intent: {cls.intent} ({cls.source})",
                   {"intent": cls.intent, "source": cls.source, "slots": cls.slots.model_dump()}, request_id)
@@ -124,6 +134,7 @@ async def _query(text: str, mid: str, request_id: str, consent_token: str, doc_c
 
 @app.post("/merchant/query", response_model=MerchantResponse)
 async def merchant_query(req: QueryRequest) -> dict[str, Any]:
+    pipeline.set_lang(req.language)
     request_id = pipeline.new_request_id()
     consent_token = pipeline.require_consent(req.consent_granted, req.mid, request_id, channel="text")
     return await _query(req.text, req.mid, request_id, consent_token, req.doc_context)
@@ -134,24 +145,56 @@ async def merchant_query_audio(
     audio: UploadFile = File(...),
     mid: str = Form(DEFAULT_MID),
     consent_granted: bool = Form(False),
+    language_code: str = Form("hi-IN"),
 ) -> dict[str, Any]:
     # Consent is checked before the audio is even transcribed.
+    pipeline.set_lang(language_code)
     request_id = pipeline.new_request_id()
     consent_token = pipeline.require_consent(consent_granted, mid, request_id, channel="voice")
     data = await audio.read()
     if not data:
         raise HTTPException(400, detail={"error": "EMPTY_AUDIO", "message_hi": "आवाज़ रिकॉर्ड नहीं हुई, कृपया फिर से बोलिए।"})
-    transcript, src = await upstream.stt(data, audio.filename or "audio.wav", audio.content_type or "audio/wav")
-    if not transcript:
-        transcript, src = _mock_transcript(), "mock"
+    transcript, src = await upstream.stt(data, audio.filename or "audio.webm", audio.content_type or "audio/webm",
+                                         language_code)
+    if not transcript:  # never answer a made-up question: say what went wrong and ask again
+        reason = "voice_off" if src == "mock" or await upstream.sarvam_mode() != "live" else "stt"
+        return await pipeline.clarify(request_id=request_id, mid=mid, consent_token=consent_token, reason=reason,
+                                      merchant_text=None, transcript=None,
+                                      transcript_source="mock" if src == "mock" else "unavailable")
     STATE.log(
         "AUDIO_TRANSCRIBED",
         pipeline.ACTOR_MERCHANT,
         f"STT: “{transcript}”" + (" [mock]" if src == "mock" else ""),
-        {"transcript": transcript, "source": src, "language_code": "hi-IN"},
+        {"transcript": transcript, "source": src, "language_code": language_code},
         request_id,
     )
     return await _query(transcript, mid, request_id, consent_token, None, transcript=transcript, transcript_source=src)
+
+
+@app.post("/merchant/transcribe")
+async def merchant_transcribe(
+    audio: UploadFile = File(...),
+    mid: str = Form(DEFAULT_MID),
+    consent_granted: bool = Form(False),
+    language_code: str = Form("hi-IN"),
+) -> dict[str, Any]:
+    """Sarvam STT only: the frontend shows what was heard, handles a spoken "haan" for a pending sign-off, and
+    then sends the text to /merchant/query. transcript is null (with a Hindi reason) when nothing usable came back."""
+    pipeline.set_lang(language_code)
+    request_id = pipeline.new_request_id()
+    pipeline.require_consent(consent_granted, mid, request_id, channel="voice")
+    data = await audio.read()
+    if not data:
+        raise HTTPException(400, detail={"error": "EMPTY_AUDIO", "message_hi": "आवाज़ रिकॉर्ड नहीं हुई, कृपया फिर से बोलिए।"})
+    transcript, src = await upstream.stt(data, audio.filename or "audio.webm", audio.content_type or "audio/webm",
+                                         language_code)
+    if transcript:
+        STATE.log("AUDIO_TRANSCRIBED", pipeline.ACTOR_MERCHANT, f"STT: “{transcript}”",
+                  {"transcript": transcript, "source": src, "language_code": language_code}, request_id)
+        return {"request_id": request_id, "transcript": transcript, "source": "live", "reason": None, "message_hi": None}
+    reason = "voice_off" if src == "mock" or await upstream.sarvam_mode() != "live" else "stt"
+    return {"request_id": request_id, "transcript": None, "source": src, "reason": reason,
+            "message_hi": pipeline.clarify_text(reason)}  # in the app's language despite the field name
 
 
 @app.post("/merchant/upload-doc", response_model=MerchantResponse)
@@ -160,7 +203,9 @@ async def merchant_upload_doc(
     doc_type: Literal["pod", "upi_screenshot"] = Form(...),
     mid: str = Form(DEFAULT_MID),
     consent_granted: bool = Form(False),
+    language: str = Form("hi"),
 ) -> dict[str, Any]:
+    pipeline.set_lang(language)
     request_id = pipeline.new_request_id()
     consent_token = pipeline.require_consent(consent_granted, mid, request_id, channel=f"document:{doc_type}")
 
@@ -201,16 +246,19 @@ async def merchant_upload_doc(
 @app.post("/merchant/proactive-shield", response_model=MerchantResponse)
 async def merchant_proactive_shield(req: ProactiveRequest) -> dict[str, Any]:
     """CONTRACT.md V2: the frontend simulates Paytm's webhook; 8003 fetches the alert from 8002 and acts."""
+    pipeline.set_lang(req.language)
     return await proactive.shield(req)
 
 
 @app.post("/merchant/confirm-dispute", response_model=MerchantResponse)
 async def merchant_confirm_dispute(req: ConfirmDisputeRequest) -> dict[str, Any]:
+    pipeline.set_lang(req.language)
     return await proactive.confirm_dispute(req)
 
 
 @app.post("/merchant/confirm-edi-pause", response_model=MerchantResponse)
 async def merchant_confirm_edi_pause(req: ConfirmEdiPauseRequest) -> dict[str, Any]:
+    pipeline.set_lang(req.language)
     return await proactive.confirm_edi_pause(req)
 
 
@@ -262,6 +310,7 @@ async def reset(cascade: bool = False) -> dict[str, Any]:
     and reload the dataset from disk. `?cascade=true` also resets Paytm's ledger on 8002 (EDI back to ACTIVE)."""
     STATE.reset()
     dl.reload()  # picks up dataset edits without a restart
+    facts.reset()  # the books snapshot for INFO_QUERY answers
     upstream.reset_mock_ledger()  # mock chargebacks back to dataset initial_state (HELD)
     upstream.reset_circuits()  # re-probe 8001/8002 on next call
     paytm_reset = await upstream.paytm_reset() if cascade else None

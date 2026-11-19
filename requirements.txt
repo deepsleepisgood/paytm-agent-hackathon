@@ -1,0 +1,5 @@
+# All three services in ONE environment (used by `python run.py` and the root Dockerfile).
+# Each service keeps its own requirements.txt; this just combines them.
+-r services/sarvam_service/requirements.txt
+-r services/paytm_agent/requirements.txt
+-r services/merchant_agent/requirements.txt

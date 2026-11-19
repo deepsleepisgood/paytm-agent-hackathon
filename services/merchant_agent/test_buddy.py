@@ -3,6 +3,7 @@
 Offline by default: every upstream call fails instantly, so the merchant-side mocks of 8001/8002 answer.
 """
 import json
+import re
 
 import httpx
 import pytest
@@ -10,7 +11,7 @@ import pytest
 import advisor
 import router
 import upstream
-from conftest import MID, NO_DATASET, ask, use_dataset
+from conftest import MID, NO_DATASET, REAL_DATASET, ask, use_dataset
 from schemas import Slots
 from state import STATE
 
@@ -310,6 +311,7 @@ def test_llm_utr_not_in_the_words_is_dropped(client, monkeypatch):
 
 def test_llm_reply_with_invented_amount_falls_back_to_template(client, monkeypatch):
     import pipeline
+    monkeypatch.setattr(pipeline, "REPLY_LLM", True)
 
     async def fake_llm(system, user, response_format="json"):
         if response_format == "json":
@@ -335,3 +337,103 @@ def test_consent_offer_is_never_paraphrased_by_the_llm(client, monkeypatch):
                                                             "consent_granted": True}).json()
     assert body["proactive"]["awaiting_confirmation"] == "CONFIRM_EDI_PAUSE"
     assert body["reply_source"] == "template" and "रोक दूँ?" in body["reply_text"] and "text" not in calls
+
+
+# ----------------------------------------------------------------------------- not understood -> ask, never guess
+
+@pytest.mark.parametrize("text", ["aaj cricket match kaun jeeta?", "mujhe ek pizza order karna hai", "haan theek hai", "hello"])
+def test_off_topic_or_vague_is_not_answered_as_business(client, text):
+    """LLM down (8001 unreachable in tests): keywords only. No match used to mean 'settlement'."""
+    body = ask(client, text).json()
+    assert body["intent"] == "UNCLEAR" and body["paytm_source"] == "none"
+    assert "समझ नहीं पाया" in body["reply_text"] and body["pending_action"]["type"] == "REPHRASE"
+    assert "MERCHANT_TO_PAYTM" not in [e["type"] for e in body["a2a_events"]]
+    assert body["verified_outcome"] == {}  # nothing learned from a non-answer
+
+
+def test_llm_unclear_is_respected(client, monkeypatch):
+    import router
+
+    async def fake_llm(system, user, response_format="json"):
+        return {"intent": "UNCLEAR", "slots": {}} if response_format == "json" else None
+    monkeypatch.setattr(router.upstream, "llm", fake_llm)
+    body = ask(client, "settlement wala game kab aayega bhai").json()  # has a keyword, but the LLM knows better
+    assert body["intent"] == "UNCLEAR" and body["intent_source"] == "llm"
+
+
+def test_business_questions_still_route_without_llm(client):
+    assert ask(client, "Kal ₹1,00,000 sale tha, bank mein ₹95,840 aaya — ₹4,160 kahan kata?").json()["intent"] == "SETTLEMENT_RECONCILE"
+
+
+def test_transcribe_returns_only_real_speech(client, monkeypatch):
+    async def fake_stt(audio, filename, content_type, language_code="hi-IN"):
+        return "UTR 632184920111 check karo", "live"
+    monkeypatch.setattr(upstream, "stt", fake_stt)
+    r = client.post("/merchant/transcribe", files={"audio": ("v.webm", b"x" * 2000, "audio/webm;codecs=opus")},
+                    data={"mid": MID, "consent_granted": "true"}).json()
+    assert r["transcript"] == "UTR 632184920111 check karo" and r["source"] == "live"
+
+    async def mock_stt(audio, filename, content_type, language_code="hi-IN"):
+        return None, "mock"
+    monkeypatch.setattr(upstream, "stt", mock_stt)
+    r = client.post("/merchant/transcribe", files={"audio": ("v.webm", b"x" * 2000, "audio/webm")},
+                    data={"mid": MID, "consent_granted": "true"}).json()
+    assert r["transcript"] is None and r["reason"] == "voice_off" and "टाइप" in r["message_hi"]
+
+
+def test_transcribe_needs_consent(client):
+    r = client.post("/merchant/transcribe", files={"audio": ("v.webm", b"x" * 2000, "audio/webm")},
+                    data={"mid": MID, "consent_granted": "false"})
+    assert r.status_code == 403
+
+
+# ----------------------------------------------------------------------------- language + questions about the books
+
+def _q(client, text, language="hi"):
+    return client.post("/merchant/query", json={"text": text, "mid": MID, "consent_granted": True,
+                                                "language": language}).json()
+
+
+def test_english_tab_gets_english_clarification(client):
+    body = _q(client, "who won the cricket match today?", "en")
+    assert body["intent"] == "UNCLEAR" and body["language_code"] == "en-IN"
+    assert body["reply_text"].startswith("Sorry") and not re.search("[ऀ-ॿ]", body["reply_text"])
+
+
+def test_english_consent_prompt_is_english(client):
+    body = client.post("/merchant/proactive-shield", json={"mid": MID, "scenario": "CASHFLOW_EDI_SWITCH",
+                                                            "consent_granted": True, "language": "en"}).json()
+    assert body["proactive"]["awaiting_confirmation"] == "CONFIRM_EDI_PAUSE"
+    assert "Shall I pause" in body["reply_text"] and not re.search("[ऀ-ॿ]", body["reply_text"])
+
+
+def _fake_llm(monkeypatch, intent, answer):
+    import router
+
+    async def fake(system, user, response_format="json"):
+        return {"intent": intent, "slots": {}} if response_format == "json" else answer
+    monkeypatch.setattr(router.upstream, "llm", fake)
+
+
+def test_next_settlement_question_is_answered_from_the_books(client, monkeypatch):
+    use_dataset(REAL_DATASET)
+    client.post("/reset")
+    _fake_llm(monkeypatch, "INFO_QUERY", "आपका अगला settlement 2026-11-20 को सुबह 08:00 के आसपास आएगा, आज की बिक्री के लिए।")
+    body = _q(client, "मेरा अगला settlement कब आएगा?")
+    assert body["intent"] == "INFO_QUERY" and body["paytm_source"] == "none" and body["reply_source"] == "llm"
+    assert "20 नवंबर" in body["reply_text"]  # ISO dates are humanised for reading and TTS
+    assert "MERCHANT_TO_PAYTM" not in [e["type"] for e in body["a2a_events"]]  # read-only
+
+
+def test_info_answer_with_invented_number_is_rejected(client, monkeypatch):
+    _fake_llm(monkeypatch, "INFO_QUERY", "आपका अगला settlement ₹77,777 का होगा।")
+    body = _q(client, "agla settlement kitna aayega?")
+    assert body["intent"] == "UNCLEAR" and "77,777" not in body["reply_text"]
+
+
+def test_llm_answers_the_actual_question_by_default(client, monkeypatch):
+    import pipeline
+    monkeypatch.setattr(pipeline, "REPLY_LLM", True)  # the default; don't depend on the developer's .env
+    _fake_llm(monkeypatch, "SETTLEMENT_RECONCILE", "₹4,160 MDR, GST, refund, rental और hold में कटे।")
+    body = _q(client, "Kal ₹1,00,000 sale tha, bank mein ₹95,840 aaya — ₹4,160 kahan kata?")
+    assert body["reply_source"] == "llm" and body["reply_text"].startswith("₹4,160 MDR")
