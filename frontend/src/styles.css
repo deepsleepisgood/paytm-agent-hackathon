@@ -393,3 +393,16 @@ body{-webkit-font-smoothing:antialiased;letter-spacing:-.011em}
 /* desktop chrome in same type system */
 .cc-title b{font-weight:600;letter-spacing:-.015em}
 .col-h b{font-weight:600;letter-spacing:-.015em}
+
+/* ===== refinements: logo blend, smaller title, insights row ===== */
+img[alt="Paytm for Business"]{mix-blend-mode:multiply}
+.ios-nav{padding:52px 18px 0}
+.large-title{padding:0 18px 8px}
+.large-title h1{font-size:24px;font-weight:700;letter-spacing:-.02em}
+.large-title p{font-size:12.5px;margin-top:1px}
+.ins-min{gap:8px;padding:10px 12px;font-size:13px;white-space:nowrap}
+.ins-min b{font-weight:600;font-size:13px}
+.ins-min .trend{font-size:12px}
+.ins-min .chip-i{font-size:10.5px;padding:3px 8px;white-space:nowrap}
+.ins-min .r-go{font-size:13px;color:#c7c7cc}
+.ios-nav{padding-bottom:8px}.large-title{padding-top:2px}
