@@ -913,3 +913,24 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .attn-card{height:236px;min-height:0}
 .attn-card .ac-title{min-height:0}
 .ac-text{-webkit-line-clamp:3}
+
+/* ===== attention cards: key numbers fill the card (no empty gap) ===== */
+.attn-card{height:auto;min-height:0}
+.ac-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;margin:12px 0 0}
+.ac-stats div{background:#f4f7fb;border-radius:12px;padding:8px 10px;min-width:0}
+.urgent .ac-stats div{background:#fff3e4}
+.ac-stats span{display:block;font-size:11px;color:#6b7a90;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-stats b{display:block;font-size:15px;color:#0a2a63;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-act{margin-top:14px;padding-top:0}
+.attn-card .ac-title{margin:9px 0 5px}
+.ac-text{-webkit-line-clamp:3;min-height:0}
+
+/* ===== scrolling never mixes with the status bar: blurred, opaque strip behind time/island ===== */
+.statusbar{background:linear-gradient(to bottom,rgba(242,242,247,.98) 0%,rgba(242,242,247,.94) 62%,rgba(242,242,247,0) 100%);-webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);height:54px;-webkit-mask:linear-gradient(#000 70%,transparent);mask:linear-gradient(#000 70%,transparent);z-index:15}
+.phone:has(.voice-screen) .statusbar{background:none;-webkit-backdrop-filter:none;backdrop-filter:none;-webkit-mask:none;mask:none}
+.notch{z-index:30}
+
+/* ===== fixed top nav: logo/AI/bell (Home) and page headers stay put while content scrolls ===== */
+.topbar{position:sticky;top:0;z-index:12;background:rgba(242,242,247,.97);-webkit-backdrop-filter:blur(16px) saturate(160%);backdrop-filter:blur(16px) saturate(160%);box-shadow:0 1px 0 rgba(10,42,99,.06);padding-bottom:10px}
+.hdr{position:sticky;top:0;z-index:12}
+.screen:not(.voice-screen):not(.pg)>.topbar{animation:none}

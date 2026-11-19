@@ -64,6 +64,7 @@ function Attention({ m, L, lang, onAlert, onUpload }) {
           <span className="ac-chip">{x.chip}</span>
           <b className="ac-title">{x.title}</b>
           <p className="ac-text">{x.text}</p>
+          <div className="ac-stats">{x.stats.map((s) => <div key={s.k}><span>{s.k}</span><b>{s.v}</b></div>)}</div>
           <div className="ac-act">
             <button className="ac-cta" onClick={() => (x.photo ? file.current.click() : onAlert(x.run))}>
               {x.photo && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.2-2h6.2l1.2 2h2.2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="13" r="3.4" /></svg>}
