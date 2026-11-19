@@ -790,3 +790,24 @@ img[alt="Paytm for Business"]{mix-blend-mode:multiply}
 :root{--green:#127fa6}
 .opt.sel{background:#eaf5fa;border-color:#5ab4d1}
 .opt.sel .o-id{background:#127fa6}
+
+/* ================= COLOR SYSTEM (semantic) =================
+   Blue = brand + information (Paytm navy / sky)      Green = money in + success (emerald, cool-leaning so it sits next to blue)
+   Amber = needs attention (complement of blue)       Red = loss + risk                     Teal/indigo = AI states (listening/speaking/thinking) */
+:root{--ok:#1f9d6b;--ok-ink:#0e7a50;--ok-bg:#e3f5ec;--green:#1f9d6b}
+.green,.v.green,.big.green,.line .green,.g-r b.green{color:var(--ok)}
+.big.green{color:#178a5c}
+.pill.ok,.badge.ok,.st.ok,.caption.ok{background:var(--ok-bg);color:var(--ok-ink)}
+.trend.up{color:var(--ok)}
+.t-ic{background:var(--ok-bg);color:var(--ok)}.t-ic.r{background:#fde8e8;color:var(--red)}
+.wf-track i.net{background:var(--ok)}.wf-a.net{color:var(--ok)}.wf-track i.released{background:#46b98a}.wf-a.released{color:var(--ok)}
+.kpi.k1{background:var(--ok-bg)}.kpi.k1 b{color:var(--ok-ink)}
+.state.done{background:var(--ok-bg);color:var(--ok-ink)}
+.ok-dot{background:var(--ok)}
+.stp.done .dot{background:var(--ok)}.stp.done:not(:last-child):after{background:var(--ok)}
+.node.on{background:var(--ok-bg);color:var(--ok-ink)}.node.on .n-ic{background:var(--ok)}.arrow.on{color:var(--ok)}
+.result.good{background:#f1faf5;border-color:#bfe6d2}
+.ring b{color:var(--navy)}
+.ring{background:conic-gradient(var(--ok) calc(var(--p)*1%),#e6edf6 0)}
+.ai-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 8px 3px 4px}
+.info{display:flex;align-items:center;gap:10px}.info svg{flex:none;margin-top:0}

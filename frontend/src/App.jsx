@@ -64,7 +64,7 @@ function Home({ d, go }) {
       <div className="topbar">
         <PaytmLogo size={22} />
         <div className="tb-r">
-          <button className="ai-badge" onClick={() => go('buddy')} aria-label="AI Teammate"><I.Spark size={14} /><b>AI</b></button>
+          <button className="ai-badge" onClick={() => go('buddy')} aria-label="AI Teammate"><AIMark size={18} /><b>AI</b></button>
           <span className="dotwrap"><I.Bell size={22} /><em /></span>
         </div>
       </div>
@@ -201,7 +201,7 @@ function Settlement({ d, back }) {
         <div className="row between line total"><b>Net bank credit</b><b className="green">{inr(s.net)}</b></div>
       </div>
       <div className="card info">
-        <I.Spark size={18} />
+        <AIMark size={24} />
         <span>Total deductions {inr(s.variance)}. Fees and GST can be claimed as ITC; chargeback hold releases after proof of delivery.</span>
       </div>
     </div>
