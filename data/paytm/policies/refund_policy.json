@@ -1,0 +1,25 @@
+{
+  "disclaimer": "ILLUSTRATIVE: synthetic demo values, not actual Paytm pricing or policy",
+  "autonomous_limit_inr": 5000,
+  "rules": [
+    {
+      "if": "amount ≤ ₹5,000 and provable (duplicate UTRs / returned goods logged)",
+      "then": "AUTO",
+      "agent": "RiskPolicyAgent approves, LedgerOpsAgent executes"
+    },
+    {
+      "if": "amount > ₹5,000",
+      "then": "HUMAN_APPROVAL",
+      "approver": "OPS_L2"
+    },
+    {
+      "if": "refund to a different instrument/account than paid from",
+      "then": "REJECT"
+    }
+  ],
+  "duplicate_detection": {
+    "same_order": true,
+    "same_customer": true,
+    "max_gap_seconds": 300
+  }
+}
