@@ -174,7 +174,7 @@ async def _mandate(req, request_id, token, intent, alert, src) -> dict[str, Any]
 
 def _not_found(error: str, what: str, value: str) -> HTTPException:
     return HTTPException(404, detail={"error": error, "message": f"No {what} '{value}'. Call /merchant/proactive-shield first.",
-                                      "message_hi": "यह offer/packet नहीं मिला, कृपया पहले alert दोबारा चलाइए।"})
+                                      "message_hi": "Yeh offer/packet nahi mila, pehle alert dobara chalaiye."})
 
 
 async def confirm_dispute(req: ConfirmDisputeRequest) -> dict[str, Any]:
@@ -208,7 +208,7 @@ async def confirm_edi_pause(req: ConfirmEdiPauseRequest) -> dict[str, Any]:
     if days > max_days:
         raise HTTPException(409, detail={"error": "EDI_PAUSE_NOT_ELIGIBLE",
                                          "message": f"KFS clause {offer.get('kfs_clause', '4.2')} allows at most {max_days} days",
-                                         "message_hi": f"KFS के हिसाब से EDI ज़्यादा से ज़्यादा {max_days} दिन ही रुक सकती है।"})
+                                         "message_hi": f"KFS ke hisaab se EDI zyada se zyada {max_days} din hi ruk sakti hai."})
     STATE.log("MERCHANT_SIGNOFF", ACTOR_MERCHANT, f"Merchant consented to pause EDI for {days} days ({req.offer_id})",
               {"offer_id": req.offer_id, "pause_days": days, "consent_token": token}, request_id)
     upstream.remember_offer(offer)  # so the offline mock can execute an offer that a live 8002 made

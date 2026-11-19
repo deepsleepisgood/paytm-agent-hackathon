@@ -89,14 +89,14 @@ def test_settlement_lines_log_itc(client):
     assert body["paytm_response"]["mesh_status"] == "RESOLVED" and body["paytm_response"]["status_detail"] == "RECONCILED"
     assert body["paytm_response"]["data"]["lines_total_inr"] == 4160  # data stays 8002's raw body
     assert body["gst_itc_logged"]["amount"] == 261
-    assert "GST ₹261" in body["reply_text"] and "#9981 का ₹800 chargeback hold" in body["reply_text"]
+    assert "GST ₹261" in body["reply_text"] and "#9981 ka ₹800 chargeback hold" in body["reply_text"]
     assert len(body["paytm_agent_trace"]) == 4
 
 
 def test_not_found_utr_raises_fraud_alert(client):
     body = ask(client, "UTR 632184920555 check karo").json()
     assert body["paytm_source"] == "live" and body["fraud_alert"]["priority"] == "HIGH"
-    assert "सामान मत दीजिए" in body["reply_text"]
+    assert "saman mat dijiye" in body["reply_text"] and "fake" not in body["reply_text"].lower()
 
 
 def test_chargeback_release_is_read_from_hold_status(client):
@@ -119,7 +119,7 @@ def test_mandate_remedies_and_pause_offer(client):
     assert body["verified_outcome"]["outcome"] == "PENDING"  # nothing resolved yet: not learned
     pa = body["pending_action"]
     assert pa["type"] == "CHOOSE_REMEDY" and pa["offer_id"] == "EDIOFFER-0001"
-    assert "UPI link" in body["reply_text"] and "भेजा है" not in body["reply_text"]  # 8002 offered, didn't send
+    assert "UPI link" in body["reply_text"] and "bheja hai" not in body["reply_text"]  # 8002 offered, didn't send
     assert "EDIOFFER-0001" in [o["offer_id"] for o in client.get("/events").json()["pending_actions"]["edi_pause_offers"]]
 
 
@@ -161,7 +161,7 @@ def test_growth_advice_without_credit_offer(client, monkeypatch):
     monkeypatch.setitem(RECORDED, "GROWTH_ADVISORY", ("RESOLVED", GROWTH_V2, None))
     body = ask(client, "Mere pichle 6 mahine ke data se business badhane ka suggestion do").json()
     assert body["paytm_response"]["status"] == "ADVICE_READY"
-    assert "गुरुवार" in body["reply_text"] and "pre-approved" not in body["reply_text"]
+    assert "Guruvaar" in body["reply_text"] and "pre-approved" not in body["reply_text"]
 
 
 def test_refund_over_limit_without_order_goes_to_a_person(client, live_8002):

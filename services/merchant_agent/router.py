@@ -114,6 +114,13 @@ KEYWORD_RULES: list[tuple[str, list[str]]] = [
         "UTR_VERIFY",
         [
             r"(?<!\d)\d{12}(?!\d)", r"\butr\b", r"\bscreenshot\b", r"\bfake\b", r"\bnakli\b",
+            # No UTR: customer debited but nothing reached the merchant, or the customer's payment screen is stuck
+            r"(?:paisa|paise|payment|amount|rupay\w*).{0,30}(?:kat\s*gay|kat\s*chuk|cut\s*gay|debit|deduct)",
+            r"(?:kat\s*gay|debit\w*).{0,40}(?:nahi\s*aa|nahi\s*mil|not\s*(?:received|come|reach))",
+            r"screen.{0,30}(?:ghoom|ghum|rotat|spin|load|atak|atka|stuck|processing|pending|chakkar)",
+            r"(?:ghoom|ghum|spinning|loading|processing).{0,25}(?:screen|raha|rahi|rhi|rha)",
+            r"payment.{0,20}(?:atak|atka|stuck|pending|processing)",
+            r"कट\s*गय", r"स्क्रीन", r"घूम", r"अटक",
             r"payment\s*(aaya|aayi|hua|hui|mila|check|verify)", r"paisa\s*(aaya|mila)\s*(kya|ki)",
             r"\bverify\b", r"यूटीआर", r"नकली", r"स्क्रीनशॉट",
         ],
@@ -151,7 +158,9 @@ CLASSIFIER_SYSTEM_PROMPT = """You are the intent router for a Paytm merchant's A
 The merchant ({merchant_name}, MID {mid}) speaks Hindi, Hinglish or English.
 Classify the message into EXACTLY ONE intent:
 - SETTLEMENT_RECONCILE: settlement amount lower than expected, bank credit mismatch, "paise kam aaye", why money was deducted
-- UTR_VERIFY: check whether a UPI payment / UTR / screenshot is genuine or received
+- UTR_VERIFY: did a customer's UPI payment arrive / is a UTR or screenshot genuine. ALSO (no UTR needed): the
+  customer says money was debited / "kat gaya" but the merchant didn't get it, or the customer's payment screen is
+  stuck / loading / spinning ("screen ghoom rahi hai"), or "check karo payment aaya kya"
 - CHARGEBACK_RESOLVE: chargeback, disputed or held transaction, proof of delivery (PoD)
 - REFUND_MANAGE: customer refund status or a refund deducted from settlement
 - FEE_GST_LOAN: why / how much MDR (payment) fees or GST / input tax credit (ITC) were charged, or the loan's
@@ -191,6 +200,8 @@ def classifier_prompt(examples_per_intent: int = 2) -> str:
         lines += [f'"{u["text"]}" -> {intent}' for u in bank[:examples_per_intent]]
     lines += ['"मेरा अगला settlement कब आएगा?" -> INFO_QUERY', '"aaj kitni sale hui?" -> INFO_QUERY',
               '"When will I get my next payout?" -> INFO_QUERY',
+              '"customer ka paisa kat gaya par mere paas nahi aaya" -> UTR_VERIFY',
+              '"customer ki screen ghoom rahi hai, payment hua ya nahi?" -> UTR_VERIFY',
               '"aaj cricket match kaun jeeta?" -> UNCLEAR', '"haan theek hai" -> UNCLEAR']
     return prompt + ("\nExamples:\n" + "\n".join(lines) if lines else "")
 

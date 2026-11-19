@@ -4,6 +4,7 @@ Run:  uvicorn main:app --port 8003 --reload   (from services/merchant_agent)
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -17,6 +18,7 @@ import advisor
 import dataset_loader as dl
 import facts
 import khata
+import payments
 import pipeline
 import proactive
 import router
@@ -41,7 +43,9 @@ CORS_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"] + [
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    watcher = asyncio.create_task(payments.watch_loop(DEFAULT_MID))  # re-checks stuck payments with Paytm
     yield
+    watcher.cancel()
     await upstream.aclose()
 
 
@@ -60,7 +64,7 @@ async def unhandled(_: Request, exc: Exception) -> JSONResponse:
     log.exception("Unhandled error")
     return JSONResponse(
         status_code=500,
-        content={"detail": {"error": "INTERNAL_ERROR", "message": str(exc), "message_hi": "कुछ गड़बड़ हो गई, कृपया दोबारा कोशिश करें।"}},
+        content={"detail": {"error": "INTERNAL_ERROR", "message": str(exc), "message_hi": "Kuch gadbad ho gayi, dobara koshish kijiye."}},
     )
 
 
@@ -68,8 +72,8 @@ async def unhandled(_: Request, exc: Exception) -> JSONResponse:
 async def upstream_rejected(_: Request, exc: upstream.UpstreamRejected) -> JSONResponse:
     """8002 refused on purpose (403 consent / 409 not eligible): pass its status code through."""
     detail = exc.detail if isinstance(exc.detail, dict) else {"error": str(exc.detail)}
-    msg_hi = ("Paytm ने यह request मना कर दी: KFS शर्तें पूरी नहीं हैं।" if exc.status_code == 409
-              else "Paytm ने consent token स्वीकार नहीं किया।")
+    msg_hi = ("Paytm ne yeh request mana kar di: KFS ki sharten poori nahi hain." if exc.status_code == 409
+              else "Paytm ne consent token sweekar nahi kiya.")
     return JSONResponse(status_code=exc.status_code, content={"detail": {**detail, "message_hi": msg_hi, "from": "paytm_agent"}})
 
 
@@ -111,6 +115,11 @@ async def _query(text: str, mid: str, request_id: str, consent_token: str, doc_c
         return await proactive.cashflow_from_query(mid, request_id, consent_token, intent_source=cls.source,
                                                    merchant_text=text, transcript=transcript,
                                                    transcript_source=transcript_source)
+    if cls.intent == "UTR_VERIFY" and not cls.slots.utr_number and not doc_context:
+        # No UTR: the buddy finds the payment itself in Paytm's feed and fixes what it can (payments.py).
+        return await payments.check(request_id=request_id, mid=mid, consent_token=consent_token, merchant_text=text,
+                                    slots=cls.slots, intent_source=cls.source, transcript=transcript,
+                                    transcript_source=transcript_source)
     slots = cls.slots
     extra: dict[str, Any] = {}
     if doc_context:
@@ -153,7 +162,7 @@ async def merchant_query_audio(
     consent_token = pipeline.require_consent(consent_granted, mid, request_id, channel="voice")
     data = await audio.read()
     if not data:
-        raise HTTPException(400, detail={"error": "EMPTY_AUDIO", "message_hi": "आवाज़ रिकॉर्ड नहीं हुई, कृपया फिर से बोलिए।"})
+        raise HTTPException(400, detail={"error": "EMPTY_AUDIO", "message_hi": "Awaaz record nahi hui, phir se boliye."})
     transcript, src = await upstream.stt(data, audio.filename or "audio.webm", audio.content_type or "audio/webm",
                                          language_code)
     if not transcript:  # never answer a made-up question: say what went wrong and ask again
@@ -185,7 +194,7 @@ async def merchant_transcribe(
     pipeline.require_consent(consent_granted, mid, request_id, channel="voice")
     data = await audio.read()
     if not data:
-        raise HTTPException(400, detail={"error": "EMPTY_AUDIO", "message_hi": "आवाज़ रिकॉर्ड नहीं हुई, कृपया फिर से बोलिए।"})
+        raise HTTPException(400, detail={"error": "EMPTY_AUDIO", "message_hi": "Awaaz record nahi hui, phir se boliye."})
     transcript, src = await upstream.stt(data, audio.filename or "audio.webm", audio.content_type or "audio/webm",
                                          language_code)
     if transcript:
@@ -211,9 +220,9 @@ async def merchant_upload_doc(
 
     data = await file.read()
     if not data:
-        raise HTTPException(400, detail={"error": "EMPTY_FILE", "message_hi": "फ़ाइल खाली है, कृपया दोबारा upload कीजिए।"})
+        raise HTTPException(400, detail={"error": "EMPTY_FILE", "message_hi": "File khaali hai, dobara upload kijiye."})
     if len(data) > MAX_UPLOAD_BYTES:
-        raise HTTPException(413, detail={"error": "FILE_TOO_LARGE", "message_hi": "फ़ाइल 10MB से छोटी होनी चाहिए।"})
+        raise HTTPException(413, detail={"error": "FILE_TOO_LARGE", "message_hi": "File 10MB se chhoti honi chahiye."})
 
     extract, src = await upstream.doc_extract(data, file.filename or "doc", file.content_type or "", doc_type)
     fields: dict[str, Any] = extract.get("extracted_fields") or {}
@@ -302,6 +311,13 @@ async def events() -> dict[str, Any]:
         "strategy_memory": advisor.memory_summary(),
         "pending_actions": _pending(),
     }
+
+
+@app.get("/merchant/payment-watch")
+async def payment_watch(mid: str = DEFAULT_MID, lang: Literal["hi", "en"] = "hi") -> dict[str, Any]:
+    """Stuck payments the buddy is watching. Re-checked with Paytm now; `message` is set once one lands or goes back."""
+    await payments.recheck(mid)
+    return {"watching": [{**w, "message": payments.watch_message(w, lang == "en")} for w in STATE.payment_watch.values()]}
 
 
 @app.post("/reset")

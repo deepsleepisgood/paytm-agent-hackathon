@@ -18,23 +18,27 @@ import time
 import urllib.request
 
 DEV = re.compile("[ऀ-ॿ]")
+HINGLISH = re.compile(r"(hai|hain|nahi|kar|ka|ki|ke|mein|aap\w*|diya|gaya|hoga|kijiye|dijiye|tak|se)", re.I)
 INFO_OR_FEE = ("INFO_QUERY", "FEE_GST_LOAN")
 CASES = [
     # (language, question, acceptable intents, answer must contain any of)
-    ("hi", "मेरा अगला settlement कब आएगा?", ("INFO_QUERY",), ("20", "कल")),
+    ("hi", "मेरा अगला settlement कब आएगा?", ("INFO_QUERY",), ("20", "kal", "Kal")),
     ("hi", "kal kitni sale hui thi?", INFO_OR_FEE, ("22,301", "22301")),
     ("hi", "Loan ka kitna paisa baaki hai?", INFO_OR_FEE, ("42,000", "42000")),
     ("hi", "Kal ₹1,00,000 sale tha, bank mein ₹95,840 aaya — ₹4,160 kahan kata?", ("SETTLEMENT_RECONCILE",), ("4,160",)),
     ("hi", "UTR 632184920111 ka payment aaya kya?", ("UTR_VERIFY",), ("1,250",)),
-    ("hi", "UTR 632184920555 check karo, customer screenshot dikha raha hai", ("UTR_VERIFY",), ("मत", "नहीं मिला", "fake")),
+    ("hi", "UTR 632184920555 check karo, customer screenshot dikha raha hai", ("UTR_VERIFY",), ("mat", "nahi mila", "nahi hai")),
     ("hi", "Order 9981 ka chargeback wala paisa kab milega?", ("CHARGEBACK_RESOLVE",), ("800",)),
     ("hi", "Customer ne galti se do baar payment kar diya", ("DUPLICATE_RECONCILE",), ("1,180",)),
     ("hi", "Mera loan EDI bounce ho gaya, ab kya karun?", ("MANDATE_TROUBLESHOOT",), ("500",)),
     ("hi", "Soundbox kharab hai, payment aane pe awaaz nahi aati", ("ESCALATE_HUMAN",), ("tkt", "ticket", "TKT")),
     ("hi", "Soundbox ka rent kitna katta hai?", INFO_OR_FEE, ("149",)),
-    ("hi", "Business badhane ka koi suggestion do", ("GROWTH_ADVISORY",), ("गुरुवार", "Thursday", "stock")),
-    ("hi", "Aaj cricket match kaun jeeta?", ("UNCLEAR",), ("समझ नहीं",)),
-    ("hi", "Mujhe ek pizza order karna hai", ("UNCLEAR",), ("समझ नहीं",)),
+    ("hi", "Business badhane ka koi suggestion do", ("GROWTH_ADVISORY",), ("Guruvaar", "Thursday", "stock")),
+    ("hi", "Aaj cricket match kaun jeeta?", ("UNCLEAR",), ("samajh nahi",)),
+    ("hi", "Mujhe ek pizza order karna hai", ("UNCLEAR",), ("samajh nahi",)),
+    # No UTR: the buddy finds the payment itself in Paytm's feed (payments.py)
+    ("hi", "Customer ka paisa kat gaya par mere paas nahi aaya", ("UTR_VERIFY",), ("2,400",)),
+    ("hi", "Customer ki screen ghoom rahi hai, payment hua ya nahi?", ("UTR_VERIFY",), ("2,546", "1,180")),
     ("en", "When will my next settlement come?", ("INFO_QUERY",), ("20", "tomorrow")),
     ("en", "Why was ₹4,160 deducted from yesterday's settlement?", ("SETTLEMENT_RECONCILE",), ("4,160",)),
     ("en", "How much did I sell yesterday?", INFO_OR_FEE, ("22,301", "22301")),
@@ -44,6 +48,7 @@ CASES = [
     ("en", "How much of my loan is still left to pay?", INFO_OR_FEE, ("42,000", "42000")),
     ("en", "What's the weather like today?", ("UNCLEAR",), ("Sorry",)),
     ("en", "Tell me a joke", ("UNCLEAR",), ("Sorry",)),
+    ("en", "The customer's money was debited but I didn't get it", ("UTR_VERIFY",), ("2,400",)),
 ]
 
 
@@ -76,7 +81,8 @@ def main() -> int:
         reply = b.get("reply_text") or ""
         ok_intent = b.get("intent") in intents
         ok_fact = any(m in reply for m in must)
-        ok_lang = bool(DEV.search(reply)) if lang == "hi" else not DEV.search(reply)
+        # Both tabs are Latin script: the Hindi tab is Roman Hinglish (spoken from Devanagari, shown in Roman)
+        ok_lang = not DEV.search(reply) and (lang == "en" or bool(HINGLISH.search(reply)))
         rows.append((lang, q, b.get("intent"), ok_intent, ok_fact, ok_lang, dt, b.get("reply_source"), reply))
     print()
     for lang, q, intent, oi, of, ol, dt, src, reply in rows:

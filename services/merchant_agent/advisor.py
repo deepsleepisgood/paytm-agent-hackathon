@@ -211,16 +211,16 @@ def _diag_mandate(h: dict[str, Any], slots: Slots, extra: dict[str, Any]) -> dic
         summary = (f"Friction, not default: sales fell {dip['dip_pct']}% on {_span(dip['dip_dates'])}"
                    f"{' (' + dip['cause'] + ')' if dip['cause'] else ''} vs {_inr(h.get('daily_avg_sales'))}/day; "
                    f"{rate:g}% of EDIs paid on time in 6 months")
-        tip = (f"बिक्री लौट आई है, Fri–Sun की {_mult(h)} sale से EDI आराम से चलेगी।" if dip["recovered"]
-               else f"Fri–Sun में {_mult(h)} sale होती है, EDI weekend के बाद संभल जाएगी।")
+        tip = (f"Sale wapas aa gayi hai, Fri–Sun ki {_mult(h)} sale se EDI aaram se chalegi." if dip["recovered"]
+               else f"Fri–Sun mein {_mult(h)} sale hoti hai, EDI weekend ke baad sambhal jayegi.")
     elif rate < 80 and dip["dip_pct"] < 10:
         cls, root = "WILLFUL_DEFAULT_RISK", "REPEATED_MISSES_WITHOUT_CASH_DIP"
         summary = f"Repeated misses ({rate:g}% on-time) with normal sales — needs a specialist"
-        tip = "समय पर EDI से आपका credit limit बढ़ सकता है।"
+        tip = "Samay par EDI se aapka credit limit badh sakta hai."
     else:
         cls, root = "NEEDS_REVIEW", "UNCLEAR"
         summary = f"EDI bounced; sales dip {dip['dip_pct']}%, {rate:g}% on-time history"
-        tip = "EDI के दिन account में ₹500 का buffer रखें।"
+        tip = "EDI ke din account mein ₹500 ka buffer rakhiye."
     evidence = [
         f"eNACH bounce {m.get('bounce_date')}: {m.get('bounce_reason')}",
         f"Sales dip {dip['dip_pct']}% on {_span(dip['dip_dates'])}" if dip["dip_dates"] else "No sales dip found",
@@ -244,7 +244,7 @@ def _diag_settlement(h, slots, extra):
             "evidence": [f"Gross {_inr(gross)} vs bank credit {_inr(s['net_bank_credit'])}",
                          f"GST ITC {_inr(d.deduction_amount('GST'))} claimable"]
             + ([f"Chargeback hold #{hold.get('order_id')} {_inr(hold['amount'])} is recoverable"] if hold else []),
-            "tip_hi": "Bank UPI पर MDR 0% है, QR पर UPI को बढ़ावा दीजिए।",
+            "tip_hi": "Bank UPI par MDR 0% hai, QR par UPI ko badhava dijiye.",
             "metrics": {"variance_pct": round(var / gross * 100, 2) if gross else None,
                         "effective_mdr_pct": round(mdr / gross * 100, 2) if gross else None}}
 
@@ -262,8 +262,8 @@ def _diag_chargeback(h, slots, extra):
                        + f"; {len(won)}/{len(with_pod)} past disputes with PoD were won",
             "evidence": [f"Past disputes: {len(past)}, won with PoD: {len(won)}/{len(with_pod)}"]
             + (["Shiprocket connector holds the signed PoD"] if shiprocket and pod_ready else []),
-            "tip_hi": (f"PoD के साथ पिछले {len(with_pod)} में से {len(won)} disputes आप जीते हैं।" if with_pod
-                       else "हर delivery का signed PoD संभाल कर रखें।"),
+            "tip_hi": (f"PoD ke saath pichhle {len(with_pod)} mein se {len(won)} disputes aap jeete hain." if with_pod
+                       else "Har delivery ka signed PoD sambhal kar rakhiye."),
             "metrics": {"pod_win_rate": round(len(won) / len(with_pod), 2) if with_pod else None, "pod_ready": pod_ready}}
 
 
@@ -271,7 +271,7 @@ def _diag_utr(h, slots, extra):
     return {"root_cause": "PAYMENT_CONFIRMATION", "classification": "VERIFY_BEFORE_RELEASE",
             "summary": "Screenshots can be edited; only the NPCI/acquiring ledger proves the money arrived",
             "evidence": [f"UTR {slots.utr_number}" if slots.utr_number else "No UTR yet"],
-            "tip_hi": "Screenshot पर नहीं, Soundbox की आवाज़ या UTR check पर ही सामान दीजिए।", "metrics": {}}
+            "tip_hi": "Screenshot par nahi, Soundbox ki awaaz ya UTR check par hi saman dijiye.", "metrics": {}}
 
 
 def _diag_duplicate(h, slots, extra):
@@ -288,8 +288,8 @@ def _diag_duplicate(h, slots, extra):
             "summary": f"{name} paid {_inr(dup.get('amount'))} twice for order #{dup.get('order_id')}"
                        + (f"; repeat customer ({cust.get('visits_6m')} visits in 6 months)" if cust else ""),
             "evidence": [f"UTRs {', '.join(map(str, dup.get('utrs') or []))} on {dup.get('date')}"],
-            "tip_hi": (f"{name} आपके repeat customer हैं, तुरंत refund से भरोसा बढ़ेगा।" if cust
-                       else "Duplicate का तुरंत refund customer का भरोसा बढ़ाता है।"),
+            "tip_hi": (f"{name} aapke repeat customer hain, turant refund se bharosa badhega." if cust
+                       else "Duplicate ka turant refund customer ka bharosa badhata hai."),
             "metrics": {"customer_visits_6m": cust.get("visits_6m"), "amount": dl.num(dup.get("amount")),
                         "order_id": dl.digits(dup.get("order_id"))}}
 
@@ -306,7 +306,7 @@ def _diag_growth(h, slots, extra):
                        + (f"; best month {best['month']}" + (f" ({best['note']})" if best.get("note") else "") if best else ""),
             "evidence": [f"Daily average {_inr(h.get('daily_avg_sales'))}",
                          f"Top customers: {', '.join(c.get('name', '?') for c in top)}" if top else "No customer data"],
-            "tip_hi": f"Fri–Sun में {_mult(h)} बिक्री होती है, गुरुवार तक stock भर लीजिए।",
+            "tip_hi": f"Fri–Sun mein {_mult(h)} sale hoti hai, Guruvaar tak stock bhar lijiye.",
             "metrics": {"six_month_trend_pct": trend, "weekend_multiplier": h.get("weekend_multiplier"),
                         "best_month": best.get("month") if best else None}}
 
@@ -334,7 +334,7 @@ def _diag_cashflow(h, slots, extra):
                          f"#{(gap['refund_request'] or {}).get('order_id')}" if gap["refund_request"] else "No refund pending",
                          f"KFS clause {kfs.get('clause')}: EDI holiday "
                          f"{'eligible' if kfs.get('edi_holiday_eligible') else 'not eligible'} (max {kfs.get('max_pause_days')} days)"],
-            "tip_hi": f"Weekend की {_mult(h)} बिक्री से EDI फिर आराम से चलेगी।",
+            "tip_hi": f"Weekend ki {_mult(h)} sale se EDI phir aaram se chalegi.",
             "metrics": gap}
 
 
@@ -355,7 +355,7 @@ def _diag_escalate(h, slots, extra):
         return {"root_cause": "+".join(causes) or "DEVICE_FAULT", "classification": "HARDWARE_FAULT",
                 "summary": "Soundbox logs: " + ", ".join(p for p in parts if p),
                 "evidence": [f"Device {diag.get('device_id') or ''} last heartbeat {diag.get('last_heartbeat')}".strip()],
-                "tip_hi": "तब तक Paytm app में payment notification चालू रखिए।", "metrics": diag}
+                "tip_hi": "Tab tak Paytm app mein payment notification chalu rakhiye.", "metrics": diag}
     return {"root_cause": "SUPPORT_REQUEST", "classification": "HUMAN_REQUESTED",
             "summary": "Merchant asked for a human", "evidence": [], "tip_hi": "", "metrics": {}}
 
@@ -370,7 +370,7 @@ def _diag_soundbox_return(h, slots, extra):
     rent, months = dl.num(plan.get("rental_per_month")) or 0, dl.num(plan.get("months_active")) or 0
     return {"root_cause": "DEVICE_NOT_NEEDED", "classification": "SERVICE_REQUEST",
             "summary": f"Soundbox rented {months:g} months at {_inr(rent)}/month ({_inr(rent * months)} paid so far)",
-            "evidence": [], "tip_hi": "Pickup तक device चालू रखें, आखिरी bill pro-rata कटेगा।",
+            "evidence": [], "tip_hi": "Pickup tak device chalu rakhiye, aakhri bill pro-rata katega.",
             "metrics": {"rental_per_month": rent, "months_active": months}}
 
 
@@ -378,7 +378,7 @@ def _diag_noc(h, slots, extra):
     rate = h.get("past_edi_success_rate")
     return {"root_cause": "LOAN_CLOSURE", "classification": "SERVICE_REQUEST",
             "summary": f"Outstanding {_inr(dl.DATA.loan.get('balance'))} with {h.get('active_lender')}; {rate}% on-time EDIs",
-            "evidence": [], "tip_hi": f"{rate}% समय पर EDI से आपका credit profile मज़बूत है।",
+            "evidence": [], "tip_hi": f"{rate}% samay par EDI se aapka credit profile mazboot hai.",
             "metrics": {"outstanding": dl.DATA.loan.get("balance"), "edi_success_rate": rate}}
 
 
@@ -389,8 +389,8 @@ def _diag_hold(h, slots, extra):
             "classification": "INFO" if st == "ACTIVE" else "SETTLEMENT_BLOCKED",
             "summary": f"{bank.get('bank')} {bank.get('account_masked')} is {st}; last credit "
                        f"{_inr((bank.get('last_credit') or {}).get('amount'))} on {(bank.get('last_credit') or {}).get('date')}",
-            "evidence": [], "tip_hi": "Account details बदलें तो पहले penny-drop verify करवाइए।" if st == "ACTIVE"
-            else "Account चालू होते ही रुका settlement अगले cycle में आ जाएगा।", "metrics": {"bank_status": st}}
+            "evidence": [], "tip_hi": "Account details badlein toh pehle penny-drop verify karwaiye." if st == "ACTIVE"
+            else "Account chalu hote hi ruka settlement agle cycle mein aa jayega.", "metrics": {"bank_status": st}}
 
 
 _DIAGNOSE = {
@@ -403,14 +403,14 @@ _DIAGNOSE = {
     "CASHFLOW_EDI_SWITCH": _diag_cashflow,
     "ESCALATE_HUMAN": _diag_escalate,
     "REFUND_MANAGE": _diag_simple("CUSTOMER_REFUND", "INFO", "Refunds are deducted from the next settlement",
-                                  "Refund उसी UPI app में जाता है जिससे customer ने pay किया था।"),
+                                  "Refund usi UPI app mein jaata hai jisse customer ne pay kiya tha."),
     "FEE_GST_LOAN": _diag_simple("FEES_AND_EDI", "INFO", "MDR, GST on MDR (ITC eligible) and the daily EDI",
-                                 "हर महीने का GST ITC GSTR-3B में claim करना न भूलें।"),
+                                 "Har mahine ka GST ITC GSTR-3B mein claim karna na bhoolein."),
     "SOUNDBOX_RETURN": _diag_soundbox_return,
     "LOAN_CLOSURE_NOC": _diag_noc,
     "BANK_KYC_UPDATE": _diag_simple("ACCOUNT_CHANGE", "SERVICE_REQUEST",
                                     "Settlement-account change needs re-KYC and penny-drop verification",
-                                    "Verify होने तक settlement पुराने account में ही आएगा।"),
+                                    "Verify hone tak settlement purane account mein hi aayega."),
     "SETTLEMENT_HOLD_BANK": _diag_hold,
 }
 
