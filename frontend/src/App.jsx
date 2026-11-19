@@ -451,7 +451,7 @@ export default function App() {
       setChat((c) => [...c, { who: 'ai', text: 'Is merchant ka koi chargeback hold nahi hai, PoD ki zaroorat nahi.' }])
       return
     }
-    start(sc, { file: f.name, fileObj: f, utterance: kind === 'pod' ? `📄 ${f.name} (Proof of Delivery)` : `📱 ${f.name} (UPI screenshot)` })
+    start(sc, { file: f.name, fileObj: f, utterance: kind === 'pod' ? `${f.name} (Proof of Delivery)` : `${f.name} (UPI screenshot)` })
   }
   const onConfirm = (item, k) => {
     if (busy) return

@@ -48,7 +48,7 @@ export default function Khata({ m, L, onClose }) {
   }
   return (
     <div className="sheet">
-      <div className="sh-h"><div><b>📊 Khata & Tally Export</b><div className="muted xs">{m.profile.name} · {m.d.settlement.date}</div></div><button className="x" onClick={onClose}>✕</button></div>
+      <div className="sh-h"><div><b>Khata & Tally Export</b><div className="muted xs">{m.profile.name} · {m.d.settlement.date}</div></div><button className="x" onClick={onClose}>✕</button></div>
       <div className="sh-b">
         <div className="gst">
           <div className="g-h"><b>GST-ready summary</b><span className={`st ${g.registered ? 'ok' : 'warn'}`}>{g.registered ? g.scheme : 'UNREGISTERED'}</span></div>
@@ -84,7 +84,7 @@ export default function Khata({ m, L, onClose }) {
           </>
         )}
       </div>
-      <div className="sh-f"><button className="cta" onClick={download}>⬇ Export CSV (Tally / Excel)</button></div>
+      <div className="sh-f"><button className="cta" onClick={download}>Export CSV (Tally / Excel)</button></div>
     </div>
   )
 }

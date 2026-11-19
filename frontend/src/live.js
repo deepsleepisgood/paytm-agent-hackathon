@@ -24,9 +24,9 @@ function confirmFrom(r) {
   const p = r.proactive
   if (!p) return undefined
   if (p.awaiting_confirmation === 'CONFIRM_DISPUTE' && p.dispute_packet)
-    return { kind: 'dispute', packet: p.dispute_packet.packet_id, label: '✅ Haan, delivery proof bhej do' }
+    return { kind: 'dispute', packet: p.dispute_packet.packet_id, label: 'Haan, delivery proof bhej do' }
   if (p.awaiting_confirmation === 'CONFIRM_EDI_PAUSE' && p.edi_pause_offer)
-    return { kind: 'edi', offer_id: p.edi_pause_offer.offer_id, pause_days: p.edi_pause_offer.pause_days || 2, saved: p.edi_pause_offer.edi_saved_inr, label: '✅ Haan, EDI 2 din pause karo' }
+    return { kind: 'edi', offer_id: p.edi_pause_offer.offer_id, pause_days: p.edi_pause_offer.pause_days || 2, saved: p.edi_pause_offer.edi_saved_inr, label: 'Haan, EDI 2 din pause karo' }
   return undefined
 }
 

@@ -77,7 +77,7 @@ export const SCENARIOS = [
           resolution: { say: 'Merchant alert prepared: do not release goods' },
           ledger: { say: 'Fraud counter +1 · UTR flagged', effects: [{ t: 'UTR_ADD', row: { utr: FAKE_UTR, amount: amt, app: 'PhonePe', status: 'NOT_FOUND_SUSPECTED_FAKE', time: 'now', name: 'Screenshot upload' } }] },
         },
-        reply: `⚠️ Ye UTR hamare ledger mein nahi hai — screenshot nakli lag raha hai. Saamaan mat dena!`,
+        reply: `Ye UTR hamare ledger mein nahi hai — screenshot nakli lag raha hai. Saamaan mat dena!`,
         win: true, tone: 'bad',
       }
     },
@@ -286,7 +286,7 @@ export const SCENARIOS = [
   {
     id: 'shield_cb', chip: 'Chargeback incoming', intent: 'CHARGEBACK_RESOLVE', proactive: 'CHARGEBACK_INCOMING',
     available: (m) => !!m.d.chargeback,
-    utterance: (m) => `⚠️ Paytm alert: chargeback incoming on order ${m.d.chargeback.order}`,
+    utterance: (m) => `Paytm alert: chargeback incoming on order ${m.d.chargeback.order}`,
     build(m) {
       const c = m.d.chargeback, packet = 'DISPUTE-' + c.order.replace(/\D/g, '')
       return {
@@ -302,14 +302,14 @@ export const SCENARIOS = [
           ledger: { say: 'Waiting for merchant’s 1-tap sign-off · nothing sent to Paytm yet' },
         },
         reply: `${c.order} par ${inr(c.amount)} ka chargeback aaya hai. Shiprocket se delivery proof mil gaya, dispute taiyaar hai. Bhej doon?`,
-        confirm: { kind: 'dispute', packet, label: '✅ Haan, delivery proof bhej do' },
+        confirm: { kind: 'dispute', packet, label: 'Haan, delivery proof bhej do' },
         win: false,
       }
     },
   },
   {
     id: 'confirm_cb', hidden: true, intent: 'CHARGEBACK_RESOLVE',
-    utterance: () => '✅ Haan, delivery proof bhej do',
+    utterance: () => 'Haan, delivery proof bhej do',
     build(m, ctx) {
       const c = m.d.chargeback
       return {
@@ -331,7 +331,7 @@ export const SCENARIOS = [
   },
   {
     id: 'shield_edi', chip: 'Cashflow gap', intent: 'FEE_GST_LOAN', proactive: 'CASHFLOW_EDI_SWITCH',
-    utterance: () => '⚠️ Paytm alert: high refund request, payout may fall short',
+    utterance: () => 'Paytm alert: high refund request, payout may fall short',
     build(m) {
       const net = m.d.settlement.net, edi = m.d.loan.edi
       const ov = m.mid === 'PAYTM_MERCH_8821' ? { refund: 3500, proj: 1200, stock: 4500 } : null
@@ -352,14 +352,14 @@ export const SCENARIOS = [
           ledger: { say: 'Offer EDIOFFER-0001 ready · waiting for merchant consent' },
         },
         reply: `Kal ${inr(refund)} ka refund jayega to payout sirf ${inr(proj)} bachega, jabki ${inr(stock)} ka stock dena hai. Loan EDI 2 din ke liye pause kar doon? ${inr(saved)} bachenge.`,
-        confirm: { kind: 'edi', offer_id: 'EDIOFFER-0001', pause_days: 2, saved, label: `✅ Haan, EDI 2 din pause karo` },
+        confirm: { kind: 'edi', offer_id: 'EDIOFFER-0001', pause_days: 2, saved, label: `Haan, EDI 2 din pause karo` },
         win: false,
       }
     },
   },
   {
     id: 'confirm_edi', hidden: true, intent: 'FEE_GST_LOAN',
-    utterance: () => '✅ Haan, EDI 2 din pause karo',
+    utterance: () => 'Haan, EDI 2 din pause karo',
     build(m, ctx) {
       const saved = ctx.saved ?? m.d.loan.edi * 2
       return {

@@ -2,10 +2,10 @@ import React, { useState } from 'react'
 import { I } from './icons.jsx'
 
 const AGENTS = [
-  { key: 'intelligence', name: 'Intelligence', ic: '🧠', does: 'Reads the data' },
-  { key: 'risk', name: 'Risk', ic: '🛡️', does: 'Checks safety & policy' },
-  { key: 'resolution', name: 'Resolution', ic: '🧩', does: 'Decides the fix' },
-  { key: 'ledger', name: 'Ledger Ops', ic: '📒', does: 'Updates the books' },
+  { key: 'intelligence', name: 'Intelligence', ic: '1', does: 'Reads the data' },
+  { key: 'risk', name: 'Risk', ic: '2', does: 'Checks safety & policy' },
+  { key: 'resolution', name: 'Resolution', ic: '3', does: 'Decides the fix' },
+  { key: 'ledger', name: 'Ledger Ops', ic: '4', does: 'Updates the books' },
 ]
 const STAGES = [
   { label: 'Understand', keys: ['input'] },
@@ -56,7 +56,7 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
               </div>
             ))}
           </div>
-          <div className={`caption ${done ? 'ok' : ''}`}>{done ? '✓ Done — see the result below' : `${CAPTION[cur?.key] || 'Starting…'}…`}</div>
+          <div className={`caption ${done ? 'ok' : ''}`}>{done ? 'Done — see the result below' : `${CAPTION[cur?.key] || 'Starting…'}…`}</div>
         </>
       )}
 
@@ -142,7 +142,7 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
       {shown('reply') && (
         <div className={`tcard in result ${get('reply').tone === 'bad' ? 'bad' : escalated ? 'esc' : 'good'}`}>
           <div className="res-h">
-            <span className="res-b">{get('reply').tone === 'bad' ? '🚫 Fraud blocked' : escalated ? '🎫 Handed to a human' : '✅ Resolved by AI'}</span>
+            <span className="res-b">{get('reply').tone === 'bad' ? 'Fraud blocked' : escalated ? 'Handed to a human' : 'Resolved by AI'}</span>
             <span className="muted xs">{run.live ? `${(totalMs / 1000).toFixed(1)}s live round trip` : `${(totalMs / 1000).toFixed(1)}s of agent time`}</span>
           </div>
           <div className="sm">“{get('reply').reply}”</div>

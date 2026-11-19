@@ -45,7 +45,7 @@ export default function Right({ m, L, mode }) {
         <div className="kpi k4"><b key={L.fraud}>{L.fraud}</b><span>Frauds blocked</span></div>
       </div>
       {L.learnedLog.length > 0 && (
-        <div className="learn">{L.learnedLog.map((t, i) => <div key={i}>🧠 {t}</div>)}</div>
+        <div className="learn">{L.learnedLog.map((t, i) => <div key={i}>{t}</div>)}</div>
       )}
 
       <div className="sec">Money</div>
@@ -64,7 +64,7 @@ export default function Right({ m, L, mode }) {
         <div className="steps3">
           {['ACTIVE', 'PAUSED', 'MANDATE_FIXED', 'NOC_ISSUED'].map((k) => <span key={k} className={lo.status === k ? 'on ' + k : ''}>{k.replace('_', ' ')}</span>)}
         </div>
-        {lo.note && <div className="learn">⏸ {lo.note}</div>}
+        {lo.note && <div className="learn">{lo.note}</div>}
         <div className="kv2"><span>Daily EDI</span><b>{inr(lo.edi)}</b><span>Balance</span><b>{inr(lo.balance)}</b></div>
       </div>
 
@@ -93,9 +93,9 @@ export default function Right({ m, L, mode }) {
       {(L.tickets.length > 0 || L.refunds.length > 0 || L.itc > 0) && (
         <div className="rcard">
           <div className="r-h"><b>Actions taken</b></div>
-          {L.itc > 0 && <div className="act">🧾 GST ITC logged <b>{inr(L.itc)}</b></div>}
-          {L.refunds.map((r) => <div key={r.order} className="act">↩️ Auto-refund {r.order} <b>{inr(r.amount)}</b></div>)}
-          {L.tickets.map((t) => <div key={t.id} className="act">🎫 <b>{t.id}</b> · {t.reason}</div>)}
+          {L.itc > 0 && <div className="act">GST ITC logged <b>{inr(L.itc)}</b></div>}
+          {L.refunds.map((r) => <div key={r.order} className="act">Auto-refund {r.order} <b>{inr(r.amount)}</b></div>)}
+          {L.tickets.map((t) => <div key={t.id} className="act"><b>{t.id}</b> · {t.reason}</div>)}
         </div>
       )}
     </div>

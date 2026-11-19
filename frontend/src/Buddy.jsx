@@ -106,7 +106,7 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
     <div className="screen buddy">
       <div className="ios-nav">
         <PaytmLogo size={17} />
-        <button className={`spk ${speak ? 'on' : ''}`} onClick={() => setSpeak(!speak)} title="Hindi voice reply" aria-label="Voice replies">{speak ? '🔊' : '🔈'}</button>
+        <button className={`spk ${speak ? 'on' : ''}`} onClick={() => setSpeak(!speak)} title="Hindi voice reply" aria-label="Voice replies">{speak ? 'Voice on' : 'Voice off'}</button>
       </div>
       <div className="large-title"><h1>Assistant</h1><p>{m.profile.name}</p></div>
 
@@ -124,15 +124,14 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
             const why = mode === 'live' && !liveOk(s) ? 'Local demo only (not in contract yet)' : 'Not applicable for this merchant'
             return (
               <button key={it.id} className="row-btn" disabled={busy || !ok} onClick={() => onPreset(it.id)} title={ok ? s.utterance(m) : why}>
-                <span className="r-ic">{it.ic}</span>
-                <span className="r-t"><b>{it.t}</b><em>{ok ? it.s : why}</em></span>
+                                <span className="r-t"><b>{it.t}</b><em>{ok ? it.s : why}</em></span>
                 <span className="r-go">›</span>
               </button>
             )
           })}
         </div>
 
-        <button className="khata-btn" onClick={() => setKhata(true)}>📊 Khata & Tally Export <span>›</span></button>
+        <button className="khata-btn" onClick={() => setKhata(true)}>Khata & Tally Export <span>›</span></button>
 
         <div className="chat">
           {chat.map((c, k) => (
@@ -152,14 +151,14 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
 
       <div className="composer">
         <div className="upl">
-          <button disabled={busy} onClick={() => podRef.current.click()}>📄 Delivery proof</button>
-          <button disabled={busy} onClick={() => shotRef.current.click()}>📱 UPI screenshot</button>
+          <button disabled={busy} onClick={() => podRef.current.click()}>Delivery proof</button>
+          <button disabled={busy} onClick={() => shotRef.current.click()}>UPI screenshot</button>
           <input ref={podRef} type="file" hidden accept="image/*,.pdf" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('pod', f); e.target.value = '' }} />
           <input ref={shotRef} type="file" hidden accept="image/*" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('shot', f); e.target.value = '' }} />
         </div>
         {micNote && <div className="mic-note">{micNote}</div>}
         <div className="inp">
-          <button className={`mic ${rec ? 'rec' : ''}`} onClick={mic} aria-label="Voice">🎙️</button>
+          <button className={`mic ${rec ? 'rec' : ''}`} onClick={mic} aria-label="Voice"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
           <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} placeholder="Hindi / Hinglish mein poochiye…" />
           <button className="send" onClick={send} disabled={busy || !text.trim()} aria-label="Send">↑</button>
         </div>
