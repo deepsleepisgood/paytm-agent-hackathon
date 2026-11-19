@@ -186,7 +186,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
           {Array.from({ length: 10 }).map((_, i) => <span key={i} className="pt" style={{ '--i': i }} />)}
           <div className="orb">
             <div className="shine" />
-            <div className="bars">{BAR_K.map((k, i) => <i key={i} style={{ '--k': k, '--d': `${(i % 4) * 0.12}s` }} />)}</div>
+            <div className="vbars">{BAR_K.map((k, i) => <i key={i} style={{ '--k': k, '--d': `${(i % 4) * 0.12}s` }} />)}</div>
           </div>
         </div>
         <div className="state-lbl">{state === 'listening' ? 'सुन रहा हूँ…' : state === 'thinking' ? 'सोच रहा हूँ…' : state === 'speaking' ? 'बता रहा हूँ' : 'माइक दबाकर बोलिए'}</div>
@@ -205,7 +205,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
           </div>
         )}
         {state === 'idle' && !reply && !note && (
-          <div className="cap hint">
+          <div className="cap intro">
             {nudge ? (
               <button className="nudge" onClick={() => sayPrompt(nudge)}>
                 <em>आज का ज़रूरी काम</em>

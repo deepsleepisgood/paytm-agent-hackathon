@@ -106,7 +106,6 @@ export default function Buddy({ m, L, chat, busy, mode, run, reveal, onPreset, o
   const podRef = useRef(null)
   const shotRef = useRef(null)
 
-  useEffect(() => { onTheme && onTheme(view === 'voice'); return () => onTheme && onTheme(false) }, [view])
 
   const okFor = (id) => {
     const s = SCENARIOS.find((x) => x.id === id)
