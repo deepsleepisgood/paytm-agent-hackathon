@@ -436,3 +436,13 @@ img[alt="Paytm for Business"]{mix-blend-mode:multiply}
 .notch{top:7px;height:30px;width:106px}
 .statusbar{padding:14px 28px 0}
 .home-ind{bottom:6px}
+
+/* ===== AI aura mark ===== */
+.aura-ring{transform-origin:60px 60px;animation:aura 18s linear infinite}
+.cc.busy .aura-ring{animation-duration:1.8s}
+@keyframes aura{to{transform:rotate(360deg)}}
+.lt-row{display:flex;align-items:center;gap:10px}
+.e-ic{width:auto;height:auto;background:none}
+.qr-fab{width:54px;height:54px;min-width:54px;top:-22px;border:0;background:#f9f9f9;box-shadow:0 3px 10px rgba(0,30,80,.18);padding:4px}
+.tabs button.ctr.on .qr-fab{background:#f9f9f9;box-shadow:0 3px 12px rgba(0,186,242,.4)}
+.qr-fab svg{width:46px;height:46px}

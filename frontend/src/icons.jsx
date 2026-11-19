@@ -46,3 +46,12 @@ export function PaytmLogo({ size = 30 }) {
     </span>
   )
 }
+
+// AI assistant mark: navy core, white sparkle, segmented cyan "aura" ring (rotates faster while the AI is working).
+export const AIMark = ({ size = 48 }) => (
+  <svg width={size} height={size} viewBox="0 0 120 120" role="img" aria-label="AI assistant" style={{ display: 'block' }}>
+    <circle className="aura-ring" cx="60" cy="60" r="54" fill="none" stroke="#00BAF2" strokeWidth="6" strokeDasharray="46 9" strokeLinecap="round" />
+    <circle cx="60" cy="60" r="41" fill="#002E6E" />
+    <path d="M60 38 Q63.3 56.7 82 60 Q63.3 63.3 60 82 Q56.7 63.3 38 60 Q56.7 56.7 60 38 Z" fill="#FFFFFF" />
+  </svg>
+)

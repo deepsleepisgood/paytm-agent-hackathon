@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { I, PaytmLogo } from './icons.jsx'
+import { I, PaytmLogo, AIMark } from './icons.jsx'
 import { SCENARIOS, liveOk } from './engine.js'
 import { inr } from './data.js'
 import Khata from './Khata.jsx'
@@ -108,7 +108,7 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
         <PaytmLogo size={17} />
         <button className={`spk ${speak ? 'on' : ''}`} onClick={() => setSpeak(!speak)} title="Hindi voice reply" aria-label="Voice replies">{speak ? 'Voice on' : 'Voice off'}</button>
       </div>
-      <div className="large-title"><h1>Assistant</h1><p>{m.profile.name}</p></div>
+      <div className="large-title"><div className="lt-row"><AIMark size={30} /><h1>Assistant</h1></div><p>{m.profile.name}</p></div>
 
       <div className="b-scroll">
         <Insights m={m} />

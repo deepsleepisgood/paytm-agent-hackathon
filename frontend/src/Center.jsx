@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { I } from './icons.jsx'
+import { I, AIMark } from './icons.jsx'
 
 const AGENTS = [
   { key: 'intelligence', name: 'Intelligence', ic: '1', does: 'Reads the data' },
@@ -62,7 +62,7 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
 
       {!run && (
         <div className="empty">
-          <div className="e-ic"><I.Spark size={26} /></div>
+          <div className="e-ic"><AIMark size={64} /></div>
           <b>Pick a problem on the phone to start</b>
           <span className="muted sm">Watch the Merchant Buddy ask for permission, weigh options, and hand work to four Paytm AI agents — all in seconds.</span>
           <div className="how">

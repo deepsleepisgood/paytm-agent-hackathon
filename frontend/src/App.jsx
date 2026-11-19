@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { I, PaytmLogo } from './icons.jsx'
+import { I, PaytmLogo, AIMark } from './icons.jsx'
 import { inr } from './data.js'
 import { MERCHANTS, MERCHANT_LIST, DEFAULT_MERCHANT } from './merchants.js'
 import { SCENARIOS, runScenario, routeText, initLedger, applyEffects, liveOk } from './engine.js'
@@ -480,7 +480,7 @@ export default function App() {
   const body = (sub && subs[sub]) || tabs[tab]
 
   return (
-    <div className="cc">
+    <div className={`cc ${busy ? 'busy' : ''}`}>
       <header className="cc-top">
         <PaytmLogo size={20} />
         <div className="cc-title"><b>AI Teammate for Paytm merchants</b><span className="muted xs">Merchant AI Buddy ⇄ Paytm AI agents · solves problems end to end</span></div>
@@ -507,7 +507,7 @@ export default function App() {
             <nav className="tabs">
               {TABS.map((t) => (
                 <button key={t.id} aria-label={t.label} className={`${tab === t.id && !sub ? 'on' : ''} ${t.center ? 'ctr' : ''}`} onClick={() => go(t.id)}>
-                  {t.center ? <span className="qr-fab"><t.icon size={17} /></span> : <t.icon size={24} />}
+                  {t.center ? <span className="qr-fab"><AIMark size={46} /></span> : <t.icon size={24} />}
                   {t.center ? <span className="ghostlbl">.</span> : <span>{t.label}</span>}
                 </button>
               ))}
