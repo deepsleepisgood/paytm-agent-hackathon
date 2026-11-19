@@ -124,7 +124,11 @@ def test_get_ledger_returns_the_live_state(client):
     assert body["loan"]["edi_per_day_inr"] == 500
     assert body["loan"]["next_deduction_date"] == "2026-11-19"
     assert body["chargeback"]["hold_status"] == "HELD"
-    assert {t["utr"] for t in body["transactions"]} == {"632184920111", "632184920999"}
+    assert {t["utr"] for t in body["transactions"]} == {
+        "632184920111", "632184920999",
+        # The duplicate pair: one order, two settled payments.
+        "632184925001", "632184925002",
+    }
     assert body["counters"] == {"tickets_deflected": 0, "fraud_blocked": 0}
 
 

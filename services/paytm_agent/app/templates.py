@@ -173,11 +173,144 @@ def _chargeback_resolve(data: dict[str, Any], status: str) -> str:
     )
 
 
+def _mandate_troubleshoot(data: dict[str, Any], status: str) -> str:
+    """Opens by saying what it is not.
+
+    A bounce notice reads like default, and that fear is the actual problem to solve
+    before any remedy is useful.
+    """
+    if data["status"] != "BOUNCED":
+        return f"Your instalment mandate {data['mandate_id']} is active. Nothing has bounced."
+
+    amount = rupees(data["amount_inr"])
+    history = data["repayment_history"]
+    opener = (
+        f"Your {amount} instalment could not be collected from your bank on "
+        f"{pretty_date(data['bounce_date'])}. This is not a default, and it is not a "
+        f"mark against you: you have paid {history['on_time_rate_percent']}% of your "
+        f"instalments on time over the last {history['months']} months."
+    )
+
+    if status == "ESCALATED":
+        return (
+            opener + f" You can clear it now with a UPI link for {amount}. I have also "
+            "asked a Paytm colleague to look at your account, because a payment holiday "
+            "is not available to you at the moment."
+        )
+
+    pause = next((r for r in data["remedies"] if r["type"] == "KFS_HARDSHIP_PAUSE"), None)
+    text = opener + f" You have two choices. I can send you a UPI link to pay the {amount} now."
+    if pause:
+        text += (
+            f" Or, if money is tight this week, {pause['nbfc']} can pause your daily "
+            f"instalment for {pause['pause_days']} days, which keeps "
+            f"{rupees(pause['edi_saved_inr'])} with you. Just tell me which you prefer."
+        )
+    return text
+
+
+def _duplicate_payment_reconcile(data: dict[str, Any], status: str) -> str:
+    if data["duplicates_found"] == 0:
+        return (
+            "I have checked your payments and no order has been paid for twice, so "
+            "there is nothing to put right."
+        )
+
+    order = data["order_id"]
+    amount = rupees(data["refund"]["amount_inr"])
+
+    if data.get("already_refunded"):
+        return (
+            f"Your customer did pay twice for order {order}, but the extra {amount} has "
+            "already gone back to them. Your account is square."
+        )
+
+    if status == "ESCALATED":
+        return (
+            f"Your customer paid twice for order {order}. The extra {amount} is larger "
+            "than I am allowed to return on my own, so a Paytm colleague will release it. "
+            "You have not lost anything: the second payment was never really yours."
+        )
+
+    return (
+        f"Your customer paid twice for order {order}, {amount} each time, under a minute "
+        f"apart. I have sent the second {amount} back to them. Nothing changes for you: "
+        "you were credited twice, so your account is square either way."
+    )
+
+
+def _working_capital_advisory(data: dict[str, Any], status: str) -> str:
+    sales = data["sales"]
+    daily = rupees(sales["avg_daily_sales_inr"])
+    weekend = rupees(data["weekend_daily_sales_inr"])
+    offer = data["credit_offer"]
+
+    pattern = (
+        f"Over the last {sales['months']} months you have taken about {daily} a day, and "
+        f"{sales['busiest_days'][0]} to {sales['busiest_days'][-1]} runs about "
+        f"{sales['weekend_multiplier']} times that, around {weekend} a day. So it is "
+        f"worth having your stock in by {sales['restock_by']}."
+    )
+
+    if status == "ESCALATED":
+        # The refusal. Said plainly, and without leaving the merchant empty-handed.
+        # Phrased to avoid containing the recommendation it is declining to make, even
+        # as a quotation of the question. A test forbids those phrases outright, and a
+        # strict check is worth more than a reworded exception to it.
+        return (
+            pattern + " On whether to take the working capital, I am not the right one "
+            "to answer that: it depends on things I cannot see, and it is your business "
+            "at stake. I have asked a Paytm colleague to go through it with you properly."
+        )
+
+    repay = data["share_of_daily_takings_repaid_percent"]
+    return (
+        pattern + f" You have {rupees(offer['pre_approved_inr'])} pre-approved with "
+        f"{offer['nbfc']} if you want it. Before taking any of it you would get a Key "
+        f"Fact Statement with the full rate and term. For comparison, your current "
+        f"instalment takes about {repay}% of an average day's takings."
+    )
+
+
+def _cashflow_edi_switch(data: dict[str, Any], status: str) -> str:
+    payout = rupees(data["projected_net_payout"])
+    b = data["breakdown"]
+    offer = data.get("edi_pause_offer") or {}
+
+    why = (
+        f"Tomorrow's payout is looking like {payout}: about "
+        f"{rupees(b['expected_gross_inr'])} in sales, less "
+        f"{rupees(b['pending_refunds_inr'])} going back to a customer"
+        + (f" and {rupees(b['edi_due_inr'])} for your loan instalment."
+           if b["edi_due_inr"] else ".")
+    )
+
+    if status == "ESCALATED":
+        return (
+            why + " Your loan is not eligible for a payment holiday, so I have asked a "
+            "Paytm colleague to take it up with the lender for you."
+        )
+
+    if not offer.get("eligible"):
+        return why + f" Your instalment is already paused, so nothing more comes out tomorrow."
+
+    return (
+        why + f" If that leaves you short, {offer['nbfc']} can pause your "
+        f"{rupees(b['edi_due_inr'] or 500)} daily instalment for {offer['pause_days']} "
+        f"days, keeping {rupees(offer['edi_saved_inr'])} with you. Say the word and I "
+        "will set it up."
+    )
+
+
 RENDERERS = {
     "ESCALATE_HUMAN": _escalate_human,
     "SETTLEMENT_RECONCILE": _settlement_reconcile,
     "UTR_VERIFY": _utr_verify,
     "CHARGEBACK_RESOLVE": _chargeback_resolve,
+    "MANDATE_TROUBLESHOOT": _mandate_troubleshoot,
+    "DUPLICATE_PAYMENT_RECONCILE": _duplicate_payment_reconcile,
+    "WORKING_CAPITAL_ADVISORY": _working_capital_advisory,
+    "CASHFLOW_EDI_SWITCH": _cashflow_edi_switch,
 }
 
 

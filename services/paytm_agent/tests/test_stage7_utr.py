@@ -230,25 +230,38 @@ def test_a_missing_utr_is_a_bad_payload(client):
 # --- intent names across the team -------------------------------------------------------------
 
 def test_person_1s_alternative_names_are_accepted(client):
-    """sarvam_service calls these its canonical names; ours are its alternatives."""
+    """sarvam_service calls these its canonical names; ours are its alternatives.
+
+    Both spellings reach the same handler, and the response reports which name this
+    service actually worked with.
+    """
     for alias, canonical in (("DUPLICATE_RECONCILE", "DUPLICATE_PAYMENT_RECONCILE"),
                              ("GROWTH_ADVISORY", "WORKING_CAPITAL_ADVISORY")):
         r = client.post("/a2a/dispatch", json=body(request_id=alias, intent=alias))
-        # Recognised, and honestly reported as not built yet rather than unknown.
-        assert r.status_code == 501, alias
-        assert canonical in r.json()["error"]["message"]
+        assert r.status_code == 200, alias
+        out = r.json()
+        assert out["intent"] == alias                 # echoed as they sent it
+        assert out["intent_canonical"] == canonical   # and what we worked with
+        # The feed groups one scenario under one heading.
+        assert store.summaries[-1]["intent"] == canonical
 
 
 @pytest.mark.parametrize("intent", [
-    "MANDATE_TROUBLESHOOT", "DUPLICATE_PAYMENT_RECONCILE",
-    "WORKING_CAPITAL_ADVISORY", "CASHFLOW_EDI_SWITCH",
+    "MANDATE_TROUBLESHOOT", "SETTLEMENT_RECONCILE", "CHARGEBACK_RESOLVE", "UTR_VERIFY",
+    "DUPLICATE_PAYMENT_RECONCILE", "WORKING_CAPITAL_ADVISORY", "CASHFLOW_EDI_SWITCH",
+    "ESCALATE_HUMAN",
 ])
-def test_the_new_scenarios_are_recognised_even_before_they_are_built(client, intent):
-    """Person 1 can already route these. UNKNOWN_INTENT would be a lie."""
-    r = client.post("/a2a/dispatch", json=body(request_id=intent, intent=intent))
-    assert r.status_code == 501
-    assert r.json()["error"]["code"] == "INTERNAL"
-    assert "not implemented yet" in r.json()["error"]["message"]
+def test_every_scenario_in_the_table_has_a_handler(client, intent):
+    """The whole eight, so none can be quietly left as a 501 on demo day."""
+    from app.intents import MODULES
+
+    assert intent in MODULES, f"{intent} has no handler"
+
+
+def test_genuinely_unknown_intents_are_still_rejected_not_guessed(client):
+    r = client.post("/a2a/dispatch", json=body(intent="MAKE_ME_A_SANDWICH"))
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == "UNKNOWN_INTENT"
 
 
 def test_genuinely_unknown_intents_are_still_rejected(client):

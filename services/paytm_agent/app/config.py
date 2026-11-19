@@ -36,6 +36,18 @@ URGENT_HOURS = 12
 # payments in a single conversation is the shape of a fraud attempt against the merchant.
 UNKNOWN_UTR_LIMIT = 3
 
+# Largest duplicate payment (INR) the agent may return to a customer alone. Higher than
+# REFUND_AUTO_LIMIT_INR on purpose: a discretionary refund is a judgement call, whereas a
+# duplicate is a provable double charge — the ledger shows two settled payments against
+# one order, so there is nothing to decide. sarvam_service's own Hindi reply quotes this
+# same 5,000 figure, so the two services tell the merchant the same story.
+DUPLICATE_AUTO_LIMIT_INR = 5000
+
+# Hardship pauses a merchant may take in a rolling 90 days before a human must look.
+# (assumption) Not a published Paytm or NBFC rule.
+HARDSHIP_PAUSE_WINDOW_DAYS = 90
+HARDSHIP_PAUSES_PER_WINDOW = 1
+
 
 def _origins() -> tuple[str, ...]:
     """CORS origins.

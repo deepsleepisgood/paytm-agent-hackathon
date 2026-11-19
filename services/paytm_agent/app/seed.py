@@ -84,6 +84,10 @@ class Order:
     settled: bool
     refund_status: str  # NONE | PENDING | PROCESSED
     refund_amount_inr: int | None = None
+    # Whether this refund was one of the deductions in the settlement that has already
+    # run. A refund issued today is real, but it is not part of yesterday's arithmetic,
+    # and counting it there would make a closed settlement stop reconciling.
+    in_settlement: bool = False
 
     def as_dict(self) -> dict:
         return {
@@ -92,6 +96,7 @@ class Order:
             "settled": self.settled,
             "refund_status": self.refund_status,
             "refund_amount_inr": self.refund_amount_inr,
+            "in_settlement": self.in_settlement,
         }
 
 
@@ -101,6 +106,9 @@ class UpiTxn:
     amount_inr: int
     payer_app: str
     lookup_status: str  # SUCCESS_SETTLED | PENDING
+    order_id: str | None = None
+    received_at: str | None = None
+    refunded: bool = False
 
     def as_dict(self) -> dict:
         return {
@@ -108,6 +116,84 @@ class UpiTxn:
             "amount_inr": self.amount_inr,
             "payer_app": self.payer_app,
             "lookup_status": self.lookup_status,
+            "order_id": self.order_id,
+            "received_at": self.received_at,
+            "refunded": self.refunded,
+        }
+
+
+@dataclass
+class Mandate:
+    """The eNACH auto-debit the daily loan instalment is collected on.
+
+    Figures marked (assumption) are not published Paytm or NBFC policy.
+    """
+
+    mandate_id: str = "ENACH_8821_01"
+    amount_inr: int = 500
+    status: str = "BOUNCED"  # ACTIVE | BOUNCED
+    bounce_date: str = "2026-11-19"
+    bounce_reason: str = "INSUFFICIENT_FUNDS"
+    bounce_charge_inr: int = 118  # (assumption) 100 plus 18% GST
+    # The context that turns a frightening letter into a solvable problem.
+    on_time_rate_percent: float = 96.0
+    history_months: int = 6
+    hardship_pauses_used_90d: int = 0
+
+    def as_dict(self) -> dict:
+        return {
+            "mandate_id": self.mandate_id,
+            "amount_inr": self.amount_inr,
+            "status": self.status,
+            "bounce_date": self.bounce_date,
+            "bounce_reason": self.bounce_reason,
+            "bounce_charge_inr": self.bounce_charge_inr,
+            "on_time_rate_percent": self.on_time_rate_percent,
+            "history_months": self.history_months,
+            "hardship_pauses_used_90d": self.hardship_pauses_used_90d,
+        }
+
+
+@dataclass
+class SalesPattern:
+    """What the merchant's own trading history shows. Used for advisory only."""
+
+    avg_daily_sales_inr: int = 32_000
+    weekend_multiplier: float = 2.3
+    busiest_days: tuple[str, ...] = ("Friday", "Saturday", "Sunday")
+    restock_by: str = "Thursday"
+    months: int = 6
+
+    def as_dict(self) -> dict:
+        return {
+            "avg_daily_sales_inr": self.avg_daily_sales_inr,
+            "weekend_multiplier": self.weekend_multiplier,
+            "busiest_days": list(self.busiest_days),
+            "restock_by": self.restock_by,
+            "months": self.months,
+        }
+
+
+@dataclass
+class CreditOffer:
+    """A pre-approved working capital limit.
+
+    No interest rate or tenure is quoted here, deliberately. Those are the terms an NBFC
+    must disclose in the Key Fact Statement, and inventing them for a demo would be
+    putting made-up credit pricing in front of a merchant.
+    """
+
+    pre_approved_inr: int = 150_000
+    nbfc: str = NBFC_NAME
+    kfs_required: bool = True
+
+    def as_dict(self) -> dict:
+        return {
+            "pre_approved_inr": self.pre_approved_inr,
+            "nbfc": self.nbfc,
+            "kfs_required": self.kfs_required,
+            "terms": "Rate and tenure are set out in the KFS, which the merchant must "
+                     "see and accept before any drawdown",
         }
 
 
@@ -216,6 +302,9 @@ class Ledger:
     utrs: dict[str, UpiTxn]
     loan: Loan
     chargeback: Chargeback
+    mandate: Mandate = field(default_factory=Mandate)
+    sales: SalesPattern = field(default_factory=SalesPattern)
+    credit_offer: CreditOffer = field(default_factory=CreditOffer)
     connectors: tuple[Connector, ...] = CONNECTORS
     projected_gross_tomorrow_inr: int = PROJECTED_GROSS_TOMORROW_INR
 
@@ -230,8 +319,25 @@ class Ledger:
 
     @property
     def refund_line_inr(self) -> int:
+        """Only refunds that were part of the settlement that has already run."""
         return sum(o.refund_amount_inr or 0 for o in self.orders.values()
-                   if o.refund_status == "PROCESSED")
+                   if o.refund_status == "PROCESSED" and o.in_settlement)
+
+    def duplicate_payments(self) -> list[tuple[str, list[UpiTxn]]]:
+        """Orders paid for more than once, oldest payment first.
+
+        A duplicate is read off the ledger rather than guessed: two settled payments
+        against one order id is a fact, not an inference.
+        """
+        by_order: dict[str, list[UpiTxn]] = {}
+        for txn in self.utrs.values():
+            if txn.order_id and txn.lookup_status == "SUCCESS_SETTLED":
+                by_order.setdefault(txn.order_id, []).append(txn)
+        return [
+            (order_id, sorted(txns, key=lambda t: t.received_at or ""))
+            for order_id, txns in by_order.items()
+            if len(txns) > 1
+        ]
 
     @property
     def lines(self) -> list[dict]:
@@ -307,6 +413,9 @@ class Ledger:
             "chargeback": self.chargeback.as_dict(),
             # Named exactly as the V2 delta asks for it, alongside the fuller loan object.
             "loan_edi_status": self.loan.status,
+            "mandate": self.mandate.as_dict(),
+            "sales": self.sales.as_dict(),
+            "credit_offer": self.credit_offer.as_dict(),
             "connectors": [c.as_dict() for c in self.connectors],
             "projected_net_payout_inr": self.projected_net_payout_inr(),
         }
@@ -334,16 +443,28 @@ def fresh(chargeback_hours_left: float = CHARGEBACK_DEFAULT_HOURS,
         orders={
             # Already refunded, and that refund is one of the settlement deductions.
             "4412": Order("4412", amount_inr=1_500, settled=True,
-                          refund_status="PROCESSED", refund_amount_inr=1_500),
+                          refund_status="PROCESSED", refund_amount_inr=1_500,
+                          in_settlement=True),
             # The V2 delta's cashflow case: a refund asked for but not yet taken, which
             # is what squeezes tomorrow's payout. PENDING, so it does not appear in
             # yesterday's settlement lines.
             "4490": Order("4490", amount_inr=3_500, settled=True,
                           refund_status="PENDING", refund_amount_inr=3_500),
+            # Paid for twice. Under the duplicate auto limit, so the agent can return
+            # the second payment itself.
+            "4455": Order("4455", amount_inr=3_200, settled=True, refund_status="NONE"),
         },
         utrs={
             "632184920111": UpiTxn("632184920111", 1_250, "GPay", "SUCCESS_SETTLED"),
             "632184920999": UpiTxn("632184920999", 2_400, "PhonePe", "PENDING"),
+            # The duplicate pair: the same order paid twice, 42 seconds apart, which is
+            # what a customer tapping twice on a slow connection looks like.
+            "632184925001": UpiTxn("632184925001", 3_200, "GPay", "SUCCESS_SETTLED",
+                                   order_id="4455",
+                                   received_at="2026-11-18T11:02:14+00:00"),
+            "632184925002": UpiTxn("632184925002", 3_200, "PhonePe", "SUCCESS_SETTLED",
+                                   order_id="4455",
+                                   received_at="2026-11-18T11:02:56+00:00"),
         },
         loan=Loan(),
         chargeback=Chargeback(
