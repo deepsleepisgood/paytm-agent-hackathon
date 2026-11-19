@@ -1,0 +1,201 @@
+{
+  "mid": "PAYTM_MERCH_8821",
+  "demo_day": "2026-11-19",
+  "scenarios": [
+    {
+      "intent": "MANDATE_TROUBLESHOOT",
+      "contract_v1_intent": "FEE_GST_LOAN",
+      "trigger_hinglish": "Mera ₹500 ka loan EDI mandate fail ho gaya",
+      "record_ids": {
+        "edi_date": "2026-11-17",
+        "loan_id": "CLX-ML-26-008821",
+        "dip_days": [
+          "2026-11-14",
+          "2026-11-15",
+          "2026-11-16"
+        ],
+        "strategy_memory": [
+          "SM-002",
+          "SM-007"
+        ]
+      },
+      "story": "Market closure cut sales ~40% for 3 days, so the 17 Nov eNACH bounced; sales recovered the same day and the EDI record is 96% on time: friction, not default.",
+      "expected_root_cause": "TEMPORARY_FRICTION",
+      "expected_intervention": "Option B: 1-tap UPI link for ₹500 (KFS 4.1, no penalty); KFS 4.2 pause available if needed",
+      "expected_verified_outcome": "EDI for 2026-11-17 marked RECOVERED_VIA_UPI_LINK, no penalty, mandate stays ACTIVE"
+    },
+    {
+      "intent": "SETTLEMENT_RECONCILE",
+      "contract_v1_intent": "SETTLEMENT_RECONCILE",
+      "trigger_hinglish": "Kal ka settlement ₹4,160 kam kyun aaya? Paisa kahan kata?",
+      "record_ids": {
+        "batch_id": "STL-20261118",
+        "refund_id": "RFD-4412",
+        "chargeback_id": "CB-9981",
+        "bulk_order_txn_id": "PTM26111700016"
+      },
+      "story": "₹1,00,000 gross on 17 Nov (PG owner's card order) -> MDR ₹1,450 + GST ₹261 (ITC) + refund #4412 ₹1,500 + Soundbox ₹149 + hold #9981 ₹800 = ₹4,160; net ₹95,840.",
+      "expected_root_cause": "VALID_DEDUCTIONS_PLUS_HOLD",
+      "expected_intervention": "Itemised explanation + auto-log ₹261 GST ITC",
+      "expected_verified_outcome": "Merchant sees itemised ₹4,160; ₹261 logged to ITC register; ₹800 linked to CB-9981"
+    },
+    {
+      "intent": "CHARGEBACK_RESOLVE",
+      "contract_v1_intent": "CHARGEBACK_RESOLVE",
+      "trigger_hinglish": "Order 9981 pe chargeback aaya hai, ₹800 hold ho gaya",
+      "record_ids": {
+        "chargeback_id": "CB-9981",
+        "order_id": "9981",
+        "txn_id": "PTM26111400012",
+        "awb": "DEX7781203345",
+        "pod_document": "services/sarvam_service/app/samples/pod_9981.png",
+        "connector": "SHIPROCKET_SYNC"
+      },
+      "story": "ONDC buyer claims non-delivery, but Shiprocket holds an OTP-verified, signed PoD (delivered 16 Nov to Rohit Verma); merchant signs off in one tap.",
+      "expected_root_cause": "DISPUTE_WITH_EVIDENCE_AVAILABLE",
+      "expected_intervention": "Submit Shiprocket PoD after 1-tap sign-off",
+      "expected_verified_outcome": "CB-9981 HELD -> RELEASED; ₹800 added back in the next settlement"
+    },
+    {
+      "intent": "UTR_VERIFY",
+      "contract_v1_intent": "UTR_VERIFY",
+      "trigger_hinglish": "Customer ne screenshot dikhaya, UTR 632184920555, paisa aaya kya?",
+      "record_ids": {
+        "genuine_utr": "632184920111",
+        "genuine_txn_id": "PTM26111800011",
+        "pending_utr": "632184920999",
+        "pending_txn_id": "PTM26111800018",
+        "fake_screenshot_utr": "632184920555"
+      },
+      "story": "…0111 is a settled GPay payment, …0999 is PhonePe PENDING (auto-reversal T+1), …0555 is not in the NPCI log.",
+      "expected_root_cause": "NOT_FOUND_SUSPECTED_FAKE (for …0555)",
+      "expected_intervention": "Tell merchant, neutrally, not to hand over goods until a payment shows on the Soundbox",
+      "expected_verified_outcome": "Fraud blocked; no goods released against an unverified screenshot"
+    },
+    {
+      "intent": "DUPLICATE_RECONCILE",
+      "contract_v1_intent": "REFUND_MANAGE",
+      "trigger_hinglish": "Sunita ji ne ek hi order ke liye do baar payment kar diya",
+      "record_ids": {
+        "order_id": "4489",
+        "customer_id": "C017",
+        "txn_ids": [
+          "PTM26111800020",
+          "PTM26111800021"
+        ],
+        "utrs": [
+          "632299206882",
+          "632230725895"
+        ]
+      },
+      "story": "PhonePe charged ₹1,180 twice, 48 seconds apart, for one order; both UTRs map to the same order.",
+      "expected_root_cause": "DUPLICATE_PAYMENT",
+      "expected_intervention": "Auto-refund ₹1,180 (under ₹5,000 autonomous limit)",
+      "expected_verified_outcome": "Refund for the second UTR PROCESSED; order reconciled to one payment"
+    },
+    {
+      "intent": "GROWTH_ADVISORY",
+      "contract_v1_intent": "FEE_GST_LOAN",
+      "trigger_hinglish": "Mere pichle 6 mahine ke data se business badhane ka suggestion do",
+      "record_ids": {
+        "daily_avg": 32000,
+        "fri_sun_vs_mon_thu": 2.3,
+        "monthly_gross": {
+          "2026-05": 461290,
+          "2026-06": 1041515,
+          "2026-07": 771130,
+          "2026-08": 812092,
+          "2026-09": 945954,
+          "2026-10": 1073613,
+          "2026-11": 782406
+        },
+        "weekend_stockout_skus": [
+          "MOB-MI-CHG33",
+          "MOB-BOT-BH100",
+          "LGT-PHI-10W2",
+          "ELC-HAV-EXT41",
+          "MOB-POR-CAB1M"
+        ]
+      },
+      "story": "₹32,000/day average with a 2.3x Fri–Sun peak; chargers, earphones, LED bulbs and extension boards run out on weekends.",
+      "expected_root_cause": "GROWTH_OPPORTUNITY",
+      "expected_intervention": "Stock up by Thursday; optional KFS-transparent working-capital line sized to weekend demand",
+      "expected_verified_outcome": "Advice delivered with cited numbers; no money moved without consent"
+    },
+    {
+      "intent": "CASHFLOW_EDI_SWITCH",
+      "contract_v1_intent": "FEE_GST_LOAN",
+      "trigger_hinglish": "Refund ke baad kal payout bahut kam hai, supplier ko ₹4,500 dena hai",
+      "record_ids": {
+        "refund_id": "RFD-4490",
+        "order_id": "4490",
+        "payable_id": "PAY-TOMORROW",
+        "loan_id": "CLX-ML-26-008821",
+        "kfs_clause": "4.2"
+      },
+      "cashflow_projection": {
+        "as_of": "2026-11-19T11:30:00",
+        "collections_so_far": 4700,
+        "intraday_txns": [
+          {
+            "time": "07:12",
+            "amount": 340,
+            "method": "UPI"
+          },
+          {
+            "time": "07:40",
+            "amount": 1150,
+            "method": "UPI"
+          },
+          {
+            "time": "08:05",
+            "amount": 560,
+            "method": "UPI"
+          },
+          {
+            "time": "08:31",
+            "amount": 890,
+            "method": "UPI"
+          },
+          {
+            "time": "09:02",
+            "amount": 420,
+            "method": "UPI"
+          },
+          {
+            "time": "09:48",
+            "amount": 760,
+            "method": "UPI"
+          },
+          {
+            "time": "10:30",
+            "amount": 580,
+            "method": "UPI"
+          }
+        ],
+        "refund_request": 3500,
+        "projected_net_payout": 1200,
+        "tomorrow_stock_due": 4500,
+        "shortfall": 3300
+      },
+      "story": "A ₹3,500 refund (#4490) leaves a ₹1,200 payout against ₹4,500 owed to the Gaffar Market accessories wholesaler on Friday for weekend stock.",
+      "expected_root_cause": "CASHFLOW_SHORTFALL",
+      "expected_intervention": "Pause Clix Capital EDI for 2 days under KFS clause 4.2 (with consent)",
+      "expected_verified_outcome": "loan_edi_status PAUSED_2_DAYS, ₹1,000 freed, EDI resumes 2026-11-21"
+    },
+    {
+      "intent": "ESCALATE_HUMAN",
+      "contract_v1_intent": "ESCALATE_HUMAN",
+      "trigger_hinglish": "Mera Soundbox kharab ho gaya, payment ki awaaz nahi aa rahi",
+      "record_ids": {
+        "device_id": "SB-8821-01",
+        "log_window": "2026-11-10 to 2026-11-18",
+        "open_ticket": "TKT-PAYTM-1290"
+      },
+      "story": "Battery health fell from 41% to 18%; heartbeats and announcements fail from 15 Nov.",
+      "expected_root_cause": "HARDWARE_FAULT",
+      "expected_intervention": "Priority L2 replacement ticket with diagnostics attached",
+      "expected_verified_outcome": "TKT-PAYTM-xxxx created with logs; merchant not asked to repeat anything"
+    }
+  ]
+}

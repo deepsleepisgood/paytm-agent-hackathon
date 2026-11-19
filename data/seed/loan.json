@@ -1,0 +1,39 @@
+{
+  "loan_id": "CLX-ML-26-008821",
+  "mid": "PAYTM_MERCH_8821",
+  "lender": "Clix Capital",
+  "lender_type": "NBFC (lending partner)",
+  "distributor": "Paytm (Lending Service Provider)",
+  "product": "Merchant cash loan with daily EDI",
+  "sanctioned_amount": 115000,
+  "processing_fee": 1150,
+  "net_disbursed": 113850,
+  "disbursed_on": "2026-05-31",
+  "daily_edi": 500,
+  "total_edis": 254,
+  "total_repayable": 127000,
+  "edis_due_so_far": 171,
+  "collected_so_far": 85000,
+  "loan_balance": 42000,
+  "first_attempt_success_rate": 0.9591,
+  "collection_method": "Daily eNACH auto-debit on the merchant's bank account at 07:00 (not netted from settlements)",
+  "mandate": {
+    "type": "eNACH",
+    "umrn": "UMRN-DEMO-0000008821",
+    "bank_account_masked": "XXXXXX4821",
+    "status": "ACTIVE (last presentment BOUNCED on 2026-11-17)"
+  },
+  "kfs": {
+    "apr_percent": 31.89,
+    "cooling_off_days": 3,
+    "foreclosure_charges": "Nil after 90 days",
+    "bounce_charges": "Nil (waived for first-attempt friction cases under hardship policy)",
+    "clauses": {
+      "4.1": "EDI of ₹500 is collected daily by eNACH; a bounced EDI may be paid the same day via a UPI link without penalty.",
+      "4.2": "EDI holiday: on documented cash-flow stress the borrower may pause EDIs for up to 2 consecutive days, with explicit consent, at most once per 30 days. Paused EDIs move to the end of the tenure; no penalty interest.",
+      "4.3": "Hardship assessment uses settlement history shared with consent via the RBI Account Aggregator framework."
+    }
+  },
+  "kfs_edi_holiday_eligible": true,
+  "edi_holiday_used_last_30_days": false
+}

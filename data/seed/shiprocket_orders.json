@@ -1,0 +1,3802 @@
+{
+  "connector": "SHIPROCKET_SYNC",
+  "mid": "PAYTM_MERCH_8821",
+  "orders": [
+    {
+      "order_id": "9878",
+      "ondc_order_id": "ONDC-260519-9878",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C040",
+      "ship_to": "Lajpat Nagar, New Delhi",
+      "items": [
+        {
+          "sku": "LGT-HAV-BAT20",
+          "name": "Havells 20W LED Batten 4ft",
+          "qty": 2,
+          "price": 340
+        }
+      ],
+      "amount": 680,
+      "payment_txn_id": "PTM26051900024",
+      "ordered_at": "2026-05-19T17:14:19",
+      "courier": "Ekart",
+      "awb": "AWB8865743881",
+      "shipped_at": "2026-05-20T01:14:19",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-05-22T03:14:19",
+        "recipient": "Rohit Dahiya",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9879",
+      "ondc_order_id": "ONDC-260523-9879",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C043",
+      "ship_to": "Sohna Road, Gurugram",
+      "items": [
+        {
+          "sku": "HOM-BAJ-DIRN",
+          "name": "Bajaj Dry Iron 750W",
+          "qty": 2,
+          "price": 750
+        }
+      ],
+      "amount": 1500,
+      "payment_txn_id": "PTM26052300030",
+      "ordered_at": "2026-05-23T13:58:11",
+      "courier": "Ekart",
+      "awb": "AWB3304634086",
+      "shipped_at": "2026-05-23T20:58:11",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-05-26T00:58:11",
+        "recipient": "Mukesh Tiwari",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9880",
+      "ondc_order_id": "ONDC-260528-9880",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C037",
+      "ship_to": "DLF Phase 3, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-GEN-CVR",
+          "name": "Phone Back Cover",
+          "qty": 2,
+          "price": 199
+        }
+      ],
+      "amount": 398,
+      "payment_txn_id": "PTM26052800008",
+      "ordered_at": "2026-05-28T10:06:02",
+      "courier": "Delhivery",
+      "awb": "AWB7859607425",
+      "shipped_at": "2026-05-28T18:06:02",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-05-31T21:06:02",
+        "recipient": "Shalini Rana (electrician)",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9881",
+      "ondc_order_id": "ONDC-260529-9881",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C039",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "HOM-BAJ-DIRN",
+          "name": "Bajaj Dry Iron 750W",
+          "qty": 2,
+          "price": 750
+        },
+        {
+          "sku": "ELC-HAV-EXT41",
+          "name": "Havells 4+1 Extension Board",
+          "qty": 2,
+          "price": 499
+        }
+      ],
+      "amount": 2498,
+      "payment_txn_id": "PTM26052900022",
+      "ordered_at": "2026-05-29T20:00:43",
+      "courier": "Delhivery",
+      "awb": "AWB8236699903",
+      "shipped_at": "2026-05-30T04:00:43",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-01T08:00:43",
+        "recipient": "Anita Joshi",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9882",
+      "ondc_order_id": "ONDC-260531-9882",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C042",
+      "ship_to": "Lajpat Nagar, New Delhi",
+      "items": [
+        {
+          "sku": "ELC-ANC-SW6A",
+          "name": "Anchor Roma 6A Switch",
+          "qty": 2,
+          "price": 32
+        }
+      ],
+      "amount": 64,
+      "payment_txn_id": "PTM26053100039",
+      "ordered_at": "2026-05-31T17:34:18",
+      "courier": "Xpressbees",
+      "awb": "AWB0647973486",
+      "shipped_at": "2026-06-01T00:34:18",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-04T01:34:18",
+        "recipient": "Rohit Verma",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9883",
+      "ondc_order_id": "ONDC-260604-9883",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C046",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "KIT-PRE-KTL15",
+          "name": "Prestige Electric Kettle 1.5L",
+          "qty": 2,
+          "price": 1150
+        },
+        {
+          "sku": "LGT-SYS-9W",
+          "name": "Syska 9W LED Bulb",
+          "qty": 2,
+          "price": 99
+        },
+        {
+          "sku": "ELC-ANC-SW6A",
+          "name": "Anchor Roma 6A Switch",
+          "qty": 2,
+          "price": 32
+        }
+      ],
+      "amount": 2562,
+      "payment_txn_id": "PTM26060400011",
+      "ordered_at": "2026-06-04T11:24:40",
+      "courier": "Blue Dart",
+      "awb": "AWB8941121398",
+      "shipped_at": "2026-06-04T15:24:40",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-07T16:24:40",
+        "recipient": "Sunil Yadav",
+        "otp_verified": false,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9884",
+      "ondc_order_id": "ONDC-260605-9884",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C044",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "HOM-BAJ-DIRN",
+          "name": "Bajaj Dry Iron 750W",
+          "qty": 1,
+          "price": 750
+        },
+        {
+          "sku": "MOB-BOT-BH100",
+          "name": "boAt Bassheads 100 Wired Earphones",
+          "qty": 1,
+          "price": 400
+        }
+      ],
+      "amount": 1150,
+      "payment_txn_id": "PTM26060500023",
+      "ordered_at": "2026-06-05T09:39:53",
+      "courier": "Ekart",
+      "awb": "AWB6931557730",
+      "shipped_at": "2026-06-05T13:39:53",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-08T13:39:53",
+        "recipient": "Nisha Dahiya",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9885",
+      "ondc_order_id": "ONDC-260607-9885",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C042",
+      "ship_to": "Lajpat Nagar, New Delhi",
+      "items": [
+        {
+          "sku": "KIT-PRE-KTL15",
+          "name": "Prestige Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1150
+        }
+      ],
+      "amount": 1150,
+      "payment_txn_id": "PTM26060700062",
+      "ordered_at": "2026-06-07T20:13:33",
+      "courier": "Blue Dart",
+      "awb": "AWB8157857560",
+      "shipped_at": "2026-06-08T00:13:33",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-11T01:13:33",
+        "recipient": "Rohit Verma",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9886",
+      "ondc_order_id": "ONDC-260608-9886",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C049",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "HOM-BAJ-DIRN",
+          "name": "Bajaj Dry Iron 750W",
+          "qty": 1,
+          "price": 750
+        }
+      ],
+      "amount": 750,
+      "payment_txn_id": "PTM26060800021",
+      "ordered_at": "2026-06-08T14:36:15",
+      "courier": "Xpressbees",
+      "awb": "AWB5245977302",
+      "shipped_at": "2026-06-08T18:36:15",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-09T23:36:15",
+        "recipient": "Manoj Tiwari",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9887",
+      "ondc_order_id": "ONDC-260610-9887",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C043",
+      "ship_to": "Sohna Road, Gurugram",
+      "items": [
+        {
+          "sku": "LGT-PHI-10W2",
+          "name": "Philips 10W LED Bulb (pack of 2)",
+          "qty": 2,
+          "price": 250
+        }
+      ],
+      "amount": 500,
+      "payment_txn_id": "PTM26061000001",
+      "ordered_at": "2026-06-10T07:28:39",
+      "courier": "Ekart",
+      "awb": "AWB3513151102",
+      "shipped_at": "2026-06-10T12:28:39",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-13T15:28:39",
+        "recipient": "Mukesh Tiwari",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9888",
+      "ondc_order_id": "ONDC-260612-9888",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C046",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "KIT-PHI-KTL15",
+          "name": "Philips Electric Kettle 1.5L",
+          "qty": 2,
+          "price": 1500
+        }
+      ],
+      "amount": 3000,
+      "payment_txn_id": "PTM26061200048",
+      "ordered_at": "2026-06-12T19:33:12",
+      "courier": "Xpressbees",
+      "awb": "AWB7123926839",
+      "shipped_at": "2026-06-13T01:33:12",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-15T01:33:12",
+        "recipient": "Sunil Yadav",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9889",
+      "ondc_order_id": "ONDC-260614-9889",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C034",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "LGT-PHI-10W2",
+          "name": "Philips 10W LED Bulb (pack of 2)",
+          "qty": 2,
+          "price": 250
+        }
+      ],
+      "amount": 500,
+      "payment_txn_id": "PTM26061400010",
+      "ordered_at": "2026-06-14T09:22:40",
+      "courier": "Shadowfax",
+      "awb": "AWB2878499359",
+      "shipped_at": "2026-06-14T14:22:40",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-15T15:22:40",
+        "recipient": "Suresh Bhatia",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9890",
+      "ondc_order_id": "ONDC-260616-9890",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C037",
+      "ship_to": "DLF Phase 3, Gurugram",
+      "items": [
+        {
+          "sku": "ELC-HAV-EXT41",
+          "name": "Havells 4+1 Extension Board",
+          "qty": 2,
+          "price": 499
+        }
+      ],
+      "amount": 998,
+      "payment_txn_id": "PTM26061600020",
+      "ordered_at": "2026-06-16T15:50:01",
+      "courier": "Blue Dart",
+      "awb": "AWB7636132326",
+      "shipped_at": "2026-06-16T23:50:01",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-20T05:50:01",
+        "recipient": "Shalini Rana (electrician)",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9891",
+      "ondc_order_id": "ONDC-260617-9891",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C041",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "BAT-DUR-AA4",
+          "name": "Duracell AA Batteries (pack of 4)",
+          "qty": 1,
+          "price": 140
+        }
+      ],
+      "amount": 140,
+      "payment_txn_id": "PTM26061700031",
+      "ordered_at": "2026-06-17T19:12:15",
+      "courier": "Xpressbees",
+      "awb": "AWB5263931165",
+      "shipped_at": "2026-06-18T01:12:15",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-19T01:12:15",
+        "recipient": "Kavita Rawat",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9892",
+      "ondc_order_id": "ONDC-260620-9892",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C033",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 2,
+          "price": 899
+        }
+      ],
+      "amount": 1798,
+      "payment_txn_id": "PTM26062000029",
+      "ordered_at": "2026-06-20T14:37:33",
+      "courier": "Blue Dart",
+      "awb": "AWB7541628016",
+      "shipped_at": "2026-06-20T22:37:33",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-24T03:37:33",
+        "recipient": "Rekha Tiwari",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9893",
+      "ondc_order_id": "ONDC-260622-9893",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C048",
+      "ship_to": "DLF Phase 3, Gurugram",
+      "items": [
+        {
+          "sku": "LGT-PHI-10W2",
+          "name": "Philips 10W LED Bulb (pack of 2)",
+          "qty": 2,
+          "price": 250
+        },
+        {
+          "sku": "LGT-HAV-BAT20",
+          "name": "Havells 20W LED Batten 4ft",
+          "qty": 2,
+          "price": 340
+        },
+        {
+          "sku": "MOB-BOT-BH100",
+          "name": "boAt Bassheads 100 Wired Earphones",
+          "qty": 1,
+          "price": 400
+        }
+      ],
+      "amount": 1580,
+      "payment_txn_id": "PTM26062200012",
+      "ordered_at": "2026-06-22T15:32:02",
+      "courier": "Xpressbees",
+      "awb": "AWB1077211590",
+      "shipped_at": "2026-06-22T20:32:02",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-25T22:32:02",
+        "recipient": "Meena Kapoor",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9894",
+      "ondc_order_id": "ONDC-260623-9894",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C033",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "MOB-SAM-CHG25",
+          "name": "Samsung 25W USB-C Charger",
+          "qty": 1,
+          "price": 1099
+        },
+        {
+          "sku": "KIT-PHI-KTL15",
+          "name": "Philips Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1500
+        },
+        {
+          "sku": "LGT-HAV-BAT20",
+          "name": "Havells 20W LED Batten 4ft",
+          "qty": 2,
+          "price": 340
+        }
+      ],
+      "amount": 3279,
+      "payment_txn_id": "PTM26062300012",
+      "ordered_at": "2026-06-23T18:08:35",
+      "courier": "Xpressbees",
+      "awb": "AWB7570441479",
+      "shipped_at": "2026-06-24T00:08:35",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-27T03:08:35",
+        "recipient": "Rekha Tiwari",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9895",
+      "ondc_order_id": "ONDC-260624-9895",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C033",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "MOB-GEN-CVR",
+          "name": "Phone Back Cover",
+          "qty": 1,
+          "price": 199
+        },
+        {
+          "sku": "LGT-WIP-PNL15",
+          "name": "Wipro 15W LED Square Panel",
+          "qty": 2,
+          "price": 480
+        },
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 1,
+          "price": 899
+        }
+      ],
+      "amount": 2058,
+      "payment_txn_id": "PTM26062400004",
+      "ordered_at": "2026-06-24T08:17:22",
+      "courier": "Xpressbees",
+      "awb": "AWB0992969814",
+      "shipped_at": "2026-06-24T13:17:22",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-25T15:17:22",
+        "recipient": "Rekha Tiwari",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9896",
+      "ondc_order_id": "ONDC-260625-9896",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C044",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "BAT-EVR-AAA10",
+          "name": "Eveready AAA Batteries (pack of 10)",
+          "qty": 1,
+          "price": 180
+        }
+      ],
+      "amount": 180,
+      "payment_txn_id": "PTM26062500001",
+      "ordered_at": "2026-06-25T07:05:14",
+      "courier": "Xpressbees",
+      "awb": "AWB0711870138",
+      "shipped_at": "2026-06-25T13:05:14",
+      "status": "RTO_DELIVERED",
+      "pod": null,
+      "rto_reason": "Customer not reachable (3 attempts)"
+    },
+    {
+      "order_id": "9897",
+      "ondc_order_id": "ONDC-260626-9897",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C045",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "LGT-PHI-10W2",
+          "name": "Philips 10W LED Bulb (pack of 2)",
+          "qty": 2,
+          "price": 250
+        },
+        {
+          "sku": "HOM-BAJ-DIRN",
+          "name": "Bajaj Dry Iron 750W",
+          "qty": 2,
+          "price": 750
+        },
+        {
+          "sku": "MOB-BOT-BH100",
+          "name": "boAt Bassheads 100 Wired Earphones",
+          "qty": 2,
+          "price": 400
+        }
+      ],
+      "amount": 2800,
+      "payment_txn_id": "PTM26062600043",
+      "ordered_at": "2026-06-26T17:18:18",
+      "courier": "Ekart",
+      "awb": "AWB0962376690",
+      "shipped_at": "2026-06-27T01:18:18",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-06-28T06:18:18",
+        "recipient": "Sunita Tiwari",
+        "otp_verified": false,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9898",
+      "ondc_order_id": "ONDC-260628-9898",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C038",
+      "ship_to": "Sohna Road, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-POR-CAB1M",
+          "name": "Portronics USB-C Cable 1m",
+          "qty": 2,
+          "price": 150
+        }
+      ],
+      "amount": 300,
+      "payment_txn_id": "PTM26062800042",
+      "ordered_at": "2026-06-28T19:06:10",
+      "courier": "Ekart",
+      "awb": "AWB0055280434",
+      "shipped_at": "2026-06-29T00:06:10",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-02T04:06:10",
+        "recipient": "Shalini Khanna",
+        "otp_verified": false,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9899",
+      "ondc_order_id": "ONDC-260629-9899",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C050",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "LGT-PHI-10W2",
+          "name": "Philips 10W LED Bulb (pack of 2)",
+          "qty": 2,
+          "price": 250
+        }
+      ],
+      "amount": 500,
+      "payment_txn_id": "PTM26062900017",
+      "ordered_at": "2026-06-29T14:30:44",
+      "courier": "Shadowfax",
+      "awb": "AWB9136817059",
+      "shipped_at": "2026-06-29T21:30:44",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-01T03:30:44",
+        "recipient": "Kavita Verma",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9900",
+      "ondc_order_id": "ONDC-260630-9900",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C036",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "LGT-SYS-9W",
+          "name": "Syska 9W LED Bulb",
+          "qty": 1,
+          "price": 99
+        },
+        {
+          "sku": "ELC-ANC-MCB32",
+          "name": "Anchor 32A MCB (single pole)",
+          "qty": 1,
+          "price": 220
+        },
+        {
+          "sku": "BAT-EVR-AAA10",
+          "name": "Eveready AAA Batteries (pack of 10)",
+          "qty": 2,
+          "price": 180
+        }
+      ],
+      "amount": 679,
+      "payment_txn_id": "PTM26063000005",
+      "ordered_at": "2026-06-30T08:24:38",
+      "courier": "Blue Dart",
+      "awb": "AWB3152363402",
+      "shipped_at": "2026-06-30T13:24:38",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-03T14:24:38",
+        "recipient": "Pankaj Yadav",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9901",
+      "ondc_order_id": "ONDC-260701-9901",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C045",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "LGT-SYS-9W",
+          "name": "Syska 9W LED Bulb",
+          "qty": 1,
+          "price": 99
+        },
+        {
+          "sku": "ACC-GEN-REM",
+          "name": "Universal TV Remote",
+          "qty": 2,
+          "price": 250
+        }
+      ],
+      "amount": 599,
+      "payment_txn_id": "PTM26070100006",
+      "ordered_at": "2026-07-01T08:14:01",
+      "courier": "Ekart",
+      "awb": "AWB6827586724",
+      "shipped_at": "2026-07-01T16:14:01",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-03T17:14:01",
+        "recipient": "Sunita Tiwari",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9902",
+      "ondc_order_id": "ONDC-260705-9902",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C036",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "ELC-ANC-SKT",
+          "name": "Anchor Roma 6A 5-pin Socket",
+          "qty": 1,
+          "price": 75
+        }
+      ],
+      "amount": 75,
+      "payment_txn_id": "PTM26070500024",
+      "ordered_at": "2026-07-05T16:48:18",
+      "courier": "Blue Dart",
+      "awb": "AWB3970030391",
+      "shipped_at": "2026-07-06T00:48:18",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-09T05:48:18",
+        "recipient": "Pankaj Yadav",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9903",
+      "ondc_order_id": "ONDC-260707-9903",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C043",
+      "ship_to": "Sohna Road, Gurugram",
+      "items": [
+        {
+          "sku": "FAN-BAJ-EXH15",
+          "name": "Bajaj Exhaust Fan 150mm",
+          "qty": 2,
+          "price": 1250
+        }
+      ],
+      "amount": 2500,
+      "payment_txn_id": "PTM26070700015",
+      "ordered_at": "2026-07-07T16:26:37",
+      "courier": "Shadowfax",
+      "awb": "AWB5901451256",
+      "shipped_at": "2026-07-07T20:26:37",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-09T21:26:37",
+        "recipient": "Mukesh Tiwari",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9904",
+      "ondc_order_id": "ONDC-260708-9904",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C046",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "LGT-HAV-BAT20",
+          "name": "Havells 20W LED Batten 4ft",
+          "qty": 1,
+          "price": 340
+        },
+        {
+          "sku": "MOB-BOT-BH100",
+          "name": "boAt Bassheads 100 Wired Earphones",
+          "qty": 2,
+          "price": 400
+        }
+      ],
+      "amount": 1140,
+      "payment_txn_id": "PTM26070800017",
+      "ordered_at": "2026-07-08T20:11:23",
+      "courier": "Blue Dart",
+      "awb": "AWB9424581010",
+      "shipped_at": "2026-07-09T02:11:23",
+      "status": "RTO_DELIVERED",
+      "pod": null,
+      "rto_reason": "Customer not reachable (3 attempts)"
+    },
+    {
+      "order_id": "9905",
+      "ondc_order_id": "ONDC-260710-9905",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C038",
+      "ship_to": "Sohna Road, Gurugram",
+      "items": [
+        {
+          "sku": "ELC-ANC-SKT",
+          "name": "Anchor Roma 6A 5-pin Socket",
+          "qty": 1,
+          "price": 75
+        }
+      ],
+      "amount": 75,
+      "payment_txn_id": "PTM26071000033",
+      "ordered_at": "2026-07-10T17:10:33",
+      "courier": "Blue Dart",
+      "awb": "AWB0105422679",
+      "shipped_at": "2026-07-11T00:10:33",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-13T03:10:33",
+        "recipient": "Shalini Khanna",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9906",
+      "ondc_order_id": "ONDC-260711-9906",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C032",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "KIT-PRE-KTL15",
+          "name": "Prestige Electric Kettle 1.5L",
+          "qty": 2,
+          "price": 1150
+        },
+        {
+          "sku": "MOB-POR-CAB1M",
+          "name": "Portronics USB-C Cable 1m",
+          "qty": 1,
+          "price": 150
+        }
+      ],
+      "amount": 2450,
+      "payment_txn_id": "PTM26071100015",
+      "ordered_at": "2026-07-11T09:34:48",
+      "courier": "Shadowfax",
+      "awb": "AWB9930707003",
+      "shipped_at": "2026-07-11T15:34:48",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-12T16:34:48",
+        "recipient": "Naresh Rawat",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9907",
+      "ondc_order_id": "ONDC-260712-9907",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C033",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "MOB-SAM-CHG25",
+          "name": "Samsung 25W USB-C Charger",
+          "qty": 1,
+          "price": 1099
+        }
+      ],
+      "amount": 1099,
+      "payment_txn_id": "PTM26071200032",
+      "ordered_at": "2026-07-12T19:11:08",
+      "courier": "Blue Dart",
+      "awb": "AWB2631416734",
+      "shipped_at": "2026-07-13T00:11:08",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-14T04:11:08",
+        "recipient": "Rekha Tiwari",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9908",
+      "ondc_order_id": "ONDC-260713-9908",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C035",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "KIT-PRE-KTL15",
+          "name": "Prestige Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1150
+        },
+        {
+          "sku": "ACC-GEN-REM",
+          "name": "Universal TV Remote",
+          "qty": 1,
+          "price": 250
+        }
+      ],
+      "amount": 1400,
+      "payment_txn_id": "PTM26071300007",
+      "ordered_at": "2026-07-13T10:46:17",
+      "courier": "Ekart",
+      "awb": "AWB2173832470",
+      "shipped_at": "2026-07-13T18:46:17",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-16T18:46:17",
+        "recipient": "Mukesh Malhotra",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9909",
+      "ondc_order_id": "ONDC-260714-9909",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C037",
+      "ship_to": "DLF Phase 3, Gurugram",
+      "items": [
+        {
+          "sku": "LGT-SYS-9W",
+          "name": "Syska 9W LED Bulb",
+          "qty": 1,
+          "price": 99
+        }
+      ],
+      "amount": 99,
+      "payment_txn_id": "PTM26071400018",
+      "ordered_at": "2026-07-14T16:58:23",
+      "courier": "Ekart",
+      "awb": "AWB6853678251",
+      "shipped_at": "2026-07-15T00:58:23",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-16T02:58:23",
+        "recipient": "Shalini Rana (electrician)",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9910",
+      "ondc_order_id": "ONDC-260715-9910",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C048",
+      "ship_to": "DLF Phase 3, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-SAM-CHG25",
+          "name": "Samsung 25W USB-C Charger",
+          "qty": 2,
+          "price": 1099
+        },
+        {
+          "sku": "BAT-EVR-AAA10",
+          "name": "Eveready AAA Batteries (pack of 10)",
+          "qty": 2,
+          "price": 180
+        },
+        {
+          "sku": "MOB-BOT-BH100",
+          "name": "boAt Bassheads 100 Wired Earphones",
+          "qty": 1,
+          "price": 400
+        }
+      ],
+      "amount": 2958,
+      "payment_txn_id": "PTM26071500008",
+      "ordered_at": "2026-07-15T10:45:53",
+      "courier": "Xpressbees",
+      "awb": "AWB3473843985",
+      "shipped_at": "2026-07-15T18:45:53",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-17T22:45:53",
+        "recipient": "Meena Kapoor",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9911",
+      "ondc_order_id": "ONDC-260719-9911",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C035",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "MOB-GEN-CVR",
+          "name": "Phone Back Cover",
+          "qty": 2,
+          "price": 199
+        },
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 1,
+          "price": 899
+        }
+      ],
+      "amount": 1297,
+      "payment_txn_id": "PTM26071900045",
+      "ordered_at": "2026-07-19T19:22:59",
+      "courier": "Shadowfax",
+      "awb": "AWB5394517092",
+      "shipped_at": "2026-07-19T23:22:59",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-21T02:22:59",
+        "recipient": "Mukesh Malhotra",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9912",
+      "ondc_order_id": "ONDC-260720-9912",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C034",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "ELC-ANC-MCB32",
+          "name": "Anchor 32A MCB (single pole)",
+          "qty": 1,
+          "price": 220
+        }
+      ],
+      "amount": 220,
+      "payment_txn_id": "PTM26072000012",
+      "ordered_at": "2026-07-20T11:46:11",
+      "courier": "Shadowfax",
+      "awb": "AWB0520569292",
+      "shipped_at": "2026-07-20T17:46:11",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-22T19:46:11",
+        "recipient": "Suresh Bhatia",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9913",
+      "ondc_order_id": "ONDC-260721-9913",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C050",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "MOB-BOT-BH100",
+          "name": "boAt Bassheads 100 Wired Earphones",
+          "qty": 2,
+          "price": 400
+        },
+        {
+          "sku": "MOB-MI-CHG33",
+          "name": "Xiaomi 33W USB-C Charger",
+          "qty": 1,
+          "price": 749
+        },
+        {
+          "sku": "ELC-HAV-EXT41",
+          "name": "Havells 4+1 Extension Board",
+          "qty": 1,
+          "price": 499
+        }
+      ],
+      "amount": 2048,
+      "payment_txn_id": "PTM26072100004",
+      "ordered_at": "2026-07-21T10:00:32",
+      "courier": "Ekart",
+      "awb": "AWB2040683748",
+      "shipped_at": "2026-07-21T15:00:32",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-24T15:00:32",
+        "recipient": "Kavita Verma",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9914",
+      "ondc_order_id": "ONDC-260724-9914",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C036",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "BAT-DUR-AA4",
+          "name": "Duracell AA Batteries (pack of 4)",
+          "qty": 2,
+          "price": 140
+        }
+      ],
+      "amount": 280,
+      "payment_txn_id": "PTM26072400041",
+      "ordered_at": "2026-07-24T20:34:44",
+      "courier": "Shadowfax",
+      "awb": "AWB0685867764",
+      "shipped_at": "2026-07-25T03:34:44",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-28T09:34:44",
+        "recipient": "Pankaj Yadav",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9915",
+      "ondc_order_id": "ONDC-260726-9915",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C046",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "ELC-HAV-EXT41",
+          "name": "Havells 4+1 Extension Board",
+          "qty": 1,
+          "price": 499
+        },
+        {
+          "sku": "MOB-BOT-BH100",
+          "name": "boAt Bassheads 100 Wired Earphones",
+          "qty": 2,
+          "price": 400
+        }
+      ],
+      "amount": 1299,
+      "payment_txn_id": "PTM26072600008",
+      "ordered_at": "2026-07-26T08:51:13",
+      "courier": "Delhivery",
+      "awb": "AWB0210500936",
+      "shipped_at": "2026-07-26T16:51:13",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-29T18:51:13",
+        "recipient": "Sunil Yadav",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9916",
+      "ondc_order_id": "ONDC-260727-9916",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C031",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "LGT-HAV-BAT20",
+          "name": "Havells 20W LED Batten 4ft",
+          "qty": 2,
+          "price": 340
+        },
+        {
+          "sku": "BAT-DUR-AA4",
+          "name": "Duracell AA Batteries (pack of 4)",
+          "qty": 2,
+          "price": 140
+        },
+        {
+          "sku": "KIT-PRE-KTL15",
+          "name": "Prestige Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1150
+        }
+      ],
+      "amount": 2110,
+      "payment_txn_id": "PTM26072700008",
+      "ordered_at": "2026-07-27T11:43:06",
+      "courier": "Blue Dart",
+      "awb": "AWB5913980504",
+      "shipped_at": "2026-07-27T16:43:06",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-28T18:43:06",
+        "recipient": "Sanjay Malhotra",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9917",
+      "ondc_order_id": "ONDC-260728-9917",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C032",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "LGT-HAV-BAT20",
+          "name": "Havells 20W LED Batten 4ft",
+          "qty": 1,
+          "price": 340
+        },
+        {
+          "sku": "HOM-BAJ-DIRN",
+          "name": "Bajaj Dry Iron 750W",
+          "qty": 1,
+          "price": 750
+        }
+      ],
+      "amount": 1090,
+      "payment_txn_id": "PTM26072800017",
+      "ordered_at": "2026-07-28T12:23:31",
+      "courier": "Xpressbees",
+      "awb": "AWB3095713746",
+      "shipped_at": "2026-07-28T16:23:31",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-31T19:23:31",
+        "recipient": "Naresh Rawat",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9918",
+      "ondc_order_id": "ONDC-260729-9918",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C038",
+      "ship_to": "Sohna Road, Gurugram",
+      "items": [
+        {
+          "sku": "KIT-PRE-KTL15",
+          "name": "Prestige Electric Kettle 1.5L",
+          "qty": 2,
+          "price": 1150
+        },
+        {
+          "sku": "KIT-PHI-KTL15",
+          "name": "Philips Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1500
+        }
+      ],
+      "amount": 3800,
+      "payment_txn_id": "PTM26072900005",
+      "ordered_at": "2026-07-29T09:39:14",
+      "courier": "Ekart",
+      "awb": "AWB1075609797",
+      "shipped_at": "2026-07-29T17:39:14",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-07-31T19:39:14",
+        "recipient": "Shalini Khanna",
+        "otp_verified": false,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9919",
+      "ondc_order_id": "ONDC-260731-9919",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C050",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "ELC-ANC-SKT",
+          "name": "Anchor Roma 6A 5-pin Socket",
+          "qty": 1,
+          "price": 75
+        },
+        {
+          "sku": "MOB-BOT-BH100",
+          "name": "boAt Bassheads 100 Wired Earphones",
+          "qty": 2,
+          "price": 400
+        },
+        {
+          "sku": "KIT-PRE-KTL15",
+          "name": "Prestige Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1150
+        }
+      ],
+      "amount": 2025,
+      "payment_txn_id": "PTM26073100004",
+      "ordered_at": "2026-07-31T08:54:16",
+      "courier": "Delhivery",
+      "awb": "AWB0420859794",
+      "shipped_at": "2026-07-31T16:54:16",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-01T22:54:16",
+        "recipient": "Kavita Verma",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9920",
+      "ondc_order_id": "ONDC-260801-9920",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C043",
+      "ship_to": "Sohna Road, Gurugram",
+      "items": [
+        {
+          "sku": "FAN-BAJ-EXH15",
+          "name": "Bajaj Exhaust Fan 150mm",
+          "qty": 2,
+          "price": 1250
+        },
+        {
+          "sku": "MOB-GEN-CVR",
+          "name": "Phone Back Cover",
+          "qty": 1,
+          "price": 199
+        },
+        {
+          "sku": "ACC-GEN-REM",
+          "name": "Universal TV Remote",
+          "qty": 1,
+          "price": 250
+        }
+      ],
+      "amount": 2949,
+      "payment_txn_id": "PTM26080100004",
+      "ordered_at": "2026-08-01T07:32:42",
+      "courier": "Ekart",
+      "awb": "AWB4625474666",
+      "shipped_at": "2026-08-01T15:32:42",
+      "status": "LOST_IN_TRANSIT",
+      "pod": null
+    },
+    {
+      "order_id": "9921",
+      "ondc_order_id": "ONDC-260803-9921",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C049",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "HOM-BAJ-DIRN",
+          "name": "Bajaj Dry Iron 750W",
+          "qty": 2,
+          "price": 750
+        }
+      ],
+      "amount": 1500,
+      "payment_txn_id": "PTM26080300008",
+      "ordered_at": "2026-08-03T09:10:02",
+      "courier": "Blue Dart",
+      "awb": "AWB5350098479",
+      "shipped_at": "2026-08-03T17:10:02",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-04T18:10:02",
+        "recipient": "Manoj Tiwari",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9922",
+      "ondc_order_id": "ONDC-260805-9922",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C044",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "KIT-PRE-KTL15",
+          "name": "Prestige Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1150
+        },
+        {
+          "sku": "MOB-MI-CHG33",
+          "name": "Xiaomi 33W USB-C Charger",
+          "qty": 1,
+          "price": 749
+        },
+        {
+          "sku": "KIT-PHI-KTL15",
+          "name": "Philips Electric Kettle 1.5L",
+          "qty": 2,
+          "price": 1500
+        }
+      ],
+      "amount": 4899,
+      "payment_txn_id": "PTM26080500009",
+      "ordered_at": "2026-08-05T09:19:59",
+      "courier": "Delhivery",
+      "awb": "AWB4521473574",
+      "shipped_at": "2026-08-05T14:19:59",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-07T18:19:59",
+        "recipient": "Nisha Dahiya",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9923",
+      "ondc_order_id": "ONDC-260806-9923",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C037",
+      "ship_to": "DLF Phase 3, Gurugram",
+      "items": [
+        {
+          "sku": "HOM-BAJ-DIRN",
+          "name": "Bajaj Dry Iron 750W",
+          "qty": 1,
+          "price": 750
+        },
+        {
+          "sku": "MOB-GEN-TGL",
+          "name": "Tempered Glass Screen Guard",
+          "qty": 1,
+          "price": 150
+        }
+      ],
+      "amount": 900,
+      "payment_txn_id": "PTM26080600003",
+      "ordered_at": "2026-08-06T08:02:58",
+      "courier": "Delhivery",
+      "awb": "AWB1372383366",
+      "shipped_at": "2026-08-06T12:02:58",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-08T16:02:58",
+        "recipient": "Shalini Rana (electrician)",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9924",
+      "ondc_order_id": "ONDC-260807-9924",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C031",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-GEN-CVR",
+          "name": "Phone Back Cover",
+          "qty": 2,
+          "price": 199
+        },
+        {
+          "sku": "LGT-PHI-10W2",
+          "name": "Philips 10W LED Bulb (pack of 2)",
+          "qty": 1,
+          "price": 250
+        }
+      ],
+      "amount": 648,
+      "payment_txn_id": "PTM26080700013",
+      "ordered_at": "2026-08-07T10:33:24",
+      "courier": "Shadowfax",
+      "awb": "AWB5767712255",
+      "shipped_at": "2026-08-07T17:33:24",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-10T20:33:24",
+        "recipient": "Sanjay Malhotra",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9925",
+      "ondc_order_id": "ONDC-260809-9925",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C034",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "LGT-HAV-BAT20",
+          "name": "Havells 20W LED Batten 4ft",
+          "qty": 2,
+          "price": 340
+        }
+      ],
+      "amount": 680,
+      "payment_txn_id": "PTM26080900017",
+      "ordered_at": "2026-08-09T11:25:18",
+      "courier": "Blue Dart",
+      "awb": "AWB6757925259",
+      "shipped_at": "2026-08-09T16:25:18",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-10T16:25:18",
+        "recipient": "Suresh Bhatia",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9926",
+      "ondc_order_id": "ONDC-260813-9926",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C047",
+      "ship_to": "Sector 21, Faridabad",
+      "items": [
+        {
+          "sku": "LGT-WIP-PNL15",
+          "name": "Wipro 15W LED Square Panel",
+          "qty": 1,
+          "price": 480
+        },
+        {
+          "sku": "ELC-ANC-SKT",
+          "name": "Anchor Roma 6A 5-pin Socket",
+          "qty": 2,
+          "price": 75
+        }
+      ],
+      "amount": 630,
+      "payment_txn_id": "PTM26081300019",
+      "ordered_at": "2026-08-13T18:04:55",
+      "courier": "Xpressbees",
+      "awb": "AWB6994575792",
+      "shipped_at": "2026-08-13T23:04:55",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-16T01:04:55",
+        "recipient": "Amit Saini",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9927",
+      "ondc_order_id": "ONDC-260814-9927",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C050",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "ELC-ANC-MCB32",
+          "name": "Anchor 32A MCB (single pole)",
+          "qty": 2,
+          "price": 220
+        },
+        {
+          "sku": "BAT-DUR-AA4",
+          "name": "Duracell AA Batteries (pack of 4)",
+          "qty": 2,
+          "price": 140
+        },
+        {
+          "sku": "MOB-BOT-BH100",
+          "name": "boAt Bassheads 100 Wired Earphones",
+          "qty": 1,
+          "price": 400
+        }
+      ],
+      "amount": 1120,
+      "payment_txn_id": "PTM26081400043",
+      "ordered_at": "2026-08-14T18:56:38",
+      "courier": "Shadowfax",
+      "awb": "AWB7749701773",
+      "shipped_at": "2026-08-15T02:56:38",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-17T02:56:38",
+        "recipient": "Kavita Verma",
+        "otp_verified": false,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9928",
+      "ondc_order_id": "ONDC-260816-9928",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C050",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "MOB-GEN-CVR",
+          "name": "Phone Back Cover",
+          "qty": 1,
+          "price": 199
+        },
+        {
+          "sku": "ELC-ANC-SKT",
+          "name": "Anchor Roma 6A 5-pin Socket",
+          "qty": 2,
+          "price": 75
+        }
+      ],
+      "amount": 349,
+      "payment_txn_id": "PTM26081600031",
+      "ordered_at": "2026-08-16T13:59:35",
+      "courier": "Xpressbees",
+      "awb": "AWB2583298620",
+      "shipped_at": "2026-08-16T18:59:35",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-17T19:59:35",
+        "recipient": "Kavita Verma",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9929",
+      "ondc_order_id": "ONDC-260819-9929",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C044",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-SAM-CHG25",
+          "name": "Samsung 25W USB-C Charger",
+          "qty": 2,
+          "price": 1099
+        }
+      ],
+      "amount": 2198,
+      "payment_txn_id": "PTM26081900007",
+      "ordered_at": "2026-08-19T09:17:04",
+      "courier": "Delhivery",
+      "awb": "AWB0545518659",
+      "shipped_at": "2026-08-19T14:17:04",
+      "status": "RTO_DELIVERED",
+      "pod": null,
+      "rto_reason": "Customer not reachable (3 attempts)"
+    },
+    {
+      "order_id": "9930",
+      "ondc_order_id": "ONDC-260821-9930",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C033",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "MOB-MI-CHG33",
+          "name": "Xiaomi 33W USB-C Charger",
+          "qty": 2,
+          "price": 749
+        },
+        {
+          "sku": "ELC-HAV-EXT41",
+          "name": "Havells 4+1 Extension Board",
+          "qty": 2,
+          "price": 499
+        }
+      ],
+      "amount": 2496,
+      "payment_txn_id": "PTM26082100020",
+      "ordered_at": "2026-08-21T19:47:12",
+      "courier": "Shadowfax",
+      "awb": "AWB1693597768",
+      "shipped_at": "2026-08-21T23:47:12",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-25T04:47:12",
+        "recipient": "Rekha Tiwari",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9931",
+      "ondc_order_id": "ONDC-260822-9931",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C047",
+      "ship_to": "Sector 21, Faridabad",
+      "items": [
+        {
+          "sku": "ACC-GEN-REM",
+          "name": "Universal TV Remote",
+          "qty": 1,
+          "price": 250
+        }
+      ],
+      "amount": 250,
+      "payment_txn_id": "PTM26082200022",
+      "ordered_at": "2026-08-22T12:32:41",
+      "courier": "Blue Dart",
+      "awb": "AWB9557398347",
+      "shipped_at": "2026-08-22T17:32:41",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-23T18:32:41",
+        "recipient": "Amit Saini",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9932",
+      "ondc_order_id": "ONDC-260823-9932",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C045",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "MOB-BOT-AD141",
+          "name": "boAt Airdopes 141 TWS Earbuds",
+          "qty": 2,
+          "price": 1299
+        },
+        {
+          "sku": "MOB-SAM-CHG25",
+          "name": "Samsung 25W USB-C Charger",
+          "qty": 2,
+          "price": 1099
+        }
+      ],
+      "amount": 4796,
+      "payment_txn_id": "PTM26082300026",
+      "ordered_at": "2026-08-23T18:19:37",
+      "courier": "Delhivery",
+      "awb": "AWB9873709766",
+      "shipped_at": "2026-08-23T22:19:37",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-27T02:19:37",
+        "recipient": "Sunita Tiwari",
+        "otp_verified": false,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9933",
+      "ondc_order_id": "ONDC-260824-9933",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C050",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "MOB-POR-CAB1M",
+          "name": "Portronics USB-C Cable 1m",
+          "qty": 1,
+          "price": 150
+        },
+        {
+          "sku": "KIT-PHI-KTL15",
+          "name": "Philips Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1500
+        },
+        {
+          "sku": "KIT-PRE-KTL15",
+          "name": "Prestige Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1150
+        }
+      ],
+      "amount": 2800,
+      "payment_txn_id": "PTM26082400012",
+      "ordered_at": "2026-08-24T10:33:28",
+      "courier": "Xpressbees",
+      "awb": "AWB3286134393",
+      "shipped_at": "2026-08-24T14:33:28",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-26T18:33:28",
+        "recipient": "Kavita Verma",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9934",
+      "ondc_order_id": "ONDC-260825-9934",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C031",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "ELC-ANC-SW6A",
+          "name": "Anchor Roma 6A Switch",
+          "qty": 2,
+          "price": 32
+        },
+        {
+          "sku": "ELC-HAV-EXT41",
+          "name": "Havells 4+1 Extension Board",
+          "qty": 2,
+          "price": 499
+        }
+      ],
+      "amount": 1062,
+      "payment_txn_id": "PTM26082500019",
+      "ordered_at": "2026-08-25T20:11:43",
+      "courier": "Xpressbees",
+      "awb": "AWB1079454690",
+      "shipped_at": "2026-08-26T02:11:43",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-28T04:11:43",
+        "recipient": "Sanjay Malhotra",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9935",
+      "ondc_order_id": "ONDC-260827-9935",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C047",
+      "ship_to": "Sector 21, Faridabad",
+      "items": [
+        {
+          "sku": "BAT-EVR-AAA10",
+          "name": "Eveready AAA Batteries (pack of 10)",
+          "qty": 1,
+          "price": 180
+        },
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 2,
+          "price": 899
+        },
+        {
+          "sku": "LGT-SYS-9W",
+          "name": "Syska 9W LED Bulb",
+          "qty": 1,
+          "price": 99
+        }
+      ],
+      "amount": 2077,
+      "payment_txn_id": "PTM26082700022",
+      "ordered_at": "2026-08-27T19:08:59",
+      "courier": "Ekart",
+      "awb": "AWB3245278817",
+      "shipped_at": "2026-08-27T23:08:59",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-29T03:08:59",
+        "recipient": "Amit Saini",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9936",
+      "ondc_order_id": "ONDC-260829-9936",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C037",
+      "ship_to": "DLF Phase 3, Gurugram",
+      "items": [
+        {
+          "sku": "LGT-SYS-9W",
+          "name": "Syska 9W LED Bulb",
+          "qty": 1,
+          "price": 99
+        }
+      ],
+      "amount": 99,
+      "payment_txn_id": "PTM26082900033",
+      "ordered_at": "2026-08-29T17:53:50",
+      "courier": "Xpressbees",
+      "awb": "AWB5378656074",
+      "shipped_at": "2026-08-30T00:53:50",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-02T03:53:50",
+        "recipient": "Shalini Rana (electrician)",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9937",
+      "ondc_order_id": "ONDC-260830-9937",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C034",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "KIT-PHI-KTL15",
+          "name": "Philips Electric Kettle 1.5L",
+          "qty": 2,
+          "price": 1500
+        },
+        {
+          "sku": "MOB-BOT-AD141",
+          "name": "boAt Airdopes 141 TWS Earbuds",
+          "qty": 2,
+          "price": 1299
+        }
+      ],
+      "amount": 5598,
+      "payment_txn_id": "PTM26083000021",
+      "ordered_at": "2026-08-30T11:36:17",
+      "courier": "Xpressbees",
+      "awb": "AWB8255838821",
+      "shipped_at": "2026-08-30T18:36:17",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-08-31T23:36:17",
+        "recipient": "Suresh Bhatia",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9938",
+      "ondc_order_id": "ONDC-260831-9938",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C035",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "HOM-BAJ-DIRN",
+          "name": "Bajaj Dry Iron 750W",
+          "qty": 2,
+          "price": 750
+        },
+        {
+          "sku": "FAN-BAJ-EXH15",
+          "name": "Bajaj Exhaust Fan 150mm",
+          "qty": 2,
+          "price": 1250
+        }
+      ],
+      "amount": 4000,
+      "payment_txn_id": "PTM26083100011",
+      "ordered_at": "2026-08-31T14:13:24",
+      "courier": "Delhivery",
+      "awb": "AWB6803124645",
+      "shipped_at": "2026-08-31T18:13:24",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-01T20:13:24",
+        "recipient": "Mukesh Malhotra",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9939",
+      "ondc_order_id": "ONDC-260902-9939",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C044",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-BOT-AD141",
+          "name": "boAt Airdopes 141 TWS Earbuds",
+          "qty": 1,
+          "price": 1299
+        },
+        {
+          "sku": "ELC-ANC-SW6A",
+          "name": "Anchor Roma 6A Switch",
+          "qty": 1,
+          "price": 32
+        }
+      ],
+      "amount": 1331,
+      "payment_txn_id": "PTM26090200012",
+      "ordered_at": "2026-09-02T10:32:59",
+      "courier": "Ekart",
+      "awb": "AWB6243591307",
+      "shipped_at": "2026-09-02T18:32:59",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-05T20:32:59",
+        "recipient": "Nisha Dahiya",
+        "otp_verified": false,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9940",
+      "ondc_order_id": "ONDC-260903-9940",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C034",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "BAT-DUR-AA4",
+          "name": "Duracell AA Batteries (pack of 4)",
+          "qty": 1,
+          "price": 140
+        },
+        {
+          "sku": "FAN-BAJ-EXH15",
+          "name": "Bajaj Exhaust Fan 150mm",
+          "qty": 2,
+          "price": 1250
+        },
+        {
+          "sku": "ELC-ANC-MCB32",
+          "name": "Anchor 32A MCB (single pole)",
+          "qty": 1,
+          "price": 220
+        }
+      ],
+      "amount": 2860,
+      "payment_txn_id": "PTM26090300023",
+      "ordered_at": "2026-09-03T20:23:33",
+      "courier": "Xpressbees",
+      "awb": "AWB4063832918",
+      "shipped_at": "2026-09-04T04:23:33",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-07T07:23:33",
+        "recipient": "Suresh Bhatia",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9941",
+      "ondc_order_id": "ONDC-260904-9941",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C033",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "ELC-HAV-EXT41",
+          "name": "Havells 4+1 Extension Board",
+          "qty": 1,
+          "price": 499
+        },
+        {
+          "sku": "ELC-ANC-SKT",
+          "name": "Anchor Roma 6A 5-pin Socket",
+          "qty": 1,
+          "price": 75
+        }
+      ],
+      "amount": 574,
+      "payment_txn_id": "PTM26090400016",
+      "ordered_at": "2026-09-04T10:13:20",
+      "courier": "Delhivery",
+      "awb": "AWB6833546748",
+      "shipped_at": "2026-09-04T17:13:20",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-06T17:13:20",
+        "recipient": "Rekha Tiwari",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9942",
+      "ondc_order_id": "ONDC-260905-9942",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C037",
+      "ship_to": "DLF Phase 3, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-BOT-AD141",
+          "name": "boAt Airdopes 141 TWS Earbuds",
+          "qty": 1,
+          "price": 1299
+        }
+      ],
+      "amount": 1299,
+      "payment_txn_id": "PTM26090500026",
+      "ordered_at": "2026-09-05T16:29:44",
+      "courier": "Blue Dart",
+      "awb": "AWB2185824079",
+      "shipped_at": "2026-09-05T22:29:44",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-08T00:29:44",
+        "recipient": "Shalini Rana (electrician)",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9943",
+      "ondc_order_id": "ONDC-260906-9943",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C043",
+      "ship_to": "Sohna Road, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-POR-CAB1M",
+          "name": "Portronics USB-C Cable 1m",
+          "qty": 1,
+          "price": 150
+        },
+        {
+          "sku": "ELC-ANC-MCB32",
+          "name": "Anchor 32A MCB (single pole)",
+          "qty": 2,
+          "price": 220
+        },
+        {
+          "sku": "MOB-GEN-TGL",
+          "name": "Tempered Glass Screen Guard",
+          "qty": 1,
+          "price": 150
+        }
+      ],
+      "amount": 740,
+      "payment_txn_id": "PTM26090600005",
+      "ordered_at": "2026-09-06T08:22:54",
+      "courier": "Delhivery",
+      "awb": "AWB3151857151",
+      "shipped_at": "2026-09-06T13:22:54",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-08T16:22:54",
+        "recipient": "Mukesh Tiwari",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9944",
+      "ondc_order_id": "ONDC-260909-9944",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C032",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "LGT-WIP-PNL15",
+          "name": "Wipro 15W LED Square Panel",
+          "qty": 2,
+          "price": 480
+        }
+      ],
+      "amount": 960,
+      "payment_txn_id": "PTM26090900008",
+      "ordered_at": "2026-09-09T10:26:38",
+      "courier": "Ekart",
+      "awb": "AWB7323748245",
+      "shipped_at": "2026-09-09T14:26:38",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-11T19:26:38",
+        "recipient": "Naresh Rawat",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9945",
+      "ondc_order_id": "ONDC-260912-9945",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C037",
+      "ship_to": "DLF Phase 3, Gurugram",
+      "items": [
+        {
+          "sku": "LGT-HAV-BAT20",
+          "name": "Havells 20W LED Batten 4ft",
+          "qty": 1,
+          "price": 340
+        },
+        {
+          "sku": "ELC-ANC-SW6A",
+          "name": "Anchor Roma 6A Switch",
+          "qty": 2,
+          "price": 32
+        }
+      ],
+      "amount": 404,
+      "payment_txn_id": "PTM26091200001",
+      "ordered_at": "2026-09-12T07:09:25",
+      "courier": "Delhivery",
+      "awb": "AWB0878894385",
+      "shipped_at": "2026-09-12T13:09:25",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-14T16:09:25",
+        "recipient": "Shalini Rana (electrician)",
+        "otp_verified": false,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9946",
+      "ondc_order_id": "ONDC-260913-9946",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C037",
+      "ship_to": "DLF Phase 3, Gurugram",
+      "items": [
+        {
+          "sku": "LGT-WIP-PNL15",
+          "name": "Wipro 15W LED Square Panel",
+          "qty": 1,
+          "price": 480
+        }
+      ],
+      "amount": 480,
+      "payment_txn_id": "PTM26091300005",
+      "ordered_at": "2026-09-13T09:48:14",
+      "courier": "Delhivery",
+      "awb": "AWB6914666098",
+      "shipped_at": "2026-09-13T13:48:14",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-15T19:48:14",
+        "recipient": "Shalini Rana (electrician)",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9947",
+      "ondc_order_id": "ONDC-260914-9947",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C041",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-BOT-BH100",
+          "name": "boAt Bassheads 100 Wired Earphones",
+          "qty": 1,
+          "price": 400
+        },
+        {
+          "sku": "MOB-GEN-CVR",
+          "name": "Phone Back Cover",
+          "qty": 1,
+          "price": 199
+        },
+        {
+          "sku": "ACC-GEN-REM",
+          "name": "Universal TV Remote",
+          "qty": 1,
+          "price": 250
+        }
+      ],
+      "amount": 849,
+      "payment_txn_id": "PTM26091400011",
+      "ordered_at": "2026-09-14T10:14:22",
+      "courier": "Shadowfax",
+      "awb": "AWB9764367889",
+      "shipped_at": "2026-09-14T16:14:22",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-17T19:14:22",
+        "recipient": "Kavita Rawat",
+        "otp_verified": false,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9948",
+      "ondc_order_id": "ONDC-260917-9948",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C044",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 2,
+          "price": 899
+        }
+      ],
+      "amount": 1798,
+      "payment_txn_id": "PTM26091700011",
+      "ordered_at": "2026-09-17T11:13:02",
+      "courier": "Ekart",
+      "awb": "AWB8595520899",
+      "shipped_at": "2026-09-17T15:13:02",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-20T17:13:02",
+        "recipient": "Nisha Dahiya",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9949",
+      "ondc_order_id": "ONDC-260920-9949",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C049",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "MOB-BOT-BH100",
+          "name": "boAt Bassheads 100 Wired Earphones",
+          "qty": 1,
+          "price": 400
+        },
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 1,
+          "price": 899
+        }
+      ],
+      "amount": 1299,
+      "payment_txn_id": "PTM26092000045",
+      "ordered_at": "2026-09-20T15:59:58",
+      "courier": "Blue Dart",
+      "awb": "AWB0603275611",
+      "shipped_at": "2026-09-20T19:59:58",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-22T21:59:58",
+        "recipient": "Manoj Tiwari",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9950",
+      "ondc_order_id": "ONDC-260921-9950",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C037",
+      "ship_to": "DLF Phase 3, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-GEN-CVR",
+          "name": "Phone Back Cover",
+          "qty": 2,
+          "price": 199
+        },
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 1,
+          "price": 899
+        }
+      ],
+      "amount": 1297,
+      "payment_txn_id": "PTM26092100014",
+      "ordered_at": "2026-09-21T10:57:47",
+      "courier": "Ekart",
+      "awb": "AWB8245891664",
+      "shipped_at": "2026-09-21T15:57:47",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-23T18:57:47",
+        "recipient": "Shalini Rana (electrician)",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9951",
+      "ondc_order_id": "ONDC-260923-9951",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C047",
+      "ship_to": "Sector 21, Faridabad",
+      "items": [
+        {
+          "sku": "LGT-HAV-BAT20",
+          "name": "Havells 20W LED Batten 4ft",
+          "qty": 2,
+          "price": 340
+        },
+        {
+          "sku": "ELC-HAV-EXT41",
+          "name": "Havells 4+1 Extension Board",
+          "qty": 2,
+          "price": 499
+        }
+      ],
+      "amount": 1678,
+      "payment_txn_id": "PTM26092300005",
+      "ordered_at": "2026-09-23T12:07:49",
+      "courier": "Shadowfax",
+      "awb": "AWB5381816598",
+      "shipped_at": "2026-09-23T18:07:49",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-26T19:07:49",
+        "recipient": "Amit Saini",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9952",
+      "ondc_order_id": "ONDC-260925-9952",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C049",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "ELC-ANC-MCB32",
+          "name": "Anchor 32A MCB (single pole)",
+          "qty": 1,
+          "price": 220
+        },
+        {
+          "sku": "LGT-PHI-10W2",
+          "name": "Philips 10W LED Bulb (pack of 2)",
+          "qty": 2,
+          "price": 250
+        },
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 1,
+          "price": 899
+        }
+      ],
+      "amount": 1619,
+      "payment_txn_id": "PTM26092500023",
+      "ordered_at": "2026-09-25T16:27:52",
+      "courier": "Xpressbees",
+      "awb": "AWB1480581117",
+      "shipped_at": "2026-09-25T21:27:52",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-26T23:27:52",
+        "recipient": "Manoj Tiwari",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9953",
+      "ondc_order_id": "ONDC-260926-9953",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C045",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "ELC-HAV-EXT41",
+          "name": "Havells 4+1 Extension Board",
+          "qty": 2,
+          "price": 499
+        }
+      ],
+      "amount": 998,
+      "payment_txn_id": "PTM26092600033",
+      "ordered_at": "2026-09-26T14:57:59",
+      "courier": "Xpressbees",
+      "awb": "AWB1847408863",
+      "shipped_at": "2026-09-26T20:57:59",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-09-27T21:57:59",
+        "recipient": "Sunita Tiwari",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9954",
+      "ondc_order_id": "ONDC-261003-9954",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C044",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "ELC-ANC-SW6A",
+          "name": "Anchor Roma 6A Switch",
+          "qty": 2,
+          "price": 32
+        },
+        {
+          "sku": "BAT-DUR-AA4",
+          "name": "Duracell AA Batteries (pack of 4)",
+          "qty": 2,
+          "price": 140
+        },
+        {
+          "sku": "KIT-PRE-KTL15",
+          "name": "Prestige Electric Kettle 1.5L",
+          "qty": 2,
+          "price": 1150
+        }
+      ],
+      "amount": 2644,
+      "payment_txn_id": "PTM26100300003",
+      "ordered_at": "2026-10-03T07:48:46",
+      "courier": "Blue Dart",
+      "awb": "AWB3140284162",
+      "shipped_at": "2026-10-03T11:48:46",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-05T12:48:46",
+        "recipient": "Nisha Dahiya",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9955",
+      "ondc_order_id": "ONDC-261005-9955",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C035",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "KIT-PHI-KTL15",
+          "name": "Philips Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1500
+        },
+        {
+          "sku": "ELC-ANC-MCB32",
+          "name": "Anchor 32A MCB (single pole)",
+          "qty": 1,
+          "price": 220
+        },
+        {
+          "sku": "ELC-ANC-SKT",
+          "name": "Anchor Roma 6A 5-pin Socket",
+          "qty": 1,
+          "price": 75
+        }
+      ],
+      "amount": 1795,
+      "payment_txn_id": "PTM26100500001",
+      "ordered_at": "2026-10-05T07:12:53",
+      "courier": "Xpressbees",
+      "awb": "AWB8595303899",
+      "shipped_at": "2026-10-05T11:12:53",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-08T14:12:53",
+        "recipient": "Mukesh Malhotra",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9956",
+      "ondc_order_id": "ONDC-261006-9956",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C031",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-GEN-TGL",
+          "name": "Tempered Glass Screen Guard",
+          "qty": 1,
+          "price": 150
+        }
+      ],
+      "amount": 150,
+      "payment_txn_id": "PTM26100600002",
+      "ordered_at": "2026-10-06T08:01:08",
+      "courier": "Ekart",
+      "awb": "AWB9589144765",
+      "shipped_at": "2026-10-06T12:01:08",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-09T13:01:08",
+        "recipient": "Sanjay Malhotra",
+        "otp_verified": false,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9957",
+      "ondc_order_id": "ONDC-261009-9957",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C034",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 2,
+          "price": 899
+        },
+        {
+          "sku": "ELC-HAV-EXT41",
+          "name": "Havells 4+1 Extension Board",
+          "qty": 2,
+          "price": 499
+        }
+      ],
+      "amount": 2796,
+      "payment_txn_id": "PTM26100900012",
+      "ordered_at": "2026-10-09T09:02:13",
+      "courier": "Delhivery",
+      "awb": "AWB3587682641",
+      "shipped_at": "2026-10-09T15:02:13",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-10T17:02:13",
+        "recipient": "Suresh Bhatia",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9958",
+      "ondc_order_id": "ONDC-261010-9958",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C043",
+      "ship_to": "Sohna Road, Gurugram",
+      "items": [
+        {
+          "sku": "ELC-ANC-MCB32",
+          "name": "Anchor 32A MCB (single pole)",
+          "qty": 2,
+          "price": 220
+        },
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 2,
+          "price": 899
+        }
+      ],
+      "amount": 2238,
+      "payment_txn_id": "PTM26101000034",
+      "ordered_at": "2026-10-10T11:56:33",
+      "courier": "Ekart",
+      "awb": "AWB0511696487",
+      "shipped_at": "2026-10-10T19:56:33",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-13T00:56:33",
+        "recipient": "Mukesh Tiwari",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9959",
+      "ondc_order_id": "ONDC-261012-9959",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C034",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "HOM-BAJ-DIRN",
+          "name": "Bajaj Dry Iron 750W",
+          "qty": 1,
+          "price": 750
+        },
+        {
+          "sku": "ACC-GEN-REM",
+          "name": "Universal TV Remote",
+          "qty": 2,
+          "price": 250
+        },
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 1,
+          "price": 899
+        }
+      ],
+      "amount": 2149,
+      "payment_txn_id": "PTM26101200022",
+      "ordered_at": "2026-10-12T18:14:47",
+      "courier": "Delhivery",
+      "awb": "AWB9964982172",
+      "shipped_at": "2026-10-13T00:14:47",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-14T05:14:47",
+        "recipient": "Suresh Bhatia",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9960",
+      "ondc_order_id": "ONDC-261014-9960",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C049",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "LGT-WIP-PNL15",
+          "name": "Wipro 15W LED Square Panel",
+          "qty": 1,
+          "price": 480
+        },
+        {
+          "sku": "LGT-SYS-9W",
+          "name": "Syska 9W LED Bulb",
+          "qty": 1,
+          "price": 99
+        }
+      ],
+      "amount": 579,
+      "payment_txn_id": "PTM26101400010",
+      "ordered_at": "2026-10-14T09:17:06",
+      "courier": "Delhivery",
+      "awb": "AWB5449678843",
+      "shipped_at": "2026-10-14T15:17:06",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-16T15:17:06",
+        "recipient": "Manoj Tiwari",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9961",
+      "ondc_order_id": "ONDC-261015-9961",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C036",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "ELC-HAV-EXT41",
+          "name": "Havells 4+1 Extension Board",
+          "qty": 2,
+          "price": 499
+        }
+      ],
+      "amount": 998,
+      "payment_txn_id": "PTM26101500018",
+      "ordered_at": "2026-10-15T19:57:41",
+      "courier": "Ekart",
+      "awb": "AWB2051018845",
+      "shipped_at": "2026-10-16T01:57:41",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-17T05:57:41",
+        "recipient": "Pankaj Yadav",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9962",
+      "ondc_order_id": "ONDC-261016-9962",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C034",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-SAM-CHG25",
+          "name": "Samsung 25W USB-C Charger",
+          "qty": 2,
+          "price": 1099
+        }
+      ],
+      "amount": 2198,
+      "payment_txn_id": "PTM26101600053",
+      "ordered_at": "2026-10-16T19:11:04",
+      "courier": "Blue Dart",
+      "awb": "AWB7450009404",
+      "shipped_at": "2026-10-17T02:11:04",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-20T05:11:04",
+        "recipient": "Suresh Bhatia",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9963",
+      "ondc_order_id": "ONDC-261018-9963",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C049",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 1,
+          "price": 899
+        },
+        {
+          "sku": "MOB-GEN-CVR",
+          "name": "Phone Back Cover",
+          "qty": 1,
+          "price": 199
+        },
+        {
+          "sku": "HOM-BAJ-DIRN",
+          "name": "Bajaj Dry Iron 750W",
+          "qty": 1,
+          "price": 750
+        }
+      ],
+      "amount": 1848,
+      "payment_txn_id": "PTM26101800008",
+      "ordered_at": "2026-10-18T08:19:30",
+      "courier": "Blue Dart",
+      "awb": "AWB6134136496",
+      "shipped_at": "2026-10-18T16:19:30",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-21T20:19:30",
+        "recipient": "Manoj Tiwari",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9964",
+      "ondc_order_id": "ONDC-261019-9964",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C038",
+      "ship_to": "Sohna Road, Gurugram",
+      "items": [
+        {
+          "sku": "ELC-ANC-MCB32",
+          "name": "Anchor 32A MCB (single pole)",
+          "qty": 2,
+          "price": 220
+        },
+        {
+          "sku": "LGT-PHI-10W2",
+          "name": "Philips 10W LED Bulb (pack of 2)",
+          "qty": 2,
+          "price": 250
+        },
+        {
+          "sku": "KIT-PRE-KTL15",
+          "name": "Prestige Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1150
+        }
+      ],
+      "amount": 2090,
+      "payment_txn_id": "PTM26101900010",
+      "ordered_at": "2026-10-19T09:11:07",
+      "courier": "Xpressbees",
+      "awb": "AWB6323991522",
+      "shipped_at": "2026-10-19T16:11:07",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-22T16:11:07",
+        "recipient": "Shalini Khanna",
+        "otp_verified": false,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9965",
+      "ondc_order_id": "ONDC-261021-9965",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C038",
+      "ship_to": "Sohna Road, Gurugram",
+      "items": [
+        {
+          "sku": "LGT-PHI-10W2",
+          "name": "Philips 10W LED Bulb (pack of 2)",
+          "qty": 1,
+          "price": 250
+        }
+      ],
+      "amount": 250,
+      "payment_txn_id": "PTM26102100024",
+      "ordered_at": "2026-10-21T21:10:22",
+      "courier": "Blue Dart",
+      "awb": "AWB1762244604",
+      "shipped_at": "2026-10-22T02:10:22",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-23T04:10:22",
+        "recipient": "Shalini Khanna",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9966",
+      "ondc_order_id": "ONDC-261022-9966",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C042",
+      "ship_to": "Lajpat Nagar, New Delhi",
+      "items": [
+        {
+          "sku": "HOM-BAJ-DIRN",
+          "name": "Bajaj Dry Iron 750W",
+          "qty": 2,
+          "price": 750
+        },
+        {
+          "sku": "MOB-MI-CHG33",
+          "name": "Xiaomi 33W USB-C Charger",
+          "qty": 1,
+          "price": 749
+        }
+      ],
+      "amount": 2249,
+      "payment_txn_id": "PTM26102200017",
+      "ordered_at": "2026-10-22T15:29:00",
+      "courier": "Shadowfax",
+      "awb": "AWB3406933083",
+      "shipped_at": "2026-10-22T23:29:00",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-25T23:29:00",
+        "recipient": "Rohit Verma",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9967",
+      "ondc_order_id": "ONDC-261023-9967",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C033",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "KIT-PRE-KTL15",
+          "name": "Prestige Electric Kettle 1.5L",
+          "qty": 2,
+          "price": 1150
+        },
+        {
+          "sku": "FAN-BAJ-EXH15",
+          "name": "Bajaj Exhaust Fan 150mm",
+          "qty": 2,
+          "price": 1250
+        }
+      ],
+      "amount": 4800,
+      "payment_txn_id": "PTM26102300058",
+      "ordered_at": "2026-10-23T20:25:57",
+      "courier": "Delhivery",
+      "awb": "AWB0535626472",
+      "shipped_at": "2026-10-24T01:25:57",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-26T06:25:57",
+        "recipient": "Rekha Tiwari",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9968",
+      "ondc_order_id": "ONDC-261027-9968",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C035",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "BAT-DUR-AA4",
+          "name": "Duracell AA Batteries (pack of 4)",
+          "qty": 1,
+          "price": 140
+        },
+        {
+          "sku": "MOB-GEN-CVR",
+          "name": "Phone Back Cover",
+          "qty": 2,
+          "price": 199
+        },
+        {
+          "sku": "MOB-POR-CAB1M",
+          "name": "Portronics USB-C Cable 1m",
+          "qty": 1,
+          "price": 150
+        }
+      ],
+      "amount": 688,
+      "payment_txn_id": "PTM26102700031",
+      "ordered_at": "2026-10-27T20:24:07",
+      "courier": "Shadowfax",
+      "awb": "AWB7251266430",
+      "shipped_at": "2026-10-28T00:24:07",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-31T06:24:07",
+        "recipient": "Mukesh Malhotra",
+        "otp_verified": false,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9969",
+      "ondc_order_id": "ONDC-261028-9969",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C036",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "BAT-DUR-AA4",
+          "name": "Duracell AA Batteries (pack of 4)",
+          "qty": 2,
+          "price": 140
+        },
+        {
+          "sku": "MOB-MI-CHG33",
+          "name": "Xiaomi 33W USB-C Charger",
+          "qty": 1,
+          "price": 749
+        },
+        {
+          "sku": "MOB-BOT-AD141",
+          "name": "boAt Airdopes 141 TWS Earbuds",
+          "qty": 2,
+          "price": 1299
+        }
+      ],
+      "amount": 3627,
+      "payment_txn_id": "PTM26102800005",
+      "ordered_at": "2026-10-28T10:53:40",
+      "courier": "Blue Dart",
+      "awb": "AWB2314045303",
+      "shipped_at": "2026-10-28T17:53:40",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-10-29T22:53:40",
+        "recipient": "Pankaj Yadav",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9970",
+      "ondc_order_id": "ONDC-261029-9970",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C039",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "LGT-WIP-PNL15",
+          "name": "Wipro 15W LED Square Panel",
+          "qty": 2,
+          "price": 480
+        },
+        {
+          "sku": "MOB-BOT-AD141",
+          "name": "boAt Airdopes 141 TWS Earbuds",
+          "qty": 2,
+          "price": 1299
+        }
+      ],
+      "amount": 3558,
+      "payment_txn_id": "PTM26102900014",
+      "ordered_at": "2026-10-29T14:52:13",
+      "courier": "Shadowfax",
+      "awb": "AWB9499335720",
+      "shipped_at": "2026-10-29T19:52:13",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-01T23:52:13",
+        "recipient": "Anita Joshi",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9971",
+      "ondc_order_id": "ONDC-261031-9971",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C046",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "MOB-BOT-AD141",
+          "name": "boAt Airdopes 141 TWS Earbuds",
+          "qty": 1,
+          "price": 1299
+        }
+      ],
+      "amount": 1299,
+      "payment_txn_id": "PTM26103100037",
+      "ordered_at": "2026-10-31T14:00:08",
+      "courier": "Ekart",
+      "awb": "AWB6715762019",
+      "shipped_at": "2026-10-31T18:00:08",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-01T23:00:08",
+        "recipient": "Sunil Yadav",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9972",
+      "ondc_order_id": "ONDC-261101-9972",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C050",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "BAT-EVR-AAA10",
+          "name": "Eveready AAA Batteries (pack of 10)",
+          "qty": 1,
+          "price": 180
+        },
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 2,
+          "price": 899
+        }
+      ],
+      "amount": 1978,
+      "payment_txn_id": "PTM26110100029",
+      "ordered_at": "2026-11-01T09:40:17",
+      "courier": "Xpressbees",
+      "awb": "AWB9911846547",
+      "shipped_at": "2026-11-01T13:40:17",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-04T17:40:17",
+        "recipient": "Kavita Verma",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9973",
+      "ondc_order_id": "ONDC-261102-9973",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C047",
+      "ship_to": "Sector 21, Faridabad",
+      "items": [
+        {
+          "sku": "BAT-EVR-AAA10",
+          "name": "Eveready AAA Batteries (pack of 10)",
+          "qty": 1,
+          "price": 180
+        }
+      ],
+      "amount": 180,
+      "payment_txn_id": "PTM26110200012",
+      "ordered_at": "2026-11-02T09:28:57",
+      "courier": "Ekart",
+      "awb": "AWB0638401588",
+      "shipped_at": "2026-11-02T15:28:57",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-03T15:28:57",
+        "recipient": "Amit Saini",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9974",
+      "ondc_order_id": "ONDC-261103-9974",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C041",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "KIT-PHI-KTL15",
+          "name": "Philips Electric Kettle 1.5L",
+          "qty": 2,
+          "price": 1500
+        }
+      ],
+      "amount": 3000,
+      "payment_txn_id": "PTM26110300019",
+      "ordered_at": "2026-11-03T19:22:20",
+      "courier": "Blue Dart",
+      "awb": "AWB1107297798",
+      "shipped_at": "2026-11-04T02:22:20",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-07T03:22:20",
+        "recipient": "Kavita Rawat",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9975",
+      "ondc_order_id": "ONDC-261104-9975",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C046",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "BAT-EVR-AAA10",
+          "name": "Eveready AAA Batteries (pack of 10)",
+          "qty": 1,
+          "price": 180
+        },
+        {
+          "sku": "ELC-ANC-SW6A",
+          "name": "Anchor Roma 6A Switch",
+          "qty": 1,
+          "price": 32
+        },
+        {
+          "sku": "KIT-PHI-KTL15",
+          "name": "Philips Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1500
+        }
+      ],
+      "amount": 1712,
+      "payment_txn_id": "PTM26110400012",
+      "ordered_at": "2026-11-04T11:32:06",
+      "courier": "Blue Dart",
+      "awb": "AWB5516173164",
+      "shipped_at": "2026-11-04T16:32:06",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-06T16:32:06",
+        "recipient": "Sunil Yadav",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9976",
+      "ondc_order_id": "ONDC-261105-9976",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C048",
+      "ship_to": "DLF Phase 3, Gurugram",
+      "items": [
+        {
+          "sku": "LGT-SYS-9W",
+          "name": "Syska 9W LED Bulb",
+          "qty": 2,
+          "price": 99
+        },
+        {
+          "sku": "KIT-PHI-KTL15",
+          "name": "Philips Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1500
+        }
+      ],
+      "amount": 1698,
+      "payment_txn_id": "PTM26110500010",
+      "ordered_at": "2026-11-05T09:16:06",
+      "courier": "Delhivery",
+      "awb": "AWB8031619375",
+      "shipped_at": "2026-11-05T15:16:06",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-07T17:16:06",
+        "recipient": "Meena Kapoor",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9977",
+      "ondc_order_id": "ONDC-261106-9977",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C033",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "MOB-GEN-CVR",
+          "name": "Phone Back Cover",
+          "qty": 1,
+          "price": 199
+        },
+        {
+          "sku": "MOB-BOT-AD141",
+          "name": "boAt Airdopes 141 TWS Earbuds",
+          "qty": 2,
+          "price": 1299
+        }
+      ],
+      "amount": 2797,
+      "payment_txn_id": "PTM26110600065",
+      "ordered_at": "2026-11-06T17:16:12",
+      "courier": "Ekart",
+      "awb": "AWB9686568601",
+      "shipped_at": "2026-11-07T01:16:12",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-10T03:16:12",
+        "recipient": "Rekha Tiwari",
+        "otp_verified": false,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9978",
+      "ondc_order_id": "ONDC-261108-9978",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C035",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "BAT-EVR-AAA10",
+          "name": "Eveready AAA Batteries (pack of 10)",
+          "qty": 2,
+          "price": 180
+        },
+        {
+          "sku": "LGT-WIP-PNL15",
+          "name": "Wipro 15W LED Square Panel",
+          "qty": 2,
+          "price": 480
+        },
+        {
+          "sku": "MOB-AMB-PB10K",
+          "name": "Ambrane 10000mAh Power Bank",
+          "qty": 1,
+          "price": 899
+        }
+      ],
+      "amount": 2219,
+      "payment_txn_id": "PTM26110800024",
+      "ordered_at": "2026-11-08T10:49:37",
+      "courier": "Ekart",
+      "awb": "AWB5767767721",
+      "shipped_at": "2026-11-08T16:49:37",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-11T19:49:37",
+        "recipient": "Mukesh Malhotra",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9979",
+      "ondc_order_id": "ONDC-261109-9979",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C041",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-BOT-AD141",
+          "name": "boAt Airdopes 141 TWS Earbuds",
+          "qty": 2,
+          "price": 1299
+        }
+      ],
+      "amount": 2598,
+      "payment_txn_id": "PTM26110900004",
+      "ordered_at": "2026-11-09T08:50:31",
+      "courier": "Delhivery",
+      "awb": "AWB5135932080",
+      "shipped_at": "2026-11-09T14:50:31",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-11T15:50:31",
+        "recipient": "Kavita Rawat",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": false,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9980",
+      "ondc_order_id": "ONDC-261110-9980",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C044",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "LGT-HAV-BAT20",
+          "name": "Havells 20W LED Batten 4ft",
+          "qty": 1,
+          "price": 340
+        },
+        {
+          "sku": "KIT-PHI-KTL15",
+          "name": "Philips Electric Kettle 1.5L",
+          "qty": 1,
+          "price": 1500
+        }
+      ],
+      "amount": 1840,
+      "payment_txn_id": "PTM26111000012",
+      "ordered_at": "2026-11-10T12:36:05",
+      "courier": "Delhivery",
+      "awb": "AWB0351895000",
+      "shipped_at": "2026-11-10T17:36:05",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-12T23:36:05",
+        "recipient": "Nisha Dahiya",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9981",
+      "ondc_order_id": "ONDC-261114-9981",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C042",
+      "ship_to": "B-14, Lajpat Nagar, New Delhi 110024",
+      "items": [
+        {
+          "sku": "LGT-PHI-10W2",
+          "name": "Philips 10W LED Bulb (pack of 2)",
+          "qty": 1,
+          "price": 250
+        },
+        {
+          "sku": "MOB-BOT-BH100",
+          "name": "boAt Bassheads 100 Wired Earphones",
+          "qty": 1,
+          "price": 400
+        },
+        {
+          "sku": "MOB-POR-CAB1M",
+          "name": "Portronics USB-C Cable 1m",
+          "qty": 1,
+          "price": 150
+        }
+      ],
+      "amount": 800,
+      "payment_txn_id": "PTM26111400012",
+      "ordered_at": "2026-11-14T10:15:00",
+      "courier": "Demo Express Logistics",
+      "awb": "DEX7781203345",
+      "shipped_at": "2026-11-14T16:00:00",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-16T18:42:00",
+        "recipient": "Rohit Verma",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": false,
+        "document": "services/sarvam_service/app/samples/pod_9981.png",
+        "note": "Same values as the Sarvam sample PoD read by /doc-extract (use_sample_connector=true)"
+      }
+    },
+    {
+      "order_id": "9982",
+      "ondc_order_id": "ONDC-261114-9982",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C033",
+      "ship_to": "Dwarka Sector 10, New Delhi",
+      "items": [
+        {
+          "sku": "LGT-PHI-10W2",
+          "name": "Philips 10W LED Bulb (pack of 2)",
+          "qty": 2,
+          "price": 250
+        },
+        {
+          "sku": "LGT-HAV-BAT20",
+          "name": "Havells 20W LED Batten 4ft",
+          "qty": 2,
+          "price": 340
+        }
+      ],
+      "amount": 1180,
+      "payment_txn_id": "PTM26111400027",
+      "ordered_at": "2026-11-14T16:36:24",
+      "courier": "Xpressbees",
+      "awb": "AWB3706169141",
+      "shipped_at": "2026-11-14T20:36:24",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-18T01:36:24",
+        "recipient": "Rekha Tiwari",
+        "otp_verified": true,
+        "signature": false,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9983",
+      "ondc_order_id": "ONDC-261115-9983",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C036",
+      "ship_to": "Sector 62, Noida",
+      "items": [
+        {
+          "sku": "LGT-WIP-PNL15",
+          "name": "Wipro 15W LED Square Panel",
+          "qty": 2,
+          "price": 480
+        },
+        {
+          "sku": "BAT-DUR-AA4",
+          "name": "Duracell AA Batteries (pack of 4)",
+          "qty": 2,
+          "price": 140
+        },
+        {
+          "sku": "MOB-MI-CHG33",
+          "name": "Xiaomi 33W USB-C Charger",
+          "qty": 2,
+          "price": 749
+        }
+      ],
+      "amount": 2738,
+      "payment_txn_id": "PTM26111500008",
+      "ordered_at": "2026-11-15T09:04:28",
+      "courier": "Shadowfax",
+      "awb": "AWB0500885561",
+      "shipped_at": "2026-11-15T15:04:28",
+      "status": "DELIVERED",
+      "pod": {
+        "delivered_at": "2026-11-16T21:04:28",
+        "recipient": "Pankaj Yadav",
+        "otp_verified": true,
+        "signature": true,
+        "photo_on_delivery": true,
+        "document": null
+      }
+    },
+    {
+      "order_id": "9984",
+      "ondc_order_id": "ONDC-261116-9984",
+      "buyer_app": "Other ONDC buyer app",
+      "customer_id": "C037",
+      "ship_to": "DLF Phase 3, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-SAM-CHG25",
+          "name": "Samsung 25W USB-C Charger",
+          "qty": 2,
+          "price": 1099
+        },
+        {
+          "sku": "ELC-ANC-SW6A",
+          "name": "Anchor Roma 6A Switch",
+          "qty": 2,
+          "price": 32
+        }
+      ],
+      "amount": 2262,
+      "payment_txn_id": "PTM26111600023",
+      "ordered_at": "2026-11-16T20:31:53",
+      "courier": "Xpressbees",
+      "awb": "AWB1039071917",
+      "shipped_at": "2026-11-17T04:31:53",
+      "status": "IN_TRANSIT",
+      "pod": null
+    },
+    {
+      "order_id": "9985",
+      "ondc_order_id": "ONDC-261118-9985",
+      "buyer_app": "Paytm (ONDC)",
+      "customer_id": "C044",
+      "ship_to": "Palam Vihar, Gurugram",
+      "items": [
+        {
+          "sku": "MOB-GEN-TGL",
+          "name": "Tempered Glass Screen Guard",
+          "qty": 1,
+          "price": 150
+        },
+        {
+          "sku": "BAT-DUR-AA4",
+          "name": "Duracell AA Batteries (pack of 4)",
+          "qty": 2,
+          "price": 140
+        },
+        {
+          "sku": "MOB-BOT-BH100",
+          "name": "boAt Bassheads 100 Wired Earphones",
+          "qty": 2,
+          "price": 400
+        }
+      ],
+      "amount": 1230,
+      "payment_txn_id": "PTM26111800012",
+      "ordered_at": "2026-11-18T11:54:28",
+      "courier": "Blue Dart",
+      "awb": "AWB1077501146",
+      "shipped_at": "2026-11-18T16:54:28",
+      "status": "IN_TRANSIT",
+      "pod": null
+    }
+  ]
+}
