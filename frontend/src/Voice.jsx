@@ -266,7 +266,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
       )}
 
       <div className={`v-prompts ${state === 'idle' ? '' : 'dim'}`}>
-        <div className="vp-h">या नीचे से चुनिए</div>
+        <div className="vp-h">Ya neeche se chuniye</div>
         <div className="vp-row">
           {prompts.map((p) => (
             <button key={p.id} className="vp" disabled={busy || !p.ok} onClick={() => sayPrompt(p)}>

@@ -46,8 +46,9 @@ def tts_code() -> str:
 
 
 LANGUAGE_RULE = {
-    "hi": "Write in Hinglish using Devanagari script, EVEN IF the question was typed in Roman letters; keep UTR, GST, "
-          "ITC, settlement, chargeback, refund, MDR, EDI, KFS, PoD, Soundbox in English.",
+    "hi": "Write in everyday Hinglish in ROMAN (Latin) letters only, the way Indian shopkeepers type on WhatsApp "
+          "(e.g. \"Aapka settlement kal subah 8 baje aa jayega.\"). Never use Devanagari script, even if the question "
+          "was in Devanagari. Keep UTR, GST, ITC, settlement, chargeback, refund, MDR, EDI, KFS, PoD, Soundbox in English.",
     "en": "Write in simple Indian English (Latin script only, no Hindi words).",
 }
 
@@ -78,7 +79,7 @@ def require_consent(consent_granted: bool, mid: str, request_id: str, channel: s
             detail={
                 "error": "DPDP_CONSENT_REQUIRED",
                 "message": "consent_granted must be true before any data is shared with Paytm.",
-                "message_hi": "आगे बढ़ने के लिए कृपया डेटा शेयर करने की सहमति दें।",
+                "message_hi": "Aage badhne ke liye data share karne ki sahmati dijiye.",
                 "request_id": request_id,
             },
         )
@@ -217,15 +218,15 @@ def _deduction_phrase(item: dict[str, Any]) -> str:
     head, amount = _head_of(item), _inr(item.get("amount"))
     if "CHARGEBACK" in head or "HOLD" in head:
         oid = item.get("order_id") or (dl.DATA.chargeback() or {}).get("order_id")
-        return f"#{oid} का {amount} chargeback hold" if oid else f"{amount} chargeback hold"
+        return f"#{oid} ka {amount} chargeback hold" if oid else f"{amount} chargeback hold"
     label = next((lbl for needle, lbl in _DEDUCTION_LABELS if needle in head), head.replace("_", " ").lower())
     return f"{label} {amount}"
 
 
 _SUCCESS = {"SUCCESS", "SETTLED", "VERIFIED", "CONFIRMED", "CREDITED", "RECEIVED"}
 _PENDING = {"PENDING", "IN_PROGRESS", "PROCESSING", "INITIATED"}
-_CAUSE_HI = (("closure", "बाज़ार बंदी"), ("rain", "बारिश"), ("flood", "बाढ़"), ("holiday", "छुट्टी"),
-             ("bandh", "बंद"), ("strike", "हड़ताल"))
+_CAUSE_HI = (("closure", "market band"), ("rain", "baarish"), ("flood", "baadh"), ("holiday", "chhutti"),
+             ("bandh", "bandh"), ("strike", "hadtaal"))
 
 
 def _cause_hi(cause: Any) -> str:
@@ -235,151 +236,163 @@ def _cause_hi(cause: Any) -> str:
 
 def template_reply(intent: str, resp: dict[str, Any], gst_entry: Optional[dict[str, Any]],
                    ctx: Optional[dict[str, Any]] = None) -> str:
-    """Status-aware Hindi/Hinglish fallback replies (the resolution part; the tip is added by compose())."""
+    """Status-aware Roman Hinglish fallback replies (the resolution part; the tip is added by compose())."""
     d, h, ctx = dl.DATA, dl.DATA.history, ctx or {}
     status = str(resp.get("status") or "").upper()
     data = resp.get("data") or {}
     if is_fraud(resp):
+        # "Not in your account", never "fake": the payment may still be on its way, and the merchant has to face
+        # this customer. The fraud flag is internal (risk count), not something to accuse anyone with.
         return (
-            f"सावधान! UTR {_utr(data)} Paytm के settlement ledger में नहीं मिला, यह payment fake लग रहा है। "
-            "कृपया सामान मत दीजिए, मैंने इसे high-priority fraud alert के रूप में flag कर दिया है।"
+            f"Dhyan dijiye: UTR {_utr(data)} aapke Paytm account mein nahi mila. Jab tak paisa account mein na dikhe, "
+            "saman mat dijiye. Maine ise risk alert ke roop mein note kar liya hai."
         )
     if intent == "SETTLEMENT_RECONCILE":
         # PLAN.md golden path: itemise briefly, log ITC, and flag the chargeback hold (#9981) with a next step.
         items = dl.normalise_deductions(data.get("breakdown") or data.get("deductions")) or d.settlement["deductions"]
         parts = [_deduction_phrase(i) for i in items]
-        listing = f"{', '.join(parts[:-1])} और {parts[-1]}" if len(parts) > 1 else "".join(parts)
-        itc = f" — {_inr(gst_entry['amount'])} ITC मैंने log कर दिया" if gst_entry else ""
+        listing = f"{', '.join(parts[:-1])} aur {parts[-1]}" if len(parts) > 1 else "".join(parts)
+        itc = f" — {_inr(gst_entry['amount'])} ITC maine log kar diya" if gst_entry else ""
         hold = next((i for i in items if "CHARGEBACK" in _head_of(i) or "HOLD" in _head_of(i)), None)
-        cta = (f" Delivery proof भेजिए, {_inr(hold['amount'])} छुड़वा दूँगा।"
+        cta = (f" Delivery proof bhejiye, {_inr(hold['amount'])} chhudwa dunga."
                if hold and str(hold.get("status", "HELD")).upper() != "RELEASED" else "")
         variance = data.get("variance") or order_sheet()["variance"]
-        return f"{_inr(variance)} में {listing} है{itc}।{cta}"
+        return f"{_inr(variance)} mein {listing} hai{itc}.{cta}"
     if intent == "UTR_VERIFY":
         utr, amount = _utr(data), _amt(data.get("amount"))
         if status == "NEEDS_INFO":
-            return "Payment check करने के लिए मुझे 12 अंकों का UTR नंबर चाहिए। कृपया UTR बताइए या payment का screenshot upload कीजिए।"
+            return ("Payment check karne ke liye mujhe 12 digit ka UTR number chahiye. UTR bataiye ya payment ka "
+                    "screenshot upload kijiye.")
         if status in _PENDING:
-            return (f"UTR {utr} का {amount}payment अभी PENDING है। "
-                    "NPCI इसे T+1 में auto-reverse कर सकता है, इसलिए confirm होने तक सामान रोक कर रखिए।")
+            return (f"UTR {utr} ka {amount}payment abhi PENDING hai. Agar fail hua toh T+1 mein customer ko "
+                    "auto-reverse ho jayega, isliye confirm hone tak saman rok kar rakhiye.")
         if status in _SUCCESS:
-            return f"अच्छी खबर! UTR {utr} का {amount}payment सफल है और settle हो चुका है। आप बेफिक्र होकर सामान दे सकते हैं।"
-        return f"UTR {utr} का {amount}payment {status} है। पैसा confirm होने तक सामान मत दीजिए।"
+            return (f"Achhi khabar! UTR {utr} ka {amount}payment safal hai aur settle ho chuka hai. Aap befikr hokar "
+                    "saman de sakte hain.")
+        return f"UTR {utr} ka {amount}payment {status} hai. Paisa confirm hone tak saman mat dijiye."
     if intent == "CHARGEBACK_RESOLVE":
         cb = d.chargeback(dl.digits(data.get("order_id"))) or d.chargeback() or {}
         oid, amount = data.get("order_id") or cb.get("order_id", ""), _amt(data.get("amount") or cb.get("amount"))
         if status == "NO_CHARGEBACK_FOUND":
-            return f"Order #{oid} पर कोई chargeback hold नहीं मिला। कोई और order देखना हो तो number बताइए।"
+            return f"Order #{oid} par koi chargeback hold nahi mila. Koi aur order dekhna ho toh number bataiye."
         if status in ("RELEASED", "CHARGEBACK_REVERSED", "RESOLVED", "WON", "SUCCESS"):
-            return (f"Proof of Delivery Paytm को भेज दिया, #{oid} का {amount}hold RELEASED हो गया है। "
-                    "पैसा T+1 settlement में आ जाएगा।")
+            return (f"Proof of Delivery Paytm ko bhej diya, #{oid} ka {amount}hold RELEASED ho gaya hai. "
+                    "Paisa T+1 settlement mein aa jayega.")
         if status == "ALERT_RAISED" and ctx.get("pod_ready"):
-            return (f"Paytm ने #{oid} पर {amount}chargeback alert भेजा है। Shiprocket से signed PoD मिल गया, "
-                    "1-tap sign-off कीजिए, मैं dispute भेज दूँगा।")
+            return (f"Paytm ne #{oid} par {amount}chargeback alert bheja hai. Shiprocket se signed PoD mil gaya, "
+                    "1-tap sign-off kijiye, main dispute bhej dunga.")
         hours = data.get("pod_due_in_hours") or data.get("deadline_hours") or cb.get("pod_due_in_hours") or 48
-        return (f"ORDER #{oid} का {amount}chargeback की वजह से hold पर है। "
-                f"{hours} घंटे के अंदर Proof of Delivery upload कीजिए, मैं तुरंत Paytm से release करवा दूँगा।")
+        return (f"Order #{oid} ka {amount}chargeback ki wajah se hold par hai. {hours} ghante ke andar Proof of "
+                "Delivery upload kijiye, main turant Paytm se release karwa dunga.")
     if intent == "REFUND_MANAGE" and status != "ESCALATED":
         if status == "INITIATED":
-            return f"#{data.get('order_id')} का {_amt(data.get('amount'))}refund शुरू कर दिया है, customer को T+1 में मिल जाएगा।"
+            return (f"#{data.get('order_id')} ka {_amt(data.get('amount'))}refund shuru kar diya hai, customer ko T+1 "
+                    "mein mil jayega.")
         if status == "NEEDS_INFO":
-            return "Refund शुरू करने के लिए order number और amount बताइए।"
+            return "Refund shuru karne ke liye order number aur amount bataiye."
         rf = d.refund(dl.digits(data.get("order_id"))) or d.refund() or {}
         return (
-            f"ORDER #{data.get('order_id') or rf.get('order_id', '')} का {_amt(data.get('amount') or rf.get('amount'))}"
-            f"refund customer को {status or 'PROCESSED'} हो चुका है। यही राशि आपके settlement से काटी गई थी, इसमें कोई गड़बड़ी नहीं है।"
+            f"Order #{data.get('order_id') or rf.get('order_id', '')} ka {_amt(data.get('amount') or rf.get('amount'))}"
+            f"refund customer ko {status or 'PROCESSED'} ho chuka hai. Yahi amount aapke settlement se kata tha, isme "
+            "koi gadbad nahi hai."
         )
     if intent == "FEE_GST_LOAN":
         loan = dl.normalise_loan(data.get("loan")) or d.loan
         gst_pct = data.get("gst_rate_pct") or d.fees["gst_rate_pct"]
         return (
-            f"MDR {_inr(data.get('mdr_fee') or d.deduction_amount('MDR'))} पर {gst_pct}% GST "
-            f"{_inr(data.get('gst_on_mdr') or d.deduction_amount('GST'))} लगा, "
-            f"पूरा ITC claim होगा{' — मैंने log कर दिया' if gst_entry else ''}। "
-            f"Loan EDI {_inr(loan.get('edi_per_day'))} रोज़ है, बाकी balance {_inr(loan.get('balance'))}।"
+            f"MDR {_inr(data.get('mdr_fee') or d.deduction_amount('MDR'))} par {gst_pct}% GST "
+            f"{_inr(data.get('gst_on_mdr') or d.deduction_amount('GST'))} laga, "
+            f"poora ITC claim hoga{' — maine log kar diya' if gst_entry else ''}. "
+            f"Loan EDI {_inr(loan.get('edi_per_day'))} roz hai, baaki balance {_inr(loan.get('balance'))}."
         )
     if intent == "MANDATE_TROUBLESHOOT" and status != "ESCALATED":
         edi = _inr(data.get("missed_edi") or data.get("edi_amount") or d.loan.get("edi_per_day"))
         m = (ctx.get("insight") or {}).get("metrics") or {}
         cause = _cause_hi(((ctx.get("insight") or {}).get("summary")))
-        why = (f"{cause + ' से ' if cause else ''}बिक्री {m.get('sales_dip_pct')}% गिरी, इसलिए {edi} EDI fail हुई, default नहीं।"
-               if (ctx.get("insight") or {}).get("classification") == "PAYMENT_FRICTION" else f"{edi} EDI का mandate fail हुआ था।")
+        why = (f"{(cause + ' se sale').capitalize() if cause else 'Sale'} {m.get('sales_dip_pct')}% giri, isliye {edi} EDI "
+               "fail hui, default nahi."
+               if (ctx.get("insight") or {}).get("classification") == "PAYMENT_FRICTION"
+               else f"{edi} EDI ka mandate fail hua tha.")
         if status == "REMINDER_SENT":
-            return f"{why} Reminder भेज दिया है, कल फिर debit होगा।"
+            return f"{why} Reminder bhej diya hai, kal phir debit hoga."
         if status == "ALERT_RAISED":
-            return f"{why} 1-tap UPI link भेजूँ? 48 घंटे की grace मिलेगी।"
+            return f"{why} 1-tap UPI link bhejun? 48 ghante ki grace milegi."
         if status == "REMEDIES_OFFERED":  # live 8002: UPI link to pay today, or a KFS 2-day pause
             pause = any(r.get("offer_id") for r in data.get("remedies") or [])
-            return f"{why} 1-tap UPI link से आज भरिए, penalty नहीं{'; चाहें तो 2 दिन का KFS pause भी है' if pause else ''}।"
+            return (f"{why} 1-tap UPI link se aaj bhariye, penalty nahi"
+                    f"{'; chahein toh 2 din ka KFS pause bhi hai' if pause else ''}.")
         if status == "MANDATE_RESOLVED":
-            return f"{why} Paytm ने मामला सुलझा दिया है, penalty नहीं लगेगी।"
-        return f"{why} 1-tap UPI link भेजा है, penalty नहीं लगेगी।"
+            return f"{why} Paytm ne maamla suljha diya hai, penalty nahi lagegi."
+        return f"{why} 1-tap UPI link bheja hai, penalty nahi lagegi."
     if intent == "DUPLICATE_RECONCILE" and status != "ESCALATED":
         if status == "NO_DUPLICATE_FOUND":
-            return f"Order #{data.get('order_id') or ''} पर कोई duplicate payment नहीं मिला। UTR बताइए तो दोबारा जाँच लूँ।"
+            return (f"Order #{data.get('order_id') or ''} par koi duplicate payment nahi mila. UTR bataiye toh dobara "
+                    "check kar loon.")
         amt = _inr(data.get("amount"))
-        return (f"{data.get('customer') or 'Customer'} ने order #{data.get('order_id')} के {amt} दो बार दिए थे। "
-                f"Duplicate {amt} का refund शुरू कर दिया, T+1 में पहुँचेगा।")
+        return (f"{data.get('customer') or 'Customer'} ne order #{data.get('order_id')} ke {amt} do baar diye the. "
+                f"Duplicate {amt} ka refund shuru kar diya, T+1 mein pahunchega.")
     if intent == "GROWTH_ADVISORY" and status == "ADVICE_READY":  # 8002: advice only, no new credit offered
-        day = {"Monday": "सोमवार", "Tuesday": "मंगलवार", "Wednesday": "बुधवार", "Thursday": "गुरुवार",
-               "Friday": "शुक्रवार"}.get(str(data.get("restock_by")), data.get("restock_by") or "गुरुवार")
+        day = {"Monday": "Somvaar", "Tuesday": "Mangalvaar", "Wednesday": "Budhvaar", "Thursday": "Guruvaar",
+               "Friday": "Shukravaar"}.get(str(data.get("restock_by")), data.get("restock_by") or "Guruvaar")
         loan = data.get("existing_loan") or {}
-        loan_line = (f" {loan.get('lender')} loan का {_inr(loan.get('balance'))} बाकी है, {_inr(loan.get('edi_per_day'))} EDI "
-                     f"रोज़ की बिक्री का सिर्फ़ {loan.get('edi_share_of_daily_sales_pct')}% है।"
+        loan_line = (f" {loan.get('lender')} loan ka {_inr(loan.get('balance'))} baaki hai, "
+                     f"{_inr(loan.get('edi_per_day'))} EDI roz ki sale ka sirf {loan.get('edi_share_of_daily_sales_pct')}% hai."
                      if loan.get("balance") and loan.get("edi_share_of_daily_sales_pct") is not None else "")
-        return (f"रोज़ औसत {_inr(data.get('daily_avg_sales'))}, Fri–Sun {data.get('weekend_multiplier')}x "
-                f"(~{_inr(data.get('weekend_daily_sales'))}/दिन) — {day} तक stock भर लीजिए।{loan_line}")
+        return (f"Roz average {_inr(data.get('daily_avg_sales'))}, Fri–Sun {data.get('weekend_multiplier')}x "
+                f"(~{_inr(data.get('weekend_daily_sales'))}/din) — {day} tak stock bhar lijiye.{loan_line}")
     if intent == "GROWTH_ADVISORY":
         offer = data.get("offer") or h.get("growth_offer") or {}
         trend = data.get("six_month_trend_pct")
-        grew = f"6 महीने में बिक्री {trend}% बढ़ी है। " if isinstance(trend, (int, float)) and trend > 0 else ""
+        grew = f"6 mahine mein sale {trend}% badhi hai. " if isinstance(trend, (int, float)) and trend > 0 else ""
         # No rate is quoted: rate and tenure are the NBFC's to disclose in the KFS (same stance as 8002).
-        return (f"{grew}{offer.get('lender') or h.get('active_lender')} का {_inr(offer.get('amount'))} working capital "
-                "pre-approved है; rate और tenure KFS में देखकर ही लें।")
+        return (f"{grew}{offer.get('lender') or h.get('active_lender')} ka {_inr(offer.get('amount'))} working capital "
+                "pre-approved hai; rate aur tenure KFS mein dekhkar hi lijiye.")
     if intent == "CASHFLOW_EDI_SWITCH":
         gap = ctx.get("cashflow") or {}
         offer = data.get("edi_pause_offer") or {}
         edi = _inr(d.loan.get("edi_per_day"))
         if status == "EDI_PAUSED":
-            return (f"{data.get('nbfc') or h.get('active_lender')} का {edi} EDI {data.get('pause_days')} दिन pause कर दिया, "
-                    f"{_inr(data.get('edi_saved_inr'))} बचे; कल EDI नहीं कटेगी।")
+            return (f"{data.get('nbfc') or h.get('active_lender')} ka {edi} EDI {data.get('pause_days')} din pause kar "
+                    f"diya, {_inr(data.get('edi_saved_inr'))} bache; kal EDI nahi kategi.")
         if status == "ALERT_RAISED":
             refund = gap.get("refund_request") or {}
             if gap.get("shortfall") and offer.get("eligible"):
-                return (f"{_inr(refund.get('amount'))} refund के बाद कल payout {_inr(gap.get('projected_net_payout'))} रहेगा, "
-                        f"stock के {_inr(gap.get('tomorrow_stock_due'))} चाहिए। {offer.get('nbfc')} का {edi} EDI "
-                        f"{offer.get('pause_days')} दिन रोक दूँ?")
+                return (f"{_inr(refund.get('amount'))} refund ke baad kal payout {_inr(gap.get('projected_net_payout'))} "
+                        f"rahega, stock ke {_inr(gap.get('tomorrow_stock_due'))} chahiye. {offer.get('nbfc')} ka {edi} EDI "
+                        f"{offer.get('pause_days')} din rok doon?")
             if STATE.loan_edi_status != "ACTIVE":
-                return f"आपकी {edi} EDI पहले से pause है, कल नहीं कटेगी।"
+                return f"Aapki {edi} EDI pehle se pause hai, kal nahi kategi."
             if not gap.get("shortfall"):
-                return f"कल का payout {_inr(gap.get('projected_net_payout'))} stock के लिए काफी है, EDI pause की ज़रूरत नहीं।"
-            return "इस बार EDI pause की पात्रता नहीं है। Supplier से 2 दिन की मोहलत माँगना बेहतर रहेगा।"
-        return "इस बार EDI pause नहीं हो सकता, KFS शर्तें पूरी नहीं हैं। Supplier से 2 दिन की मोहलत माँगना बेहतर रहेगा।"
+                return (f"Kal ka payout {_inr(gap.get('projected_net_payout'))} stock ke liye kaafi hai, EDI pause ki "
+                        "zaroorat nahi.")
+            return "Is baar EDI pause ki eligibility nahi hai. Supplier se 2 din ki mohlat maangna behtar rahega."
+        return ("Is baar EDI pause nahi ho sakta, KFS ki sharten poori nahi hain. Supplier se 2 din ki mohlat maangna "
+                "behtar rahega.")
     if intent == "SOUNDBOX_RETURN" and status != "ESCALATED":
-        return (f"Soundbox की pickup {data.get('pickup_within_hours', 48)} घंटे में होगी, ticket {data.get('pickup_ticket')}। "
-                f"{_inr(data.get('rental_per_month'))} का rental अगले cycle से बंद हो जाएगा।")
+        return (f"Soundbox ki pickup {data.get('pickup_within_hours', 48)} ghante mein hogi, ticket "
+                f"{data.get('pickup_ticket')}. {_inr(data.get('rental_per_month'))} ka rental agle cycle se band ho jayega.")
     if intent == "LOAN_CLOSURE_NOC" and status != "ESCALATED":
-        return (f"{data.get('lender')} loan का बाकी {_inr(data.get('outstanding'))} है, foreclosure charge "
-                f"{_inr(data.get('foreclosure_charge', 0))}। भुगतान के {data.get('noc_eta_days', 7)} दिन में NOC मिल जाएगा।")
+        return (f"{data.get('lender')} loan ka baaki {_inr(data.get('outstanding'))} hai, foreclosure charge "
+                f"{_inr(data.get('foreclosure_charge', 0))}. Payment ke {data.get('noc_eta_days', 7)} din mein NOC mil jayega.")
     if intent == "BANK_KYC_UPDATE" and status != "ESCALATED":
-        return ("नया bank account जोड़ने का secure link भेज दिया है। Penny-drop verify होते ही "
-                f"{data.get('eta_hours', '24-48')} घंटे में settlement नए account में आएगा।")
+        return ("Naya bank account jodne ka secure link bhej diya hai. Penny-drop verify hote hi "
+                f"{data.get('eta_hours', '24-48')} ghante mein settlement naye account mein aayega.")
     if intent == "SETTLEMENT_HOLD_BANK" and status != "ESCALATED":
         if status == "NO_BANK_HOLD":
             last = data.get("last_credit") or {}
             holds = data.get("open_holds") or []
-            hold = (f" सिर्फ #{holds[0]['order_id']} का {_inr(holds[0].get('amount'))} chargeback hold है।" if holds else "")
-            return (f"आपका {data.get('bank') or 'bank'} account ACTIVE है, कोई bank hold नहीं; "
-                    f"{_inr(last.get('amount'))} credit हो चुका है।{hold}")
-        return (f"Bank account {data.get('bank_status')} होने से settlement रुका है। "
-                "Account update कीजिए, अगले cycle में पैसा आ जाएगा।")
+            hold = (f" Sirf #{holds[0]['order_id']} ka {_inr(holds[0].get('amount'))} chargeback hold hai." if holds else "")
+            return (f"Aapka {data.get('bank') or 'bank'} account ACTIVE hai, koi bank hold nahi; "
+                    f"{_inr(last.get('amount'))} credit ho chuka hai.{hold}")
+        return (f"Bank account {data.get('bank_status')} hone se settlement ruka hai. "
+                "Account update kijiye, agle cycle mein paisa aa jayega.")
     ticket = (resp.get("escalation_ticket") or {}).get("ticket_id", "")
     hardware = (data.get("device") or data.get("issue_type") == "HARDWARE_SOUNDBOX"
                 or ctx.get("issue_type") == "HARDWARE_SOUNDBOX")  # live 8002 doesn't echo the device back
-    what = "Soundbox की खराबी का मामला" if hardware else "आपका मामला"
+    what = "Soundbox ki kharabi ka maamla" if hardware else "aapka maamla"
     return (
-        f"मैंने {what} Paytm की L2 team को भेज दिया है{f', ticket {ticket}' if ticket else ''}। "
-        "2 घंटे में आपको callback आएगा।"
+        f"Maine {what} Paytm ki L2 team ko bhej diya hai{f', ticket {ticket}' if ticket else ''}. "
+        "2 ghante mein aapko callback aayega."
     )
 
 
@@ -439,7 +452,7 @@ async def vernacular_reply(
     # "payment notification चालू रखिए" into "PoD लेकर रखें", so it no longer writes tips.)
     if isinstance(reply, str) and len(reply.strip()) > 10 and len(reply.split()) <= 40:
         bad = ungrounded_numbers(reply, " ".join([user_prompt, template, merchant_text or ""]))
-        if not bad and not (english and _DEVANAGARI.search(reply)):
+        if not bad and not _DEVANAGARI.search(reply):  # both tabs are Latin script (Hinglish / English)
             return compose(human_dates(reply.strip()), tip, max_words=48), "llm"
         # Live: the LLM said "₹4,160 का UTR" when no amount existed. Money talk must come from the facts.
         log.warning("LLM reply dropped (ungrounded numbers %s / wrong language)", bad)
@@ -454,14 +467,12 @@ async def vernacular_reply(
 
 _DEVANAGARI = re.compile("[\u0900-\u097F]")
 _ISO_DATE = re.compile(r"\b(20\d\d)-(\d\d)-(\d\d)\b")
-_MONTHS = {"en": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-           "hi": ["\u091C\u0928\u0935\u0930\u0940", "\u092B\u093C\u0930\u0935\u0930\u0940", "\u092E\u093E\u0930\u094D\u091A", "\u0905\u092A\u094D\u0930\u0948\u0932", "\u092E\u0908", "\u091C\u0942\u0928", "\u091C\u0941\u0932\u093E\u0908", "\u0905\u0917\u0938\u094D\u0924", "\u0938\u093F\u0924\u0902\u092C\u0930", "\u0905\u0915\u094D\u091F\u0942\u092C\u0930", "\u0928\u0935\u0902\u092C\u0930", "\u0926\u093F\u0938\u0902\u092C\u0930"]}
+_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]  # Hinglish uses these too
 
 
 def human_dates(text: str) -> str:
-    """'2026-11-20' -> '20 Nov' / '20 \u0928\u0935\u0902\u092C\u0930' (reads and sounds natural). Runs after the number check."""
-    months = _MONTHS[lang()]
-    return _ISO_DATE.sub(lambda m: f"{int(m.group(3))} {months[int(m.group(2)) - 1]}", text)
+    """'2026-11-20' -> '20 Nov' (reads and sounds natural in English and Hinglish). Runs after the number check."""
+    return _ISO_DATE.sub(lambda m: f"{int(m.group(3))} {_MONTHS[int(m.group(2)) - 1]}", text)
 
 
 def consent_template_en(intent: str, resp: dict[str, Any], ctx: dict[str, Any]) -> Optional[str]:
@@ -798,12 +809,13 @@ async def run(
 
 CLARIFY_HI = {
     # STT ran but heard nothing usable
-    "stt": "माफ़ कीजिए, आपकी आवाज़ साफ़ नहीं आई। फ़ोन थोड़ा पास रखकर फिर से बोलिए, या सवाल टाइप कीजिए।",
+    "stt": "Maaf kijiye, aapki awaaz saaf nahi aayi. Phone thoda paas rakhkar phir se boliye, ya sawaal type kijiye.",
     # 8001 has no Sarvam key (mock mode) or is down: be honest instead of answering a canned line
-    "voice_off": "आवाज़ पहचानने की सेवा अभी बंद है, इसलिए मैं सुन नहीं पाया। कृपया सवाल टाइप कीजिए या नीचे का कोई बटन दबाइए।",
+    "voice_off": ("Awaaz pehchanne wali service abhi band hai, isliye main sun nahi paaya. Sawaal type kijiye ya neeche "
+                  "ka koi button dabaiye."),
     # off-topic or too vague
-    "unclear": ("माफ़ कीजिए, यह मैं ठीक से समझ नहीं पाया। मैं settlement, UTR या payment check, chargeback, refund, "
-                "loan EDI, Soundbox और KYC में मदद करता हूँ। इनमें से क्या जानना है?"),
+    "unclear": ("Maaf kijiye, yeh main theek se samajh nahi paaya. Main settlement, UTR ya payment check, chargeback, "
+                "refund, loan EDI, Soundbox aur KYC mein madad karta hoon. Inmein se kya jaanna hai?"),
 }
 
 
@@ -862,7 +874,7 @@ payments, chargebacks, refunds, the loan EDI or the Soundbox. Use ONLY numbers t
 async def answer_info(*, request_id: str, mid: str, consent_token: str, merchant_text: str,
                       transcript: Optional[str] = None, transcript_source: Optional[str] = None,
                       intent_source: str = "llm") -> dict[str, Any]:
-    """Read-only answer from the merchant's own books ("अगला settlement कब आएगा?"). Nothing goes to Paytm."""
+    """Read-only answer from the merchant's own books ("agla settlement kab aayega?"). Nothing goes to Paytm."""
     import facts  # local: facts imports state, which imports this module's siblings
 
     f = facts.merchant_facts()
@@ -872,7 +884,7 @@ async def answer_info(*, request_id: str, mid: str, consent_token: str, merchant
         json.dumps({"question": merchant_text, "facts": f}, ensure_ascii=False, default=str), response_format="text")
     ok = (isinstance(reply, str) and len(reply.strip()) > 5 and len(reply.split()) <= 55
           and not ungrounded_numbers(reply, facts_json + " " + (merchant_text or ""))
-          and not (lang() == "en" and _DEVANAGARI.search(reply)))
+          and not _DEVANAGARI.search(reply))
     if not ok:
         log.warning("INFO answer unusable (LLM down, ungrounded numbers or wrong language): asking to rephrase")
         return await clarify(request_id=request_id, mid=mid, consent_token=consent_token, reason="unclear",

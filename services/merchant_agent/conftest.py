@@ -15,6 +15,7 @@ NO_DATASET = HERE / "_no_dataset_"  # never created -> every file falls back to 
 
 for _k in ("SARVAM_URL", "SARVAM_SERVICE_URL", "PAYTM_URL", "PAYTM_AGENT_URL"):
     os.environ[_k] = "http://127.0.0.1:9"
+os.environ["SARVAM_API_BASE"] = "http://127.0.0.1:9"  # transliterate-for-voice must not reach the real Sarvam API
 os.environ["UPSTREAM_TIMEOUT_S"] = "1"
 os.environ["DOC_EXTRACT_TIMEOUT_S"] = "1"
 os.environ["DATASET_DIR"] = str(NO_DATASET)

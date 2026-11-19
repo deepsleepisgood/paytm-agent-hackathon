@@ -3,6 +3,7 @@
 Offline by default: every upstream call fails instantly, so the merchant-side mocks of 8001/8002 answer.
 """
 import json
+import sys
 import re
 
 import httpx
@@ -87,7 +88,7 @@ def test_response_carries_the_full_loop(client):
     assert body["verified_outcome"]["outcome"] == "SUCCESS" and body["verified_outcome"]["learned"]
     assert body["pending_action"]["type"] == "PAY_VIA_UPI_LINK"
     # Act 1: friction-not-default + a historical tip, within the voice budget
-    assert "default नहीं" in body["reply_text"] and "2.3x" in body["reply_text"]
+    assert "default nahi" in body["reply_text"] and "2.3x" in body["reply_text"]
     assert len(body["reply_text"].split()) <= 35
     m2p = next(e for e in events(client, body["request_id"]) if e["type"] == "MERCHANT_TO_PAYTM")["payload"]
     assert m2p["selected_intervention"]["option_id"] == "B"
@@ -316,7 +317,7 @@ def test_llm_reply_with_invented_amount_falls_back_to_template(client, monkeypat
     async def fake_llm(system, user, response_format="json"):
         if response_format == "json":
             return None
-        return "₹9,999 का settlement आज आपके bank में आ जाएगा, चिंता मत कीजिए।"
+        return "₹9,999 ka settlement aaj aapke bank mein aa jayega, chinta mat kijiye."
     monkeypatch.setattr(pipeline.upstream, "llm", fake_llm)
     body = ask(client, "Kal ₹1,00,000 sale tha, bank mein ₹95,840 aaya — ₹4,160 kahan kata?").json()
     assert body["reply_source"] == "template" and "9,999" not in body["reply_text"]
@@ -331,12 +332,12 @@ def test_consent_offer_is_never_paraphrased_by_the_llm(client, monkeypatch):
 
     async def fake_llm(system, user, response_format="json"):
         calls.append(response_format)
-        return "Paytm ने EDI 2 दिन के लिए pause किया है।" if response_format == "text" else None
+        return "Paytm ne EDI 2 din ke liye pause kiya hai." if response_format == "text" else None
     monkeypatch.setattr(pipeline.upstream, "llm", fake_llm)
     body = client.post("/merchant/proactive-shield", json={"mid": MID, "scenario": "CASHFLOW_EDI_SWITCH",
                                                             "consent_granted": True}).json()
     assert body["proactive"]["awaiting_confirmation"] == "CONFIRM_EDI_PAUSE"
-    assert body["reply_source"] == "template" and "रोक दूँ?" in body["reply_text"] and "text" not in calls
+    assert body["reply_source"] == "template" and "rok doon?" in body["reply_text"] and "text" not in calls
 
 
 # ----------------------------------------------------------------------------- not understood -> ask, never guess
@@ -346,7 +347,7 @@ def test_off_topic_or_vague_is_not_answered_as_business(client, text):
     """LLM down (8001 unreachable in tests): keywords only. No match used to mean 'settlement'."""
     body = ask(client, text).json()
     assert body["intent"] == "UNCLEAR" and body["paytm_source"] == "none"
-    assert "समझ नहीं पाया" in body["reply_text"] and body["pending_action"]["type"] == "REPHRASE"
+    assert "samajh nahi paaya" in body["reply_text"] and body["pending_action"]["type"] == "REPHRASE"
     assert "MERCHANT_TO_PAYTM" not in [e["type"] for e in body["a2a_events"]]
     assert body["verified_outcome"] == {}  # nothing learned from a non-answer
 
@@ -378,7 +379,7 @@ def test_transcribe_returns_only_real_speech(client, monkeypatch):
     monkeypatch.setattr(upstream, "stt", mock_stt)
     r = client.post("/merchant/transcribe", files={"audio": ("v.webm", b"x" * 2000, "audio/webm")},
                     data={"mid": MID, "consent_granted": "true"}).json()
-    assert r["transcript"] is None and r["reason"] == "voice_off" and "टाइप" in r["message_hi"]
+    assert r["transcript"] is None and r["reason"] == "voice_off" and "type" in r["message_hi"]
 
 
 def test_transcribe_needs_consent(client):
@@ -418,15 +419,15 @@ def _fake_llm(monkeypatch, intent, answer):
 def test_next_settlement_question_is_answered_from_the_books(client, monkeypatch):
     use_dataset(REAL_DATASET)
     client.post("/reset")
-    _fake_llm(monkeypatch, "INFO_QUERY", "आपका अगला settlement 2026-11-20 को सुबह 08:00 के आसपास आएगा, आज की बिक्री के लिए।")
+    _fake_llm(monkeypatch, "INFO_QUERY", "Aapka agla settlement 2026-11-20 ko subah 08:00 ke aaspaas aayega, aaj ki sale ke liye.")
     body = _q(client, "मेरा अगला settlement कब आएगा?")
     assert body["intent"] == "INFO_QUERY" and body["paytm_source"] == "none" and body["reply_source"] == "llm"
-    assert "20 नवंबर" in body["reply_text"]  # ISO dates are humanised for reading and TTS
+    assert "20 Nov" in body["reply_text"]  # ISO dates are humanised for reading and TTS
     assert "MERCHANT_TO_PAYTM" not in [e["type"] for e in body["a2a_events"]]  # read-only
 
 
 def test_info_answer_with_invented_number_is_rejected(client, monkeypatch):
-    _fake_llm(monkeypatch, "INFO_QUERY", "आपका अगला settlement ₹77,777 का होगा।")
+    _fake_llm(monkeypatch, "INFO_QUERY", "Aapka agla settlement ₹77,777 ka hoga.")
     body = _q(client, "agla settlement kitna aayega?")
     assert body["intent"] == "UNCLEAR" and "77,777" not in body["reply_text"]
 
@@ -434,6 +435,81 @@ def test_info_answer_with_invented_number_is_rejected(client, monkeypatch):
 def test_llm_answers_the_actual_question_by_default(client, monkeypatch):
     import pipeline
     monkeypatch.setattr(pipeline, "REPLY_LLM", True)  # the default; don't depend on the developer's .env
-    _fake_llm(monkeypatch, "SETTLEMENT_RECONCILE", "₹4,160 MDR, GST, refund, rental और hold में कटे।")
+    _fake_llm(monkeypatch, "SETTLEMENT_RECONCILE", "₹4,160 MDR, GST, refund, rental aur hold mein kate.")
     body = _q(client, "Kal ₹1,00,000 sale tha, bank mein ₹95,840 aaya — ₹4,160 kahan kata?")
     assert body["reply_source"] == "llm" and body["reply_text"].startswith("₹4,160 MDR")
+
+
+# ----------------------------------------------------------------------------- no-UTR payment check (payments.py)
+
+import payments  # noqa: E402
+
+_FEED = [  # Paytm's /ledger transactions: one stuck payment, one order paid twice, one ordinary payment
+    {"utr": "632184920999", "amount_inr": 2400, "payer_app": "PhonePe", "lookup_status": "PENDING",
+     "order_id": "BILL-1", "received_at": "2026-11-18T18:15:40", "refunded": False},
+    {"utr": "632299206882", "amount_inr": 1180, "payer_app": "PhonePe", "lookup_status": "SUCCESS_SETTLED",
+     "order_id": "4489", "received_at": "2026-11-18T19:42:10", "refunded": False},
+    {"utr": "632230725895", "amount_inr": 1180, "payer_app": "PhonePe", "lookup_status": "SUCCESS_SETTLED",
+     "order_id": "4489", "received_at": "2026-11-18T19:42:58", "refunded": False},
+    {"utr": "632233330726", "amount_inr": 2546, "payer_app": "Paytm", "lookup_status": "SUCCESS_SETTLED",
+     "order_id": "4491", "received_at": "2026-11-18T21:10:00", "refunded": False},
+]
+
+
+def _paytm_up(monkeypatch, sent):
+    async def ledger(mid):
+        return {"transactions": _FEED}
+
+    async def dispatch(env):
+        sent.append((env["intent"], env["payload"]))
+        if env["intent"] == "UTR_VERIFY":
+            t = next(x for x in _FEED if x["utr"] == env["payload"]["utr"])
+            return {"status": "RESOLVED", "data": {"lookup_status": t["lookup_status"]}}, "live"
+        if env["intent"] == "ESCALATE_HUMAN":
+            return {"status": "ESCALATED", "data": {}, "escalation_ticket": {"ticket_id": "tkt_009"}}, "live"
+        return {"status": "RESOLVED", "data": {"refund": {"utr": "632230725895"}, "refund_status": "PROCESSED"}}, "live"
+
+    monkeypatch.setattr(upstream, "paytm_ledger", ledger)
+    monkeypatch.setattr(upstream, "dispatch", dispatch)
+
+
+@pytest.mark.parametrize("text", ["Customer ka paisa kat gaya par mere paas nahi aaya",
+                                  "customer ki screen ghoom rahi hai", "The customer's money was debited but I didn't get it"])
+def test_payment_problems_route_to_utr_verify_without_a_utr(text):
+    assert router.keyword_intent(text) == "UTR_VERIFY"
+
+
+def test_debited_not_received_is_found_and_fixed_without_a_utr(client, monkeypatch):
+    sent = []
+    _paytm_up(monkeypatch, sent)
+    body = _q(client, "Customer ka paisa kat gaya par mere paas nahi aaya")
+    pc = body["payment_check"]
+    assert body["intent"] == "UTR_VERIFY" and pc["situation"] == "debited"
+    assert [f["kind"] for f in pc["findings"]] == ["STUCK", "PAID_TWICE"]
+    # Real actions at Paytm: status checked, a ticket raised for the stuck payment, the second payment refunded
+    assert [i for i, _ in sent] == ["UTR_VERIFY", "ESCALATE_HUMAN", "DUPLICATE_RECONCILE"]
+    assert {a["type"] for a in pc["actions"]} == {"TICKET", "WATCH", "REFUND"}
+    assert "₹2,400" in body["reply_text"] and "tkt_009" in body["reply_text"]
+    assert not re.search("[ऀ-ॿ]", body["reply_text"])  # Hindi tab = Roman Hinglish
+    # Asked again: the same ticket, not a second one
+    sent.clear()
+    again = _q(client, "Customer ka paisa kat gaya par mere paas nahi aaya")
+    assert "ESCALATE_HUMAN" not in [i for i, _ in sent] and "tkt_009" in again["reply_text"]
+
+
+def test_spinning_screen_checks_the_newest_payment(client, monkeypatch):
+    sent = []
+    _feed = [dict(t, refunded=t["utr"] == "632230725895") for t in _FEED]  # double payment already refunded
+    monkeypatch.setattr(sys.modules[__name__], "_FEED", _feed)
+    _paytm_up(monkeypatch, sent)
+    body = _q(client, "customer ki screen ghoom rahi hai, payment hua ya nahi?", "en")
+    assert [f["kind"] for f in body["payment_check"]["findings"]] == ["RECEIVED"]
+    assert "₹2,546" in body["reply_text"] and "not to pay again" in body["reply_text"]
+
+
+def test_payment_check_claims_nothing_when_paytm_is_unreachable(client):
+    use_dataset(REAL_DATASET)
+    client.post("/reset")
+    body = _q(client, "Customer ka paisa kat gaya par mere paas nahi aaya")
+    assert body["payment_check"]["actions"] == []
+    assert "kuch change nahi kiya" in body["reply_text"] and "ticket" not in body["reply_text"]
