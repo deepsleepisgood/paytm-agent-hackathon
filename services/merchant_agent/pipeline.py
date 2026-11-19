@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import logging
+import re
 import time
 import uuid
 from typing import Any, Awaitable, Callable, Optional
@@ -16,6 +18,8 @@ import repository
 import upstream
 from schemas import Slots
 from state import STATE, order_sheet
+
+log = logging.getLogger("merchant_agent.pipeline")
 
 FRAUD_STATUS = "NOT_FOUND_SUSPECTED_FAKE"
 ACTOR_MERCHANT = "MERCHANT_AGENT"
@@ -287,6 +291,15 @@ def template_reply(intent: str, resp: dict[str, Any], gst_entry: Optional[dict[s
         amt = _inr(data.get("amount"))
         return (f"{data.get('customer') or 'Customer'} ने order #{data.get('order_id')} के {amt} दो बार दिए थे। "
                 f"Duplicate {amt} का refund शुरू कर दिया, T+1 में पहुँचेगा।")
+    if intent == "GROWTH_ADVISORY" and status == "ADVICE_READY":  # 8002: advice only, no new credit offered
+        day = {"Monday": "सोमवार", "Tuesday": "मंगलवार", "Wednesday": "बुधवार", "Thursday": "गुरुवार",
+               "Friday": "शुक्रवार"}.get(str(data.get("restock_by")), data.get("restock_by") or "गुरुवार")
+        loan = data.get("existing_loan") or {}
+        loan_line = (f" {loan.get('lender')} loan का {_inr(loan.get('balance'))} बाकी है, {_inr(loan.get('edi_per_day'))} EDI "
+                     f"रोज़ की बिक्री का सिर्फ़ {loan.get('edi_share_of_daily_sales_pct')}% है।"
+                     if loan.get("balance") and loan.get("edi_share_of_daily_sales_pct") is not None else "")
+        return (f"रोज़ औसत {_inr(data.get('daily_avg_sales'))}, Fri–Sun {data.get('weekend_multiplier')}x "
+                f"(~{_inr(data.get('weekend_daily_sales'))}/दिन) — {day} तक stock भर लीजिए।{loan_line}")
     if intent == "GROWTH_ADVISORY":
         offer = data.get("offer") or h.get("growth_offer") or {}
         trend = data.get("six_month_trend_pct")
@@ -377,17 +390,60 @@ async def vernacular_reply(
         default=str,
     )
     system_prompt = REPLY_SYSTEM_PROMPT.format(merchant_name=dl.DATA.merchant["name"])
-    reply = await upstream.llm(system_prompt, user_prompt, response_format="text")
-    # PLAN.md budget is ≤35 words; allow some slack, otherwise use the (short) template.
-    if isinstance(reply, str) and len(reply) > 10 and len(reply.split()) <= 45:
-        return reply, "llm"
+    # Consent moments (EDI pause offer, dispute sign-off) are never paraphrased: live, the LLM turned
+    # "EDI 2 दिन रोक दूँ?" into "Paytm ने EDI pause किया है" before the merchant had said yes.
+    awaiting = (ctx or {}).get("awaiting_confirmation")
+    reply = None if awaiting else await upstream.llm(system_prompt, user_prompt, response_format="text")
     resolution = template_reply(intent, resp, gst_entry, {**(ctx or {}), "insight": insight})
     tip = None if is_fraud(resp) else insight.get("tip_hi")
     # The tip names the duplicate payer from the merchant's books; if Paytm matched a different order, drop it.
     paid_order = dl.digits((resp.get("data") or {}).get("order_id"))
     if intent == "DUPLICATE_RECONCILE" and paid_order and paid_order != (insight.get("metrics") or {}).get("order_id"):
         tip = None
-    return compose(resolution, tip), "template"
+    template = compose(resolution, tip)
+    # PLAN.md budget is ≤35 words; allow some slack, otherwise use the (short) template.
+    if isinstance(reply, str) and len(reply) > 10 and len(reply.split()) <= 45:
+        bad = ungrounded_numbers(reply, " ".join([user_prompt, template, merchant_text or ""]))
+        if not bad:
+            return reply, "llm"
+        # Live: the LLM said "₹4,160 का UTR" when no amount existed. Money talk must come from the facts.
+        log.warning("LLM reply dropped, numbers not in the facts: %s", bad)
+    return template, "template"
+
+
+_NUM_RE = re.compile(r"(₹\s*)?(\d[\d,]*(?:\.\d+)?)")
+
+
+def _num_forms(text: str) -> set[str]:
+    forms: set[str] = set()
+    for _, n in _NUM_RE.findall(text.translate(str.maketrans("०१२३४५६७८९", "0123456789"))):
+        n = n.replace(",", "").rstrip(".")
+        forms.add(n)
+        try:
+            f = float(n)
+            forms.add(str(int(f)) if f == int(f) else str(f))
+        except ValueError:
+            pass
+    return forms
+
+
+def ungrounded_numbers(reply: str, facts: str) -> list[str]:
+    """Amounts (₹…) and 3+ digit numbers (UTRs, orders, years) in `reply` that appear nowhere in `facts`."""
+    known = _num_forms(facts)
+    bad = []
+    for rupee, n in _NUM_RE.findall(reply.translate(str.maketrans("०१२३४५६७८९", "0123456789"))):
+        plain = n.replace(",", "").rstrip(".")
+        if not (rupee or len(re.sub(r"\D", "", plain)) >= 3):
+            continue
+        forms = {plain}
+        try:
+            f = float(plain)
+            forms.add(str(int(f)) if f == int(f) else str(f))
+        except ValueError:
+            pass
+        if not forms & known:
+            bad.append((rupee or "") + n)
+    return bad
 
 
 # ----------------------------------------------------------------------------- pending action
@@ -427,7 +483,12 @@ def _register_remedy_offers(resp: dict[str, Any], request_id: str, insight: dict
                 "source": "MANDATE_REMEDY"}
 
 
-def paytm_payload_aliases(intent: str, payload: dict[str, Any], ctx: dict[str, Any], from_document: bool) -> dict[str, Any]:
+# "wapas karna hai", "refund kar do/karo", "return karo": the merchant wants to send money back (vs. "refund hua?")
+_REFUND_ASK_RE = re.compile(r"wapas\s+(karna|kar\s*do|karo|dena|de\s*do)|refund\s+(karna|kar\s*do|karo|dena|de\s*do|initiate|start)|लौटा(ना|\s*दो)|वापस\s+(करना|कर\s*दो|करो)", re.I)
+
+
+def paytm_payload_aliases(intent: str, payload: dict[str, Any], ctx: dict[str, Any], from_document: bool,
+                          merchant_text: Optional[str] = None) -> dict[str, Any]:
     """Field names Person 2's 8002 reads (it answers 400 BAD_PAYLOAD without them); ours stay alongside."""
     out: dict[str, Any] = {}
     if payload.get("utr_number"):
@@ -438,6 +499,10 @@ def paytm_payload_aliases(intent: str, payload: dict[str, Any], ctx: dict[str, A
             out["claimed_amount_inr"] = payload["amount"]
     if intent == "CHARGEBACK_RESOLVE" and payload.get("pod_document") and "doc_confidence" not in payload:
         out["doc_confidence"] = ctx.get("doc_confidence")
+    if intent == "REFUND_MANAGE":  # 8002 reads order_id + action (STATUS | INITIATE) + amount_inr
+        out["action"] = "INITIATE" if _REFUND_ASK_RE.search(merchant_text or "") else "STATUS"
+        if payload.get("amount") is not None:
+            out["amount_inr"] = int(payload["amount"])
     if intent == "ESCALATE_HUMAN" and not payload.get("reason_code"):
         out["reason_code"] = "MERCHANT_REQUESTED_HUMAN"  # 8002 has no hardware code; the details go in reason_text
         if payload.get("issue_type") == "HARDWARE_SOUNDBOX":
@@ -512,7 +577,7 @@ async def run(
             }
         if extra_payload:
             payload.update(extra_payload)
-        payload.update(paytm_payload_aliases(intent, payload, ctx, doc_extract is not None))
+        payload.update(paytm_payload_aliases(intent, payload, ctx, doc_extract is not None, merchant_text))
         envelope = {
             "request_id": request_id,
             "mid": mid,
@@ -630,7 +695,11 @@ async def run(
         "verified_outcome": outcome,
         "pending_action": pending_action(resp),
         # 8002's body as sent, plus the merchant-side reading of it (e.g. RESOLVED -> RELEASED)
-        "paytm_response": {**raw_resp, "status_detail": resp.get("status")} if raw_resp is not resp else resp,
+        # D1 shape: `status` is the specific outcome (RELEASED, PENDING, …), as in mock mode, which the frontend
+        # keys its ledger effects on. 8002's own RESOLVED/ACTION_REQUIRED/ESCALATED stays in `mesh_status`;
+        # `data` stays 8002's raw body (the frontend reads its field names).
+        "paytm_response": {**raw_resp, "status": resp.get("status"), "mesh_status": raw_resp.get("status"),
+                           "status_detail": resp.get("status")} if raw_resp is not resp else resp,
         "paytm_source": paytm_source,
         "paytm_agent_trace": resp.get("agent_trace") if isinstance(resp.get("agent_trace"), list) else [],
         "hindi_reply": reply_text,

@@ -283,3 +283,55 @@ def test_khata_csv_is_tally_ready(client):
     assert lines[0] == "Date,Voucher Type,Voucher No,Debit Ledger,Credit Ledger,Amount,GST ITC Eligible,Reference,Status,Narration"
     assert lines[1].startswith("18-11-2026,Sales,") and ",100000.00," in lines[1]
     assert len(lines) == 1 + 7  # sales, 5 deductions, bank receipt
+
+
+# ----------------------------------------------------------------------------- voice digits + reply grounding
+
+def test_spoken_digits_become_a_utr_but_everyday_words_do_not():
+    import router
+    assert router.extract_slots("UTR छह तीन दो एक आठ चार नौ दो शून्य एक एक एक check karo").utr_number == "632184920111"
+    assert router.spoken_digits("PhonePe se ₹1,180 do baar kat gaya") == "PhonePe se ₹1,180 do baar kat gaya"
+    assert router.extract_slots("order ९९८१ ka kya hua").order_id == "9981"
+
+
+def test_llm_utr_not_in_the_words_is_dropped(client, monkeypatch):
+    """Live: 11 spoken digits + a mis-heard word came back from the LLM as a made-up 12-digit UTR -> false fraud."""
+    import router
+
+    async def fake_llm(system, user, response_format="json"):
+        if response_format == "json":
+            return {"intent": "UTR_VERIFY", "slots": {"utr_number": "632184920110"}}
+        return None
+    monkeypatch.setattr(router.upstream, "llm", fake_llm)
+    body = ask(client, "यूटीआर छह तीन दो एक आठ चार नौ दो शून्य एक एक कैप का पेमेंट चेक करो").json()
+    assert body["intent"] == "UTR_VERIFY" and body["slots"]["utr_number"] is None
+    assert not body.get("fraud_alert")
+
+
+def test_llm_reply_with_invented_amount_falls_back_to_template(client, monkeypatch):
+    import pipeline
+
+    async def fake_llm(system, user, response_format="json"):
+        if response_format == "json":
+            return None
+        return "₹9,999 का settlement आज आपके bank में आ जाएगा, चिंता मत कीजिए।"
+    monkeypatch.setattr(pipeline.upstream, "llm", fake_llm)
+    body = ask(client, "Kal ₹1,00,000 sale tha, bank mein ₹95,840 aaya — ₹4,160 kahan kata?").json()
+    assert body["reply_source"] == "template" and "9,999" not in body["reply_text"]
+    assert pipeline.ungrounded_numbers("₹4,160 कटे, UTR 632184920111", '{"variance": 4160.0, "utr": "632184920111"}') == []
+    assert pipeline.ungrounded_numbers("₹4,160 का UTR", '{"utr": null}') == ["₹4,160"]
+
+
+def test_consent_offer_is_never_paraphrased_by_the_llm(client, monkeypatch):
+    """Live: the LLM said the EDI 'was paused' while the 1-tap consent was still pending."""
+    import pipeline
+    calls = []
+
+    async def fake_llm(system, user, response_format="json"):
+        calls.append(response_format)
+        return "Paytm ने EDI 2 दिन के लिए pause किया है।" if response_format == "text" else None
+    monkeypatch.setattr(pipeline.upstream, "llm", fake_llm)
+    body = client.post("/merchant/proactive-shield", json={"mid": MID, "scenario": "CASHFLOW_EDI_SWITCH",
+                                                            "consent_granted": True}).json()
+    assert body["proactive"]["awaiting_confirmation"] == "CONFIRM_EDI_PAUSE"
+    assert body["reply_source"] == "template" and "रोक दूँ?" in body["reply_text"] and "text" not in calls

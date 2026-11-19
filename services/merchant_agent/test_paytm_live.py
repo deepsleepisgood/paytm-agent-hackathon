@@ -84,8 +84,10 @@ def test_envelope_has_person2_fields(client, live_8002):
 
 def test_settlement_lines_log_itc(client):
     body = ask(client, "Kal ₹1,00,000 sale tha, bank mein ₹95,840 aaya — ₹4,160 kahan kata?").json()
-    assert body["paytm_source"] == "live" and body["paytm_response"]["status"] == "RESOLVED"
-    assert body["paytm_response"]["status_detail"] == "RECONCILED"
+    # D1 shape: `status` is the specific outcome (the frontend keys on it); 8002's own status is `mesh_status`
+    assert body["paytm_source"] == "live" and body["paytm_response"]["status"] == "RECONCILED"
+    assert body["paytm_response"]["mesh_status"] == "RESOLVED" and body["paytm_response"]["status_detail"] == "RECONCILED"
+    assert body["paytm_response"]["data"]["lines_total_inr"] == 4160  # data stays 8002's raw body
     assert body["gst_itc_logged"]["amount"] == 261
     assert "GST ₹261" in body["reply_text"] and "#9981 का ₹800 chargeback hold" in body["reply_text"]
     assert len(body["paytm_agent_trace"]) == 4
@@ -137,3 +139,39 @@ def test_escalation_sends_reason_code_and_diagnostics(client, live_8002):
 def test_unknown_intents_fall_back_to_mock(client):
     body = ask(client, "soundbox wapas karna hai").json()
     assert body["paytm_source"] == "mock" and body["paytm_response"]["status"] == "RETURN_INITIATED"
+
+
+# ----------------------------------------------------------------------------- found in the full-stack check
+
+GROWTH_V2 = {"sales": {"avg_daily_sales_inr": 32000, "weekend_multiplier": 2.3, "restock_by": "Thursday", "months": 6},
+             "weekend_daily_sales_inr": 73600,
+             "existing_loan": {"nbfc": "Clix Capital", "balance_inr": 42000, "edi_per_day_inr": 500},
+             "share_of_daily_takings_repaid_percent": 1.56, "new_facility_offered": False}
+
+
+def test_frontend_effects_get_the_specific_status(client):
+    body = client.post("/merchant/upload-doc", files={"file": ("pod_9981.png", b"img", "image/png")},
+                       data={"doc_type": "pod", "mid": MID, "consent_granted": "true"}).json()
+    pr = body["paytm_response"]
+    assert pr["status"] == "RELEASED" and pr["mesh_status"] == "RESOLVED"  # live.js: status === 'RELEASED'
+    assert pr["data"]["hold_status"] == "RELEASED"
+
+
+def test_growth_advice_without_credit_offer(client, monkeypatch):
+    monkeypatch.setitem(RECORDED, "GROWTH_ADVISORY", ("RESOLVED", GROWTH_V2, None))
+    body = ask(client, "Mere pichle 6 mahine ke data se business badhane ka suggestion do").json()
+    assert body["paytm_response"]["status"] == "ADVICE_READY"
+    assert "गुरुवार" in body["reply_text"] and "pre-approved" not in body["reply_text"]
+
+
+def test_refund_over_limit_without_order_goes_to_a_person(client, live_8002):
+    body = ask(client, "Customer ko ₹6,500 wapas karna hai").json()
+    p = live_8002[-1]["payload"]
+    assert p["action"] == "INITIATE" and p["amount_inr"] == 6500
+    assert body["paytm_response"]["status"] == "ESCALATED"
+    assert "4412" not in body["reply_text"] and "PROCESSED" not in body["reply_text"]
+
+
+def test_refund_status_question_is_not_an_initiate(client, live_8002):
+    ask(client, "order 4412 ka refund hua kya?")
+    assert live_8002[-1]["payload"]["action"] == "STATUS"

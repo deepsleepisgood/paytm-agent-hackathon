@@ -89,7 +89,7 @@ If a host refuses a connection, the service skips it for 10s and uses the fallba
 
 **Person 2 (8002) compatibility:**
 - **What 8003 sends.** 8002 needs `utr` for UTR checks and `reason_code` for escalations, and answers 400 without them. 8003 sends both, plus `session_id` and `language_code`.
-- **How 8003 reads the answer.** 8002 answers `RESOLVED | ACTION_REQUIRED | ESCALATED` with the details in `data`. `upstream.interpret()` turns that into specific outcomes (RECONCILED, RELEASED, NOT_FOUND_SUSPECTED_FAKE, …). `paytm_response` is 8002's raw body plus `status_detail`.
+- **How 8003 reads the answer.** 8002 answers `RESOLVED | ACTION_REQUIRED | ESCALATED` with the details in `data`. `upstream.interpret()` turns that into specific outcomes (RECONCILED, RELEASED, NOT_FOUND_SUSPECTED_FAKE, …). `paytm_response` is 8002's raw body, except that `status` holds the specific outcome (same as mock mode, and what the frontend reads); 8002's own status is in `mesh_status`.
 - **Not supported by 8002.** The 4 service-request intents (`UNKNOWN_INTENT`) and `FEE_GST_LOAN` / `REFUND_MANAGE` (501) are answered by the 8003 mock.
 
 **Person 1 (8001) compatibility:** their responses carry `source: "sarvam" | "mock"`, and we pass that through as `*_source: "live" | "mock"`. Their **mock `/llm` is deliberately ignored**: it keyword-matches canned replies and can't read Paytm's JSON (e.g. it would say "upload your PoD" right after a PoD was accepted). Our own routing and templates are used instead. Their `/doc-extract` field `utr` is read as `utr_number`.

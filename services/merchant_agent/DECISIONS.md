@@ -349,6 +349,102 @@ Pulled: Person 2's `services/paytm_agent` (8002), the team dataset at `data/seed
 
 ---
 
+## Phase 6: Shared .env + Vercel/Railway deployment prep (user request, 2026-11-19)
+The user asked for one `.env` connecting all four apps, plus deploy prep. Files outside this folder are new files
+only, at the repo root and in `deploy/`. No teammate's code was edited.
+
+- **D78 — One root `.env`.**
+  - 8001 and 8002 call `load_dotenv()` without a path, which in python-dotenv 1.2.4 searches upward from `app/config.py`, so they find `<repo>/.env` unchanged.
+  - 8003 now loads its own `.env` first, then the root one (`upstream.py`, `dataset_loader.py`). `load_dotenv` never overrides, so a service `.env` or real env vars win.
+  - Vite ignores it. `frontend/src/config.js` already defaults to localhost.
+- **D79 — New root `.gitignore`.** There was none, and `frontend/.gitignore` only covers `.env.local`, so a root `.env` holding the Sarvam key would have been committed. `.env.example` (no secrets) stays tracked.
+- **D80 — Railway via Dockerfiles in `deploy/`, built from the repo root.**
+  - Selected with `RAILWAY_DOCKERFILE_PATH`, not `railway.json`: Railway's docs mark config as code deprecated for older services after 2026-12-01.
+  - The repo root is the context because 8003 needs `data/seed`. Its image keeps the repo layout, so no `DATASET_DIR` is needed, and it copies Person 1's two sample PNGs.
+  - `.dockerignore` keeps `.env` and venvs out of every image.
+  - One replica each, because state is in memory.
+- **D81 — CORS.** The browser calls only 8003 and 8002 (`frontend/src/api.js`). The Vercel origin goes in `CORS_EXTRA_ORIGINS` (8003) and `ALLOWED_ORIGINS` (8002). 8001 is reached only from 8003, so it needs no Vercel origin.
+
+### Verification
+- `pytest -q`: 103 passed, with the root `.env` present. The conftest env wins, so the key doesn't leak into the tests.
+- All three services started like their containers (service folder as cwd, `--host 0.0.0.0 --port $PORT`), with no env passed in, so everything came from the root `.env`.
+  - 8001 `/health`: `mode: live`, `api_key_configured: true`.
+  - An off-script query to 8003 was classified by Sarvam's LLM (`intent_source=llm`, 4.9 s). 8002 answered live with the correct reply.
+  - Sarvam TTS returned real audio (`source=sarvam`), and the Sarvam Vision samples finished.
+- CORS preflight with deploy-style variables: a `*.vercel.app` origin is allowed on 8001, 8002 and 8003, and a foreign origin is rejected.
+- Vercel build simulated in a scratch copy (`frontend/` + `data/seed`, `npm ci && npm run build` with `VITE_*` = Railway URLs). It built in 1 s, the Railway URLs are in the bundle, and no localhost URL remains.
+- Docker isn't installed here, so the images themselves weren't built. Ports 8001–8003 were freed.
+
+---
+
+## Phase 7: Full-stack check — frontend + 8001 (live Sarvam) + 8002 + 8003 (2026-11-19, main @ d198e53)
+The frontend's own `callLive` → `responseToRun` → `applyEffects` code was run in Node through Vite SSR against
+the live stack, for all 16 UI scenarios, plus a real voice round trip (Sarvam TTS → `queryAudio` → Sarvam STT).
+Then the production build was served on :3000 and driven in Chromium (Playwright). Bugs found and fixed in 8003:
+
+- **D82 — `paytm_response.status` is the specific outcome again.**
+  - Phase 5 had made it 8002's generic `RESOLVED`, with the detail only in `status_detail`, so live mode never fired the frontend's effects (`status === 'RELEASED'`, `'PENDING'`, …).
+  - The chargeback release and the UTR check didn't show in the UI.
+  - Now `status` holds the specific outcome, as in D1 and mock mode. 8002's status is in `mesh_status`, and `data` stays raw (the frontend reads `order_amount_inr` and `duplicates_found`).
+- **D83 — No invented numbers in LLM replies.**
+  - Live, the reply LLM said "₹4,160 का UTR" and "₹4,160 पुराने account में settle होगा"; neither amount was in its facts.
+  - `ungrounded_numbers()` now checks every ₹ amount and every number of 3+ digits against the facts sent to the LLM, the template and the merchant's words. If any is missing, the template is used. It fired live once, on the bank reply.
+- **D84 — Consent moments are never paraphrased.** While `awaiting_confirmation` is set (EDI pause offer, dispute sign-off), the template is always used. Live, the LLM turned "EDI 2 दिन रोक दूँ?" into "Paytm ने EDI pause किया है" before the merchant tapped yes.
+- **D85 — Spoken UTRs.**
+  - Sarvam STT writes digits as words ("छह तीन दो …"). `router.spoken_digits()` joins runs of 4+ digit words or single digits; "do baar" and "₹1,180" are left alone.
+  - The LLM classifier invented a 12th digit for an 11-digit transcript, so a genuine payment got a HIGH fraud alert. A UTR or order id from the LLM is now kept only if its digits are in what the merchant said. Otherwise 8003 asks for the UTR or a screenshot (`PROVIDE_UTR`) with no fraud alert.
+- **D86 — Refunds.**
+  - 8002 now implements `REFUND_MANAGE` (05d32c8) and reads `order_id`, `action` (STATUS or INITIATE) and `amount_inr`, so 8003 sends them. INITIATE is chosen from the wording ("wapas karna hai", "refund kar do").
+  - The mock answered "₹6,500 wapas karna hai" (no order) with the old ₹1,500 refund for order 4412, "PROCESSED". Now a new request over ₹5,000 escalates to a person (8002's rule and the frontend's story), and one under ₹5,000 asks for the order number.
+- **D87 — 8002's new growth body.** It has no `credit_offer` but has `sales`, `existing_loan` and `new_facility_offered: false`, which maps to `ADVICE_READY`. The template says "restock by Thursday" and gives the EDI as a share of daily sales. It never says "pre-approved".
+
+### Verification
+- `pytest -q`: **111 passed, 3 skipped** (the teammate's Supabase tests, which skip by default). There are 8 new regression tests, one per bug above.
+- Frontend harness, live stack: every scenario answered with the right intent.
+  - Live 8002: settle, utr, dup, edi, growth, soundbox, fake, cb, shield_edi/confirm_edi and shield_cb/confirm_cb. The 8003 mock answered the 4 new intents and refund-without-order.
+  - Effects now fire: CB_RELEASE, UTR_CHECK, REFUND_AUTO, TICKET, FRAUD, LOAN:PAUSED.
+- Browser, guided demo plus a tap on the confirm button:
+  - chargeback RELEASED, EDI PAUSED, and impact counters of 4 solved, 4 learned, 3 tickets avoided, 1 fraud blocked;
+  - Khata shows ITC ₹261, reconciled;
+  - 8002's own ledger shows `PAUSED_2_DAYS`, resume 2026-11-21;
+  - the only console error is a missing `/favicon.ico`.
+- Ports 3000 and 8001–8003 were freed.
+
+### Left for teammates (not 8003's to change)
+- **Person 4 (frontend):**
+  - `DUP_AMT` says ₹3,200, but 8002 and the dataset now say order 4489, ₹1,180.
+  - `HOLD_AMT` ₹18,500 matches nothing in the dataset.
+  - There's no effect for `REMEDIES_OFFERED`. The old `ACTION_REQUIRED` branch claimed "UPI link sent · penalty waived", which 8002 doesn't do.
+  - `/favicon.ico` returns 404.
+  - Guided-demo order: settle → cb → fake → shield_edi releases the chargeback first, so the cashflow line shows payout ₹2,000 and gap ₹2,500, not ₹1,200 and ₹3,300. The numbers are consistent, but they differ from the pitch script.
+- **Person 2:** the 4 new intents (SOUNDBOX_RETURN, LOAN_CLOSURE_NOC, BANK_KYC_UPDATE, SETTLEMENT_HOLD_BANK) still return `UNKNOWN_INTENT`, so 8003's mock answers them. A refund without an `order_id` is a 400 (8003 handles it).
+
+---
+
+## Phase 8: Supabase connector wired in (user request, 2026-11-19)
+The user approved changes in `frontend/` for this, so they're outside my usual folder.
+
+- **D88 — Frontend reads Supabase live.**
+  - Installed `@supabase/supabase-js` and copied `supabase/frontend/useLedgerRealtime.js` into `src/` unchanged.
+  - `App.jsx` calls the hook, shows a "Supabase live" badge, and calls `refetch()` after Reset (Realtime doesn't stream TRUNCATE).
+  - `live.js` has `overlaySupabase()`, which in live mode moves chargeback #9981 to RELEASED and the EDI to PAUSED when the Supabase rows say so.
+  - **Forward-only on purpose.** With the backends on `USE_SUPABASE=false`, the rows stay at their seeded HELD/ACTIVE values and must never undo a live result. Going back is Reset's job.
+  - `frontend/.env` holds the URL and the public anon key (git-ignored by the root `.gitignore`). `.env.example` has a placeholder.
+- **D89 — Backends stay off for now.** `USE_SUPABASE=false` in the root `.env`. Turning it on needs the `paytm_svc` / `merchant_svc` passwords (supabase/README step 1), which we don't have. Until then the 4 live tables (`utr_checks`, `verified_outcomes`, `agent_trace`, `a2a_events`) stay empty. Railway and Vercel variables are in `deploy/README.md`.
+
+### Verification
+- The anon key reads all 8 tables (HTTP 200). No write was attempted against the shared database.
+- `npm run build` passes. supabase-js pushes the bundle past Vite's 500 kB advisory warning, which isn't an error.
+- `overlaySupabase` passes 6 checks: seed rows change nothing, a released row releases and a paused row pauses, stale rows never undo, another order's WON is ignored, and nothing happens until connected.
+- Browser (production build + live stack):
+  - the badge shows "Supabase live" and 40 REST reads all returned 200;
+  - after the guided demo and confirm, EDI is PAUSED and the chargeback RELEASED;
+  - Reset goes back to ACTIVE/HELD and reloads;
+  - the only console error is the missing `favicon.ico`.
+- `pytest` (merchant): 111 passed, 3 skipped. Ports 3000 and 8001–8003 were freed.
+
+---
+
 ## Open items for integration (6:30 PM)
 1. **Person 4:** share the response shape and event types (README + D1–D5). There is no frontend contract for these yet.
 2. **Person 2:** confirm two things:

@@ -118,6 +118,21 @@ export function overlayLedger(L, led) {
   return s
 }
 
+// Supabase Realtime rows (useLedgerRealtime): Paytm's chargeback and loan rows, pushed as the agents write them.
+// Forward-only (HELD -> RELEASED, ACTIVE -> PAUSED): while the backends run with USE_SUPABASE=false the rows stay
+// at their seeded values, and a stale row must never undo what a live response already showed. Reset handles going back.
+export function overlaySupabase(L, sb) {
+  if (!sb || sb.status !== 'live') return L
+  let s = L
+  const order = String(L.chargeback?.order || '').replace(/\D/g, '')
+  const cb = order && (sb.chargebacks || []).find((c) => String(c.order_id) === order)
+  if (cb && ['RELEASED', 'WON'].includes(String(cb.status).toUpperCase()) && L.chargeback.status !== 'RELEASED')
+    s = { ...s, chargeback: { ...s.chargeback, status: 'RELEASED' } }
+  if (String(sb.loan?.edi_status || '').toUpperCase().startsWith('PAUSED') && L.loan.status !== 'PAUSED')
+    s = { ...s, loan: { ...s.loan, status: 'PAUSED', note: sb.loan.resume_date ? `Resumes ${sb.loan.resume_date}` : s.loan.note } }
+  return s
+}
+
 // Real strategy-learning numbers from GET /merchant/strategy-memory.
 export function overlayStrategy(L, sm) {
   if (!sm || typeof sm !== 'object') return L

@@ -29,7 +29,9 @@ log = logging.getLogger("merchant_agent.upstream")
 try:  # PLAN.md: URLs are configured via .env on the demo laptop
     from dotenv import load_dotenv
 
-    load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+    _here = os.path.dirname(os.path.abspath(__file__))
+    load_dotenv(os.path.join(_here, ".env"))  # service .env wins (load_dotenv never overrides)
+    load_dotenv(os.path.join(_here, "..", "..", ".env"))  # then the shared repo-root .env
 except ImportError:  # pragma: no cover
     pass
 
@@ -456,18 +458,24 @@ def mock_paytm(envelope: dict[str, Any]) -> dict[str, Any]:
 
     if intent == "REFUND_MANAGE":
         oid = dl.digits(p.get("order_id"))
-        amount = p.get("amount")
-        known = d.refund(oid) if oid else d.refund()
-        if known:
+        amount = p.get("amount_inr", p.get("amount"))
+        initiate = str(p.get("action") or "").upper() == "INITIATE"
+        if oid:
+            known = d.refund(oid)
+        else:  # no order: only a status question may fall back to the latest refund, and only if the amount fits
+            latest = None if initiate else d.refund()
+            known = latest if latest and (amount is None or dl.num(latest.get("amount")) == dl.num(amount)) else None
+        if known and not initiate:
             st = known.get("status") or "PROCESSED"
             return _answer(base, st, {"order_id": known["order_id"], "amount": known.get("amount"),
                                       "deducted_in_settlement": d.settlement["settlement_date"]}, [
                 f"Refund #{known['order_id']} found: {st}", consent,
                 "Explained deduction to merchant", "No ledger change"], resolved=True)
+        if amount is not None and float(amount) > float(d.refund_limit):  # PLAN.md / 8002: > ₹5,000 needs a human
+            return _escalation(base, envelope, "REFUND_MANAGE",
+                               f"Refund {_inr(amount)}{f' on order #{oid}' if oid else ''} exceeds "
+                               f"{_inr(d.refund_limit)} autonomous limit")
         if oid and amount:
-            if float(amount) > float(d.refund_limit):  # PLAN.md: > ₹5,000 needs a human
-                return _escalation(base, envelope, "REFUND_MANAGE",
-                                   f"Refund ₹{amount} on order #{oid} exceeds ₹{d.refund_limit} autonomous limit")
             return _answer(base, "INITIATED", {"order_id": oid, "amount": amount, "eta": "T+1"}, [
                 f"Order #{oid} eligible for refund",
                 f"{_inr(amount)} ≤ {_inr(d.refund_limit)} autonomous limit — approved",
@@ -771,12 +779,18 @@ def interpret(intent: str, resp: dict[str, Any], source: str) -> dict[str, Any]:
                 "utrs": [x.get("utr") for x in d.get("payments") or []], "kept_utr": keep.get("utr"),
                 "refunded_utr": refund.get("utr"), "refund_status": d.get("refund_status"), "customer": None}
     elif canon == "WORKING_CAPITAL_ADVISORY" and ("credit_offer" in d or "sales" in d):
-        offer, sales = d.get("credit_offer") or {}, d.get("sales") or {}
-        status = "OFFER_PREAPPROVED" if offer and mesh == "RESOLVED" else mesh
+        offer, sales, loan = d.get("credit_offer") or {}, d.get("sales") or {}, d.get("existing_loan") or {}
+        # Newer 8002 (05d32c8+) gives sales advice + the existing loan and deliberately offers no new credit.
+        status = ("OFFER_PREAPPROVED" if offer else "ADVICE_READY") if mesh == "RESOLVED" else mesh
         data = {"daily_avg_sales": sales.get("avg_daily_sales_inr"), "weekend_multiplier": sales.get("weekend_multiplier"),
-                "weekend_daily_sales": d.get("weekend_daily_sales_inr"),
+                "weekend_daily_sales": d.get("weekend_daily_sales_inr"), "restock_by": sales.get("restock_by"),
+                "busiest_days": sales.get("busiest_days"), "months": sales.get("months"),
+                "existing_loan": {"lender": loan.get("nbfc"), "balance": loan.get("balance_inr"),
+                                  "edi_per_day": loan.get("edi_per_day_inr"),
+                                  "edi_share_of_daily_sales_pct": d.get("share_of_daily_takings_repaid_percent")} if loan else None,
+                "new_facility_offered": d.get("new_facility_offered", bool(offer)),
                 "offer": {"amount": offer.get("pre_approved_inr"), "lender": offer.get("nbfc"),
-                          "kfs_required": offer.get("kfs_required"), "terms": offer.get("terms")}}
+                          "kfs_required": offer.get("kfs_required"), "terms": offer.get("terms")} if offer else None}
     elif mesh == "ESCALATED":
         data = {**d, "reason": (resp.get("escalation_ticket") or {}).get("reason_text")}
     return {**resp, "status": status, "data": data, "action_required": ar, "mesh_status": mesh}
