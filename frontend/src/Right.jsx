@@ -1,6 +1,23 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { inr } from './data.js'
 import { MerchantLogo } from './icons.jsx'
+
+// Dropdown card: header always visible, opens on click, and opens by itself when `watch` changes (new info landed).
+function Drop({ title, sub, badge, tone, def, watch, children }) {
+  const [open, setOpen] = useState(!!def)
+  const first = React.useRef(true)
+  useEffect(() => { if (first.current) { first.current = false; return } setOpen(true) }, [watch])
+  return (
+    <div className={`acc ${open ? 'open' : ''} ${tone || ''}`}>
+      <button className="acc-h" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <span className="acc-t"><b>{title}</b><em>{sub}</em></span>
+        {badge && <i className="acc-b">{badge}</i>}
+        <span className="acc-chev">›</span>
+      </button>
+      <div className="acc-body"><div>{children}</div></div>
+    </div>
+  )
+}
 
 function Waterfall({ m, L }) {
   const s = m.d.settlement
@@ -15,8 +32,7 @@ function Waterfall({ m, L }) {
   rows.push({ label: 'Bank credit', amount: run, start: 0, end: run, kind: 'net' })
   const pct = (v) => (v / s.gross) * 100
   return (
-    <div className="rcard">
-      <div className="r-h"><b>Settlement waterfall</b><span className="muted xs">{s.date}</span></div>
+    <div className="rbody">
       {rows.map((r, i) => (
         <div key={i} className="wf">
           <div className="wf-l"><span>{r.label}</span><em>{r.note}</em></div>
@@ -49,51 +65,36 @@ export default function Right({ m, L, mode }) {
         <div className="learn">{L.learnedLog.map((t, i) => <div key={i}>{t}</div>)}</div>
       )}
 
-      <div className="sec">Money</div>
-      <Waterfall m={m} L={L} />
+      <div className="sec">Money & account</div>
+      <Drop title="Money" sub={`Settlement ${m.d.settlement.date} · ${L.chargeback ? 'chargeback ' + L.chargeback.status.toLowerCase() : 'no disputes'}`} badge={L.chargeback ? (L.chargeback.status === 'HELD' ? 'Held' : 'Released') : ''} tone={L.chargeback?.status === 'HELD' ? 'esc' : 'good'} def watch={L.chargeback?.status}>
+        <Waterfall m={m} L={L} />
+        {L.chargeback && (
+          <div className="row-card rbody">
+            <div><b>Chargeback {L.chargeback.order}</b><div className="muted xs">{inr(L.chargeback.amount)} · PoD due 48h</div></div>
+            <span className={`st ${L.chargeback.status === 'HELD' ? 'warn' : 'ok'}`}>{L.chargeback.status === 'HELD' ? 'HELD' : 'RELEASED — T+1'}</span>
+          </div>
+        )}
+      </Drop>
 
-      {L.chargeback && (
-        <div className="rcard row-card">
-          <div><b>Chargeback {L.chargeback.order}</b><div className="muted xs">{inr(L.chargeback.amount)} · PoD due 48h</div></div>
-          <span className={`st ${L.chargeback.status === 'HELD' ? 'warn' : 'ok'}`}>{L.chargeback.status === 'HELD' ? 'HELD' : 'RELEASED — T+1'}</span>
+      <Drop title="Loan EDI" sub={`Daily ${inr(lo.edi)} · balance ${inr(lo.balance)}`} badge={lo.status.replace(/_/g, ' ')} tone={stat === 'warn' ? 'esc' : ''} watch={lo.status}>
+        <div className="rbody">
+          <div className="steps3">
+            {[['ACTIVE', 'ACTIVE'], ['LINK_SENT', 'UPI LINK SENT'], ['PAUSED', 'PAUSED'], ['QUOTE', 'CLOSURE QUOTE']].map(([k, lab]) => <span key={k} className={lo.status === k ? 'on ' + k : ''}>{lab}</span>)}
+          </div>
+          {lo.note && <div className="learn">{lo.note}</div>}
+          <div className="kv2"><span>Daily EDI</span><b>{inr(lo.edi)}</b><span>Balance</span><b>{inr(lo.balance)}</b></div>
         </div>
-      )}
+      </Drop>
 
-      <div className="sec">Loan, account & payments</div>
-      <div className="rcard">
-        <div className="r-h"><b>Loan EDI</b><span className={`st ${stat}`}>{lo.status}</span></div>
-        <div className="steps3">
-          {[['ACTIVE', 'ACTIVE'], ['LINK_SENT', 'UPI LINK SENT'], ['PAUSED', 'PAUSED'], ['QUOTE', 'CLOSURE QUOTE']].map(([k, lab]) => <span key={k} className={lo.status === k ? 'on ' + k : ''}>{lab}</span>)}
+      <Drop title="Account & device status" sub="Bank, hold and Soundbox" watch={L.bank.status + L.soundbox.status}>
+        <div className="rbody">
+          <div className="sts"><span>Bank hold</span><span className="st ok">NONE</span></div>
+          <div className="sts"><span>Settlement bank · {L.bank.acct}</span><span className={`st ${L.bank.status === 'LINK_SENT' ? 'warn' : 'ok'}`}>{L.bank.status === 'LINK_SENT' ? 'VERIFY PENDING' : 'ACTIVE'}</span></div>
+          <div className="sts"><span>Soundbox rent {inr(L.soundbox.rent)}/mo{L.soundbox.note ? ` · ${L.soundbox.note}` : ''}</span><span className={`st ${L.soundbox.status === 'PICKUP' ? 'info' : 'ok'}`}>{L.soundbox.status === 'PICKUP' ? 'PICKUP · RENT STOPS' : 'ACTIVE'}</span></div>
         </div>
-        {lo.note && <div className="learn">{lo.note}</div>}
-        <div className="kv2"><span>Daily EDI</span><b>{inr(lo.edi)}</b><span>Balance</span><b>{inr(lo.balance)}</b></div>
-      </div>
+      </Drop>
 
-      <div className="rcard">
-        <div className="r-h"><b>Account & device status</b></div>
-        <div className="sts"><span>Bank hold</span><span className="st ok">NONE</span></div>
-        <div className="sts"><span>Settlement bank · {L.bank.acct}</span><span className={`st ${L.bank.status === 'LINK_SENT' ? 'warn' : 'ok'}`}>{L.bank.status === 'LINK_SENT' ? 'VERIFY PENDING' : 'ACTIVE'}</span></div>
-        <div className="sts"><span>Soundbox rent {inr(L.soundbox.rent)}/mo{L.soundbox.note ? ` · ${L.soundbox.note}` : ''}</span><span className={`st ${L.soundbox.status === 'PICKUP' ? 'info' : 'ok'}`}>{L.soundbox.status === 'PICKUP' ? 'PICKUP · RENT STOPS' : 'ACTIVE'}</span></div>
-      </div>
-
-      {m.profile.connectors && (
-        <div className="rcard">
-          <div className="r-h"><b>Connected data sources</b><span className="muted xs">DPDP consent</span></div>
-          {Object.entries(m.profile.connectors).map(([k, v]) => (
-            <div key={k} className="sts"><span>{k.replace(/_/g, ' ')}</span><span className="st ok">{v.consent === 'GRANTED' || v.consent_status === 'GRANTED' ? 'GRANTED' : 'ACTIVE'}</span></div>
-          ))}
-        </div>
-      )}
-
-      {m.policies && (
-        <div className="rcard">
-          <div className="r-h"><b>What the AI already learned</b><span className="muted xs">strategy memory</span></div>
-          {m.policies.map((p, i) => <div key={i} className="pol"><b>{p.intent.replace(/_/g, ' ')}</b><span>{p.policy}</span></div>)}
-        </div>
-      )}
-
-      <div className="rcard">
-        <div className="r-h"><b>UTR verification</b><span className="muted xs">{L.utrs.length} rows</span></div>
+      <Drop title="UTR verification" sub={`${L.utrs.length} payments checked`} badge={L.utrs.some((u) => u.check === 'FAKE') ? 'Fake found' : ''} tone={L.utrs.some((u) => u.check === 'FAKE') ? 'bad' : ''} watch={L.utrs.length + ':' + L.utrs.map((u) => u.check).join()}>
         <table className="utr">
           <tbody>
             {L.utrs.map((u) => (
@@ -105,15 +106,34 @@ export default function Right({ m, L, mode }) {
             ))}
           </tbody>
         </table>
-      </div>
+      </Drop>
 
       {(L.tickets.length > 0 || L.refunds.length > 0 || L.itc > 0) && (
-        <div className="rcard">
-          <div className="r-h"><b>Actions taken</b></div>
-          {L.itc > 0 && <div className="act">GST ITC logged <b>{inr(L.itc)}</b></div>}
-          {L.refunds.map((r) => <div key={r.order} className="act">Auto-refund {r.order} <b>{inr(r.amount)}</b></div>)}
-          {L.tickets.map((t) => <div key={t.id} className="act"><b>{t.id}</b> · {t.reason}</div>)}
-        </div>
+        <Drop title="Actions taken" sub="What the AI changed for you" badge={String(L.tickets.length + L.refunds.length + (L.itc > 0 ? 1 : 0))} tone="good" def watch={L.tickets.length + L.refunds.length + L.itc}>
+          <div className="rbody">
+            {L.itc > 0 && <div className="act">GST ITC logged <b>{inr(L.itc)}</b></div>}
+            {L.refunds.map((r) => <div key={r.order} className="act">Auto-refund {r.order} <b>{inr(r.amount)}</b></div>)}
+            {L.tickets.map((t) => <div key={t.id} className="act"><b>{t.id}</b> · {t.reason}</div>)}
+          </div>
+        </Drop>
+      )}
+
+      {m.profile.connectors && (
+        <Drop title="Connected data sources" sub="DPDP consent">
+          <div className="rbody">
+            {Object.entries(m.profile.connectors).map(([k, v]) => (
+              <div key={k} className="sts"><span>{k.replace(/_/g, ' ')}</span><span className="st ok">{v.consent === 'GRANTED' || v.consent_status === 'GRANTED' ? 'GRANTED' : 'ACTIVE'}</span></div>
+            ))}
+          </div>
+        </Drop>
+      )}
+
+      {m.policies && (
+        <Drop title="What the AI already learned" sub={`${m.policies.length} strategies remembered`}>
+          <div className="rbody">
+            {m.policies.map((p, i) => <div key={i} className="pol"><b>{p.intent.replace(/_/g, ' ')}</b><span>{p.policy}</span></div>)}
+          </div>
+        </Drop>
       )}
     </div>
   )
