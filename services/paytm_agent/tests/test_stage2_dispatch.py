@@ -152,7 +152,6 @@ def test_private_bookkeeping_never_leaves_the_service(client):
     ({"consent_token": None}, "CONSENT_MISSING"),
     ({"mid": "PAYTM_MERCH_0000"}, "UNKNOWN_MID"),
     ({"intent": "MAKE_ME_A_SANDWICH"}, "UNKNOWN_INTENT"),
-    ({"payload": {}}, "BAD_PAYLOAD"),
     ({"payload": {"reason_code": "NOT_A_REAL_CODE"}}, "BAD_PAYLOAD"),
     ({"payload": {"reason_code": "MERCHANT_REQUESTED_HUMAN", "urgency": "SOON"}}, "BAD_PAYLOAD"),
 ])
@@ -162,6 +161,36 @@ def test_error_codes(client, over, code):
     err = r.json()["error"]
     assert err["code"] == code
     assert err["retryable"] is False
+
+
+def test_a_handover_with_no_reason_still_gets_handled(client):
+    """The merchant agent routes here having already decided a person is needed, often
+    with nothing more specific to say. Refusing would drop the case at the worst moment.
+    """
+    out = client.post("/a2a/dispatch", json=body(payload={})).json()
+
+    assert out["status"] == "ESCALATED"
+    assert out["escalation_ticket"]["reason_code"] == "MERCHANT_REQUESTED_HUMAN"
+    assert len(store.tickets) == 1
+
+
+@pytest.mark.parametrize("sent, expected", [
+    ("MERCHANT_REQUESTED", "MERCHANT_REQUESTED_HUMAN"),
+    ("NEEDS_HUMAN", "MERCHANT_REQUESTED_HUMAN"),
+    ("MERCHANT_REQUESTED_HUMAN", "MERCHANT_REQUESTED_HUMAN"),
+])
+def test_the_teams_shorter_reason_names_are_accepted(client, sent, expected):
+    out = client.post("/a2a/dispatch", json=body(
+        request_id=sent, payload={"reason_code": sent})).json()
+    assert out["escalation_ticket"]["reason_code"] == expected
+
+
+def test_a_reason_we_do_not_recognise_is_still_rejected(client):
+    """Defaulting a missing reason is a kindness; silently accepting a wrong one is not,
+    because the queue's reason codes are what the employee triages on."""
+    r = client.post("/a2a/dispatch", json=body(payload={"reason_code": "BECAUSE_I_SAID"}))
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == "BAD_PAYLOAD"
 
 
 def test_malformed_body_uses_the_contract_error_shape(client):

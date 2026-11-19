@@ -42,11 +42,17 @@ def gather(case: Case) -> str:
     """IntelligenceAgent: look the reference up in the merchant's own ledger."""
     payload = case.req.payload or {}
 
-    utr = str(payload.get("utr") or "").strip()
+    # Both spellings. The contract says `utr`, but sarvam_service's intent schema
+    # returns `utr_number` and the merchant agent passes that through unchanged, so
+    # requiring one of them would reject a correctly routed request.
+    utr = str(payload.get("utr") or payload.get("utr_number") or "").strip()
     if not utr:
-        raise PayloadError("UTR_VERIFY needs a utr")
+        raise PayloadError("UTR_VERIFY needs a utr (or utr_number)")
 
+    # Same again: the contract says claimed_amount_inr, the intent schema says `amount`.
     claimed = payload.get("claimed_amount_inr")
+    if claimed is None:
+        claimed = payload.get("amount")
     if claimed is not None and not isinstance(claimed, (int, float)):
         raise PayloadError("claimed_amount_inr must be a number")
 
