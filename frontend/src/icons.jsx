@@ -47,8 +47,22 @@ export function PaytmLogo({ size = 30 }) {
   )
 }
 
-// AI assistant mark: navy core, white sparkle, segmented cyan "aura" ring (rotates faster while the AI is working).
+// AI assistant mark, option B "Neural node": navy rounded square, white core node linked to three cyan agent nodes.
+// Nodes pulse while the AI is working. (Option C "aura ring" is kept as AIMarkAura if we want to switch back.)
 export const AIMark = ({ size = 48 }) => (
+  <svg width={size} height={size} viewBox="0 0 120 120" role="img" aria-label="AI assistant" style={{ display: 'block' }}>
+    <rect x="12" y="12" width="96" height="96" rx="30" fill="#002E6E" />
+    <g stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round">
+      <line x1="60" y1="60" x2="36" y2="40" /><line x1="60" y1="60" x2="84" y2="40" /><line x1="60" y1="60" x2="60" y2="88" />
+    </g>
+    <circle cx="60" cy="60" r="9" fill="#FFFFFF" />
+    <circle className="nd nd1" cx="36" cy="40" r="7" fill="#00BAF2" />
+    <circle className="nd nd2" cx="84" cy="40" r="7" fill="#00BAF2" />
+    <circle className="nd nd3" cx="60" cy="88" r="7" fill="#00BAF2" />
+  </svg>
+)
+
+export const AIMarkAura = ({ size = 48 }) => (
   <svg width={size} height={size} viewBox="0 0 120 120" role="img" aria-label="AI assistant" style={{ display: 'block' }}>
     <circle className="aura-ring" cx="60" cy="60" r="54" fill="none" stroke="#00BAF2" strokeWidth="6" strokeDasharray="46 9" strokeLinecap="round" />
     <circle cx="60" cy="60" r="41" fill="#002E6E" />

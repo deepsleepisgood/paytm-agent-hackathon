@@ -446,3 +446,11 @@ img[alt="Paytm for Business"]{mix-blend-mode:multiply}
 .qr-fab{width:54px;height:54px;min-width:54px;top:-22px;border:0;background:#f9f9f9;box-shadow:0 3px 10px rgba(0,30,80,.18);padding:4px}
 .tabs button.ctr.on .qr-fab{background:#f9f9f9;box-shadow:0 3px 12px rgba(0,186,242,.4)}
 .qr-fab svg{width:46px;height:46px}
+
+/* ===== option B: neural node mark ===== */
+.nd{transform-box:fill-box;transform-origin:center}
+.cc.busy .nd{animation:ndp .9s ease-in-out infinite}.cc.busy .nd2{animation-delay:.2s}.cc.busy .nd3{animation-delay:.4s}
+@keyframes ndp{50%{transform:scale(1.5);opacity:.6}}
+.qr-fab{border-radius:17px;background:transparent;box-shadow:none;padding:0;width:48px;height:48px;min-width:48px;top:-18px;filter:drop-shadow(0 4px 8px rgba(0,30,80,.25))}
+.qr-fab svg{width:48px;height:48px}
+.tabs button.ctr.on .qr-fab{background:transparent;box-shadow:none;filter:drop-shadow(0 4px 10px rgba(0,186,242,.55))}
