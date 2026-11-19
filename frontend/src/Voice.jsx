@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { summarize } from './facts.js'
 import { MerchantLogo } from './icons.jsx'
 import { t, LANGS, ENGLISH_ONLY } from './i18n.js'
+import { ttsSarvam } from './api.js'
 
 const AGENTS = ['intelligence', 'risk', 'resolution', 'ledger']
 const AGENT_NAMES = ['Intelligence', 'Risk', 'Resolution', 'Ledger']
@@ -22,6 +23,20 @@ const SpeakerIcon = ({ on }) => (
     {on ? <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11" /> : <path d="M16 9.5l5 5M21 9.5l-5 5" />}
   </svg>
 )
+
+// Rank the voices installed on this device and pick the smoothest Indian one (neural/online voices first).
+const VOICE_PREF = [/neerja|veena|heera|swara|kalpana|natural|neural|online/i, /google/i, /lekha|rishi|isha|samantha|aditi|raveena/i]
+function bestVoice(lang) {
+  try {
+    const all = window.speechSynthesis.getVoices() || []
+    const base = lang.split('-')[0]
+    const pool = all.filter((x) => x.lang?.replace('_', '-').toLowerCase() === lang.toLowerCase())
+    const loose = pool.length ? pool : all.filter((x) => x.lang?.toLowerCase().startsWith(base))
+    for (const re of VOICE_PREF) { const hit = loose.find((x) => re.test(x.name)); if (hit) return hit }
+    return loose[0] || null
+  } catch { return null }
+}
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices() }
 
 export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mode, prompts, nudge, lang, setLang, onText, onAudio, onPreset, onConfirm, onMenu, onKhata, onAttach }) {
   const [phase, setPhase] = useState('idle') // idle | listening | speaking (thinking comes from `busy`)
@@ -68,28 +83,36 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
     // Safety net: some browsers never fire onend (no Hindi voice installed), so never get stuck in 'speaking'.
     safety.current = setTimeout(done, ws.length * 450 + 3000)
     const wobble = () => { let t = 0; speakTimer.current = setInterval(() => { t += 0.35; setLevel(0.35 + 0.3 * Math.abs(Math.sin(t)) + 0.15 * Math.random()) }, 90) }
-    let used = false
-    if (msg.audio) {
+    const playAudio = (b64) => {
       try {
-        const a = new Audio('data:audio/wav;base64,' + msg.audio); rec.current.audioEl = a; used = true
+        const a = new Audio('data:audio/wav;base64,' + b64); rec.current.audioEl = a
         a.onended = done; a.onerror = done; a.play().catch(done)
         wobble()
-        const per = 330; let i = 0; const kt = setInterval(() => { i += 1; setSpoken(i); if (i >= ws.length) clearInterval(kt) }, per)
-      } catch { used = false }
+        const per = Math.max(240, Math.min(420, 330)); let i = 0; const kt = setInterval(() => { i += 1; setSpoken(i); if (i >= ws.length) clearInterval(kt) }, per)
+        return true
+      } catch { return false }
     }
-    if (!used && 'speechSynthesis' in window) {
-      const u = new SpeechSynthesisUtterance(msg.text); u.lang = /[\u0900-\u097F]/.test(msg.text) ? 'hi-IN' : 'en-IN'; u.rate = 1
+    const browserSpeak = () => {
+      if (!('speechSynthesis' in window)) { // no TTS available: simulate timing
+        wobble(); let i = 0
+        const kt = setInterval(() => { i += 1; setSpoken(i); if (i >= ws.length) { clearInterval(kt); done() } }, 320)
+        return
+      }
+      const hi = /[\u0900-\u097F]/.test(msg.text)
+      const u = new SpeechSynthesisUtterance(msg.text); u.lang = hi ? 'hi-IN' : 'en-IN'
+      const v = bestVoice(u.lang); if (v) u.voice = v
+      u.rate = 0.96; u.pitch = 1.04 // a touch slower and warmer reads as calmer, less robotic
       const starts = []; let pos = 0; ws.forEach((w) => { starts.push(pos); pos += w.length + 1 })
       u.onboundary = (e) => { let idx = 0; for (let k = 0; k < starts.length; k++) if (starts[k] <= e.charIndex) idx = k; setSpoken(idx + 1) }
       u.onend = done; u.onerror = done
       wobble()
       window.speechSynthesis.speak(u)
-      used = true
     }
-    if (!used) { // no TTS available: simulate timing
-      wobble(); let i = 0
-      const kt = setInterval(() => { i += 1; setSpoken(i); if (i >= ws.length) { clearInterval(kt); done() } }, 320)
-    }
+    // One consistent voice: Sarvam's natural Indian voice when the service is up, otherwise the best Indian voice this device has.
+    if (msg.audio && playAudio(msg.audio)) return
+    if (mode === 'live') {
+      ttsSarvam(msg.text, /[\u0900-\u097F]/.test(msg.text) ? 'hi-IN' : 'en-IN').then((b64) => { if (seen.current !== chat.length) return; if (!(b64 && playAudio(b64))) browserSpeak() })
+    } else browserSpeak()
   }, [chat.length])
   useEffect(() => () => { stopSpeaking(); cleanup() }, [])
 

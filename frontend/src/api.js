@@ -1,4 +1,4 @@
-import { PAYTM_URL, MERCHANT_URL, MID } from './config.js'
+import { PAYTM_URL, MERCHANT_URL, MID, SARVAM_URL } from './config.js'
 
 async function req(url, opts = {}, timeout = 15000) {
   const ctrl = new AbortController()
@@ -74,4 +74,12 @@ export function queryAudio(blob, mid = MID) {
   fd.append('mid', mid)
   fd.append('consent_granted', 'true')
   return req(`${MERCHANT_URL}/merchant/query-audio`, { method: 'POST', body: fd }, 45000)
+}
+
+// Natural Indian voice from the project's Sarvam service (only when it is reachable); returns base64 audio or null.
+export async function ttsSarvam(text, language_code = 'en-IN') {
+  try {
+    const r = await req(`${SARVAM_URL}/tts`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, language_code }) }, 8000)
+    return r?.audio_base64 || null
+  } catch { return null }
 }
