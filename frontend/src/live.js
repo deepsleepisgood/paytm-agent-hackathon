@@ -83,10 +83,10 @@ export function responseToRun(sc, m, r, utterance, elapsed) {
   const alert = pro?.alert?.data
   const steps = [
     { key: 'input', title: 'Input understood', say: `intent=${r.intent}`, ms: 0 },
-    { key: 'consent', title: 'DPDP consent', consent: { token: r.consent_token, purpose: String(pro?.scenario || r.intent).toLowerCase(), scope: 'a2a:dispatch', ttl_min: 15, issued: new Date().toISOString().slice(11, 19) + 'Z', mid: r.mid }, ms: 0 },
     ...(hi ? [{ key: 'insight', title: 'What the AI knew', insight: { summary: hi.summary || hi.tip_hi, evidence: hi.evidence || [] }, ms: 0 }] : []),
     ev ? { key: 'eval', title: 'Intervention evaluation', options: ev.options, selected: ev.selected, ms: 0 }
        : { key: 'eval', title: 'Intent routing', live: true, route: { intent: r.intent, source: r.intent_source, slots, transcript: r.transcript, doc: r.doc_extract }, ms: 0 },
+    { key: 'consent', title: 'DPDP consent', consent: { token: r.consent_token, purpose: String(pro?.scenario || r.intent).toLowerCase(), scope: 'a2a:dispatch', ttl_min: 15, issued: new Date().toISOString().slice(11, 19) + 'Z', mid: r.mid }, ms: 0 },
     { key: 'dispatch', title: 'A2A dispatch', request: { request_id: r.request_id, mid: r.mid, intent: r.intent, payload: slots, consent_token: r.consent_token }, response: pro ? { proactive: pro } : pr, ms: 0 },
     agentStep('intelligence', 'Intelligence', alert ? `Paytm alert: ${JSON.stringify(alert).slice(0, 110)}…` : `Paytm ledger (${r.paytm_source}) → ${status}`),
     agentStep('risk', 'Risk', fraud ? (r.fraud_alert?.message || 'UTR not found across payer apps → SUSPECTED FAKE') : 'DPDP consent token valid · no fraud flag', { tone: fraud ? 'bad' : undefined }),

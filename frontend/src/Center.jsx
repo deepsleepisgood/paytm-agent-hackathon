@@ -9,8 +9,8 @@ const AGENTS = [
 ]
 const STAGES = [
   { label: 'Understand', keys: ['input'] },
-  { label: 'Permission', keys: ['consent'] },
   { label: 'Decide', keys: ['insight', 'eval'] },
+  { label: 'Permission', keys: ['consent'] },
   { label: 'Paytm agents', keys: ['dispatch', 'intelligence', 'risk', 'resolution', 'ledger'] },
   { label: 'Reply', keys: ['reply'] },
 ]
@@ -25,6 +25,87 @@ const CAPTION = {
   resolution: 'Paytm is deciding the fix',
   ledger: 'Paytm is updating the books',
   reply: 'Answer sent to the merchant',
+}
+
+
+/* ---------- Autonomous agent team: animated, step by step ---------- */
+const ico = (children) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{children}</svg>
+const FLOW = [
+  { id: 'buddy', key: 'eval', from: 0, name: 'Merchant Buddy', side: 'Merchant side', role: 'Understands, recalls and decides', tone: 'blue', think: 'Comparing three ways to help…', link: 'Decision', brand: true },
+  { id: 'consent', key: 'consent', name: 'DPDP Consent Gate', side: 'Compliance', role: 'Nothing is shared without permission', tone: 'teal', think: 'Verifying the merchant’s consent…', link: 'Signed request', icon: ico(<><rect x="5" y="10.5" width="14" height="9.5" rx="2.4" /><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" /><path d="M9.6 15.2l1.7 1.7 3.2-3.4" /></>) },
+  { id: 'intelligence', key: 'intelligence', name: 'Intelligence Agent', side: 'Paytm side', role: 'Reads the ledger and history', tone: 'indigo', think: 'Reading the ledger and merchant history…', link: 'Insights', icon: ico(<><circle cx="6" cy="7" r="2.1" /><circle cx="18" cy="7" r="2.1" /><circle cx="12" cy="17.5" r="2.1" /><path d="M7.7 8.4l3 7.4M16.3 8.4l-3 7.4M8.2 7h7.6" /></>) },
+  { id: 'risk', key: 'risk', name: 'Risk & Policy Agent', side: 'Paytm side', role: 'Fraud, limits and policy', tone: 'amber', think: 'Checking policy, limits and fraud signals…', link: 'Cleared', icon: ico(<><path d="M12 3.2l7 2.8v5.4c0 4.4-2.9 7.6-7 9.4-4.1-1.8-7-5-7-9.4V6z" /><path d="M9.2 12l2.1 2.1 3.6-3.8" /></>) },
+  { id: 'resolution', key: 'resolution', name: 'Resolution Agent', side: 'Paytm side', role: 'Chooses and applies the fix', tone: 'sky', think: 'Choosing and applying the best fix…', link: 'Decision', icon: ico(<><circle cx="6" cy="6" r="2.1" /><circle cx="6" cy="18" r="2.1" /><circle cx="18" cy="12" r="2.1" /><path d="M8 6h3a3 3 0 0 1 3 3v0M8 18h3a3 3 0 0 0 3-3v0M14 12h2" /></>) },
+  { id: 'ledger', key: 'ledger', name: 'Ledger Ops Agent', side: 'Paytm side', role: 'Updates the books', tone: 'green', think: 'Writing the result to the ledger…', link: '', icon: ico(<><path d="M6 4.5h10.5A1.5 1.5 0 0 1 18 6v13.5H7.5A1.5 1.5 0 0 1 6 18z" /><path d="M9.5 9h5M9.5 12.5h5M9.5 16h3" /></>) },
+]
+
+function AgentFlow({ run, reveal, done, escalated, totalMs }) {
+  const steps = run.steps
+  const at = (key) => steps.findIndex((s) => s.key === key)
+  const get = (key) => steps.find((s) => s.key === key)
+  const stateOf = (n) => {
+    const i = at(n.key)
+    if (i < 0) return 'idle'
+    if (reveal > i) return 'done'
+    if (reveal >= (n.from ?? i)) return 'work'
+    return 'idle'
+  }
+  const states = FLOW.map(stateOf)
+  const doneN = states.filter((s) => s === 'done').length
+  const resultOf = (n) => {
+    const s = get(n.key)
+    if (!s) return ''
+    if (n.id === 'buddy') {
+      if (s.options) { const o = s.options.find((x) => x.id === s.selected); return `Chose option ${s.selected}: ${o ? o.label : ''}` }
+      return `Understood: ${s.route?.intent || 'request'}`
+    }
+    if (n.id === 'consent') return `Token ${s.consent.token.slice(0, 18)}… · ${s.consent.purpose.replace(/_/g, ' ')}`
+    return s.say
+  }
+  return (
+    <div className="af">
+      <div className="af-h">
+        <div><b>Autonomous agent team</b><span>Each agent works on its own and hands over to the next</span></div>
+        <div className="af-chips">
+          <i>{doneN}/{FLOW.length} done</i>
+          <i className={escalated ? 'esc' : 'auto'}>{escalated ? '1 human handoff' : '0 humans in the loop'}</i>
+          {done && <i>{(totalMs / 1000).toFixed(1)}s</i>}
+        </div>
+      </div>
+      <div className="af-list">
+        {FLOW.map((n, k) => {
+          const st = states[k]
+          const s = get(n.key)
+          const tone = st === 'done' && s?.tone ? s.tone : ''
+          const linkActive = k > 0 && states[k - 1] === 'done' && st === 'work'
+          return (
+            <div key={n.id} className={`af-node ${st} t-${n.tone} ${tone}`}>
+              <div className="af-rail">
+                <div className="af-av">
+                  {n.brand ? <AIMark size={30} /> : n.icon}
+                  <span className="af-tick"><I.Check size={11} /></span>
+                </div>
+                {k < FLOW.length - 1 && (
+                  <div className={`af-link ${states[k] === 'done' ? 'on' : ''} ${states[k] === 'done' && states[k + 1] === 'work' ? 'go' : ''}`}>
+                    <span className="af-pkt" />
+                  </div>
+                )}
+              </div>
+              <div className="af-card">
+                <div className="af-top">
+                  <b>{n.name}</b>
+                  <span className="af-st">{st === 'done' ? 'Done' : st === 'work' ? <>Working<span className="af-dots"><i /><i /><i /></span></> : 'Waiting'}</span>
+                </div>
+                <div className="af-role">{n.side} · {n.role}</div>
+                {st === 'work' && <div className="af-think">{k > 0 && FLOW[k - 1].link && <span className="af-recv">Received · {FLOW[k - 1].link}</span>}<span>{n.think}</span><div className="af-shim" /></div>}
+                {st === 'done' && <div className="af-out">{resultOf(n)}</div>}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 export default function Center({ run, reveal, busy, onTry, demoActive }) {
@@ -61,6 +142,8 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
           <div className={`caption ${done ? 'ok' : ''}`}>{done ? 'Done — see the result below' : `${CAPTION[cur?.key] || 'Starting…'}…`}</div>
         </>
       )}
+
+      {run && <AgentFlow run={run} reveal={reveal} done={done} escalated={escalated} totalMs={totalMs} />}
 
       {!run && (
         <div className="empty">
@@ -106,46 +189,6 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
               <span className="o-sc" title="Fit score out of 100">{o.score}</span>
             </div>
           ))}
-        </div>
-      )}
-
-      {shown('consent') && consent && (
-        <div className="tcard in">
-          <div className="t-h"><span className="ok-dot"><I.Check size={12} /></span><b>Merchant’s permission verified</b><span className="muted xs">DPDP · by Paytm Risk Agent</span></div>
-          <div className="plain">Allowed purpose: <b>{consent.consent.purpose.replace(/_/g, ' ')}</b> · valid {consent.consent.ttl_min} min</div>
-          <div className="kv">
-            <span>Token</span><code>{consent.consent.token}</code>
-            <span>Scope</span><code>{consent.consent.scope}</code>
-            <span>Issued</span><code>{consent.consent.issued}</code>
-          </div>
-        </div>
-      )}
-
-      {AGENTS.some((a) => shown(a.key)) && (
-        <div className="tcard in">
-          <div className="t-h"><span className="n">2</span><b>Four Paytm AI agents work in order</b></div>
-          <div className="mesh">
-            {AGENTS.map((a, k) => {
-              const on = shown(a.key), s = get(a.key)
-              return (
-                <React.Fragment key={a.key}>
-                  <div className={`node ${on ? 'on' : ''} ${on && s.tone === 'bad' ? 'bad' : ''} ${on && s.tone === 'warn' ? 'warn' : ''}`}>
-                    <span className="n-ic">{a.ic}</span><b>{a.name}</b><span className="n-s">{a.does}</span>
-                  </div>
-                  {k < 3 && <span className={`arrow ${on ? 'on' : ''}`}>→</span>}
-                </React.Fragment>
-              )
-            })}
-          </div>
-          {AGENTS.filter((a) => shown(a.key)).map((a) => {
-            const s = get(a.key)
-            return (
-              <div key={a.key} className={`ag ${s.tone || ''} ${s.quiet ? 'quiet' : ''}`}>
-                <span className="ag-ic">{a.ic}</span>
-                <div><b>{a.name}</b><div className="sm">{s.say}</div></div>
-              </div>
-            )
-          })}
         </div>
       )}
 

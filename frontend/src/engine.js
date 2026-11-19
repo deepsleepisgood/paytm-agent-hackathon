@@ -459,9 +459,9 @@ export function runScenario(sc, m, ctx = {}) {
   const A = b.agents
   const steps = [
     { key: 'input', title: 'Input understood', say: `intent=${sc.intent} · lang=hi-IN`, ms: 120 },
-    { key: 'consent', title: 'DPDP consent', consent, ms: 90 },
     ...(b.insight ? [{ key: 'insight', title: 'What the AI knew', insight: b.insight, ms: 60 }] : []),
     { key: 'eval', title: 'Intervention evaluation', options: b.options, selected: b.selected, ms: 340 },
+    { key: 'consent', title: 'DPDP consent', consent, ms: 90 },
     { key: 'dispatch', title: 'A2A dispatch', request, response: b.response, ms: 210 },
     { key: 'intelligence', title: 'Intelligence', ...A.intelligence, ms: 260 },
     { key: 'risk', title: 'Risk', ...A.risk, ms: 180 },
