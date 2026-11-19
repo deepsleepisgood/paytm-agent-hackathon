@@ -16,7 +16,7 @@ function StatusBar() {
     <div className="statusbar">
       <span>9:41</span>
       <span className="sb-right">
-        <i className="sig" /> <span>5G</span> <i className="bat" />
+        <span className="bars"><i /><i /><i /><i /></span><span>5G</span><i className="bat" />
       </span>
     </div>
   )
