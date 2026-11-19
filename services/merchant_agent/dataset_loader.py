@@ -21,12 +21,16 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterator, Optional, Union
 
+import seed_adapter
 from schemas import INTENTS
 
 log = logging.getLogger("merchant_agent.dataset")
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_ROOT = HERE.parents[1] / "dataset"  # services/merchant_agent -> <repo root>/dataset
+# The team dataset landed at <repo root>/data/seed (CSV + JSON, read via seed_adapter). The older
+# per-file layout under <repo root>/dataset is still supported.
+_REPO = HERE.parents[1]  # services/merchant_agent -> <repo root>
+DEFAULT_ROOT = _REPO / "data" if (_REPO / "data" / "seed" / "merchant_profile.json").is_file() else _REPO / "dataset"
 
 try:  # this module is imported first and loads DATA at import, so read .env (DATASET_DIR) here too
     from dotenv import load_dotenv
@@ -89,7 +93,7 @@ BUILTIN_UTTERANCES: list[dict[str, Any]] = [
     {"text": "Kal ₹1,00,000 sale tha, bank mein ₹95,840 aaya — ₹4,160 kahan kata?", "intent": "SETTLEMENT_RECONCILE", "preset": True},
     {"text": "Mera ₹500 ka loan EDI mandate fail ho gaya", "intent": "MANDATE_TROUBLESHOOT", "preset": True},
     {"text": "Mere pichle 6 mahine ke data se business badhane ka suggestion do", "intent": "GROWTH_ADVISORY", "preset": True},
-    {"text": "Customer ne order 7310 ke liye do baar payment kar diya", "intent": "DUPLICATE_RECONCILE", "preset": True},
+    {"text": "Customer ne order 4489 ke liye do baar payment kar diya", "intent": "DUPLICATE_RECONCILE", "preset": True},
     {"text": "Refund ke baad kal stock ke liye paise kam pad rahe hain, EDI ruk sakti hai?", "intent": "CASHFLOW_EDI_SWITCH", "preset": True},
     {"text": "Soundbox wapas karna hai, uska bill abhi bhi kat raha hai", "intent": "SOUNDBOX_RETURN", "preset": True},
     {"text": "Loan poora settle karna hai, NOC kab milega?", "intent": "LOAN_CLOSURE_NOC", "preset": True},
@@ -97,61 +101,66 @@ BUILTIN_UTTERANCES: list[dict[str, Any]] = [
     {"text": "Settlement hold pe hai kya? Bank account inactive dikha raha hai", "intent": "SETTLEMENT_HOLD_BANK", "preset": True},
 ]
 
-# PLAN.md "6-Month Historical Memory". Sales dip of 14–16 Nov (rain) explains the 16 Nov eNACH bounce;
-# 17 Nov's ₹1,00,000 (bulk order + backlog) is the gross settled on 18 Nov, so both demo stories hold.
+# PLAN.md "6-Month Historical Memory", aligned with the team dataset (data/seed) so the offline
+# fallback tells the same story: a market closure on 14–16 Nov (~37% below the same weekdays) explains
+# the 17 Nov eNACH bounce; 17 Nov's ₹1,00,000 (market reopened + a PG fit-out order) is the gross
+# settled on 18 Nov. `expected` = mean of the same weekday over the 4 previous ordinary weeks.
 BUILTIN_HISTORY: dict[str, Any] = {
-    "window": "2026-06-01 to 2026-11-18",
+    "window": "2026-05-19 to 2026-11-18",
     "daily_avg_sales": 32000,
     "weekend_multiplier": 2.3,
     "weekend_days": "Fri–Sun",
     "past_edi_success_rate": 96,
     "supplier_payable_tomorrow": 4500,
     "active_lender": "Clix Capital",
-    "kfs": {"edi_holiday_eligible": True, "max_pause_days": 2, "clause": "4.2"},
+    "kfs": {"edi_holiday_eligible": True, "max_pause_days": 2, "clause": "4.2", "apr_percent": 31.89},
     "monthly_sales": [
-        {"month": "2026-06", "sales": 892000}, {"month": "2026-07", "sales": 918000},
-        {"month": "2026-08", "sales": 947000}, {"month": "2026-09", "sales": 963000},
-        {"month": "2026-10", "sales": 1104000, "note": "Diwali"}, {"month": "2026-11", "sales": 571000, "note": "1–18 Nov"},
+        {"month": "2026-06", "sales": 1041515}, {"month": "2026-07", "sales": 771130},
+        {"month": "2026-08", "sales": 812092}, {"month": "2026-09", "sales": 945954},
+        {"month": "2026-10", "sales": 1073613}, {"month": "2026-11", "sales": 782406, "note": "month to date"},
     ],
     "recent_daily_sales": [
-        {"date": "2026-11-10", "sales": 31400}, {"date": "2026-11-11", "sales": 30900},
-        {"date": "2026-11-12", "sales": 33800}, {"date": "2026-11-13", "sales": 71500, "note": "Friday peak"},
-        {"date": "2026-11-14", "sales": 19800, "note": "heavy rain", "dip": True},
-        {"date": "2026-11-15", "sales": 18600, "note": "heavy rain", "dip": True},
-        {"date": "2026-11-16", "sales": 19200, "note": "heavy rain", "dip": True},
-        {"date": "2026-11-17", "sales": 100000, "note": "bulk order + post-rain backlog"},
+        {"date": "2026-11-11", "sales": 19815}, {"date": "2026-11-12", "sales": 18915},
+        {"date": "2026-11-13", "sales": 45501},
+        {"date": "2026-11-14", "sales": 31173, "expected": 47432, "note": "market closure", "dip": True},
+        {"date": "2026-11-15", "sales": 28232, "expected": 49232, "note": "market closure", "dip": True},
+        {"date": "2026-11-16", "sales": 14109, "expected": 20838, "note": "market closure", "dip": True},
+        {"date": "2026-11-17", "sales": 100000, "expected": 19676, "note": "bulk order + market reopened"},
+        {"date": "2026-11-18", "sales": 22301, "expected": 21294},
     ],
-    "mandate": {"type": "eNACH", "bank": "HDFC Bank", "edi_amount": 500, "last_status": "BOUNCED",
-                "bounce_reason": "INSUFFICIENT_FUNDS", "bounce_date": "2026-11-16", "missed_edis_6m": 7, "edis_6m": 168},
+    "mandate": {"type": "eNACH", "edi_amount": 500, "last_status": "BOUNCED", "bounce_reason": "INSUFFICIENT_FUNDS",
+                "bounce_date": "2026-11-17", "context": "market closure 14-16 Nov (sales -40%)",
+                "missed_edis_6m": 7, "edis_6m": 171},
     "recent_customers": [
-        {"name": "Rohit Verma", "visits_6m": 14, "spend_6m": 18400, "preferred_app": "GPay", "last_visit": "2026-11-17"},
-        {"name": "Anita Singh", "visits_6m": 9, "spend_6m": 12750, "preferred_app": "PhonePe", "last_visit": "2026-11-17"},
-        {"name": "Vikas Gupta", "visits_6m": 11, "spend_6m": 21300, "preferred_app": "Paytm", "last_visit": "2026-11-17"},
-        {"name": "Pooja Nair", "visits_6m": 6, "spend_6m": 9600, "preferred_app": "Paytm", "last_visit": "2026-11-16"},
-        {"name": "Karan Mehta", "visits_6m": 4, "spend_6m": 3100, "preferred_app": "Paytm", "last_visit": "2026-11-15"},
+        {"name": "Vikram Malhotra", "customer_id": "C001", "spend_6m": 166203},
+        {"name": "Sunita Rana", "customer_id": "C003", "spend_6m": 95475},
+        {"name": "Geeta Saini", "customer_id": "C002", "spend_6m": 78314},
+        {"name": "Babita Malhotra", "customer_id": "C006", "spend_6m": 68133},
+        {"name": "Pooja Kapoor (electrician)", "customer_id": "C005", "spend_6m": 53285},
     ],
     "duplicate_payments": [
-        {"order_id": "7310", "customer": "Vikas Gupta", "amount": 1850, "date": "2026-11-17",
-         "utrs": ["632184920620", "632184920621"], "payer_app": "Paytm"},
+        {"order_id": "4489", "customer": "Sunita Yadav", "customer_id": "C017", "customer_visits_6m": 23, "amount": 1180,
+         "date": "2026-11-18", "utrs": ["632299206882", "632230725895"], "payer_app": "PhonePe"},
     ],
     "past_disputes": [
-        {"order_id": "8120", "amount": 650, "pod_submitted": True, "outcome": "WON"},
-        {"order_id": "8455", "amount": 1200, "pod_submitted": True, "outcome": "WON"},
-        {"order_id": "8790", "amount": 900, "pod_submitted": False, "outcome": "LOST"},
+        {"order_id": "9920", "amount": 2949, "pod_submitted": False, "outcome": "LOST"},
+        {"order_id": "9962", "amount": 2198, "pod_submitted": True, "outcome": "WON"},
     ],
     "connectors": {
-        "SHIPROCKET_SYNC": {"status": "ACTIVE", "consent": "GRANTED", "holds_pod_for": ["9981"], "pod_file": "test_files/pod_9981.png"},
+        "SHIPROCKET_SYNC": {"status": "ACTIVE", "consent": "GRANTED", "holds_pod_for": ["9981"]},
         "VYAPAR_POS_SYNC": {"status": "ACTIVE", "consent": "GRANTED", "stock_payable_tomorrow": 4500},
         "RBI_ACCOUNT_AGGREGATOR": {"status": "ACTIVE", "consent": "GRANTED"},
     },
-    "bank_account": {"bank": "HDFC Bank", "account_masked": "XXXXXX4821", "status": "ACTIVE", "kyc_status": "VERIFIED",
+    "bank_account": {"bank": None, "account_masked": "XXXXXX4821", "status": "ACTIVE", "kyc_status": "VERIFIED",
                      "last_credit": {"date": "2026-11-18", "amount": 95840}},
-    "soundbox_diagnostics": {"battery_pct": 9, "network": "2G, weak signal", "last_heartbeat": "2026-11-18T09:12:00+05:30",
-                             "speaker_test": "FAILED"},
-    "soundbox_plan": {"rental_per_month": 149, "months_active": 14},
+    "soundbox_diagnostics": {"device_id": "SB-8821-01", "battery_pct": 18, "battery_health_pct": 18,
+                             "network": "drops to offline", "heartbeats_missed_24h": 7, "announce_failures_24h": 60,
+                             "speaker_test": "FAILED", "last_heartbeat": "2026-11-18T23:00:00"},
+    "soundbox_plan": {"rental_per_month": 149, "months_active": None},
     "cashflow": {"projected_net_payout_tomorrow": 1200, "pending_refund": {"order_id": "4490", "amount": 3500}},
-    "growth_offer": {"type": "WORKING_CAPITAL_LINE", "amount": 50000, "tenure_days": 90, "apr_pct": 21,
-                     "processing_fee_pct": 1, "lender": "Clix Capital", "edi_weekday": 450, "edi_weekend": 900},
+    # Same as 8002's CreditOffer: a pre-approved limit with no rate quoted. Rate and tenure belong in the
+    # NBFC's KFS, which the merchant must see before any drawdown; inventing them would mislead.
+    "growth_offer": {"type": "WORKING_CAPITAL_LINE", "amount": 150000, "lender": "Clix Capital", "kfs_required": True},
 }
 
 # ----------------------------------------------------------------------------- tolerant readers
@@ -787,7 +796,8 @@ class Dataset:
 
     def test_file(self, name: str) -> Optional[Path]:
         p = Path(name)
-        for cand in (self.root / p, self.root / "test_files" / p.name):
+        samples = _REPO / "services" / "sarvam_service" / "app" / "samples"  # Person 1's connector documents
+        for cand in (self.root / p, self.root / "test_files" / p.name, samples / p.name):
             if cand.is_file():
                 return cand
         return None
@@ -826,7 +836,12 @@ def _resolve(root: Optional[Union[str, Path]]) -> Path:
 def load(root: Optional[Union[str, Path]] = None) -> Dataset:
     ds = Dataset(root=_resolve(root))
     raw: dict[str, Any] = {}
-    for key, rel in FILES.items():
+    seed_dir = ds.root / "seed"
+    if seed_adapter.is_team_seed(seed_dir):  # data/seed layout (CSV + JSON)
+        raw, used = seed_adapter.build_raw(seed_dir)
+        for key in FILES:
+            ds.sources[key] = used.get(key, "builtin (missing)")
+    for key, rel in (() if raw else FILES.items()):
         path = ds.root / rel
         if not path.is_file():
             ds.sources[key] = "builtin (missing)"
@@ -896,7 +911,7 @@ def load(root: Optional[Union[str, Path]] = None) -> Dataset:
         if not ds.golden_steps():
             ds.sources["golden_paths"] = "dataset (no steps recognised)"
 
-    fallbacks = {k: v for k, v in ds.sources.items() if v != "dataset"}
+    fallbacks = {k: v for k, v in ds.sources.items() if not v.startswith("dataset") or "builtin for" in v}
     if fallbacks and ds.root.is_dir():
         log.warning("Dataset %s: using built-in seed for %s", ds.root, fallbacks)
     elif not ds.root.is_dir():

@@ -83,11 +83,13 @@ async def _chargeback(req, request_id, token, intent, alert, src) -> dict[str, A
         path = dl.DATA.test_file(str(conn.get("pod_file") or f"pod_{oid}.png")) or dl.DATA.test_file(f"pod_{oid}.png")
         STATE.log("CONNECTOR_PULL", ACTOR_MERCHANT, f"Pulled signed PoD for #{oid} from SHIPROCKET_SYNC",
                   {"connector": "SHIPROCKET_SYNC", "consent": "GRANTED", "order_id": oid,
-                   "document": path.name if path else f"pod_{oid}.png (built-in)"}, request_id)
+                   "document": path.name if path else f"pod_{oid}.png (8001 sample connector)"}, request_id)
         if path is not None:
             extract, xsrc = await upstream.doc_extract(path.read_bytes(), path.name, "image/png", "pod")
-        else:
-            extract, xsrc = upstream.mock_doc_extract("pod", f"pod_{oid}.png"), "mock"
+        else:  # Person 1 serves the Shiprocket PoD itself: /doc-extract use_sample_connector=true
+            extract, xsrc = await upstream.doc_extract_sample("pod")
+            if extract is None:
+                extract, xsrc = upstream.mock_doc_extract("pod", f"pod_{oid}.png"), "mock"
         extract = {**extract, "_source": xsrc}
         STATE.log("DOC_EXTRACTED", ACTOR_MERCHANT, f"Proof of Delivery read (confidence {extract.get('confidence', 'n/a')})"
                   + (" [mock]" if xsrc == "mock" else ""), extract, request_id)

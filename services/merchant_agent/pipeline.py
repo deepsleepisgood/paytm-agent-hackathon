@@ -190,7 +190,8 @@ def _deduction_phrase(item: dict[str, Any]) -> str:
 
 _SUCCESS = {"SUCCESS", "SETTLED", "VERIFIED", "CONFIRMED", "CREDITED", "RECEIVED"}
 _PENDING = {"PENDING", "IN_PROGRESS", "PROCESSING", "INITIATED"}
-_CAUSE_HI = (("rain", "बारिश"), ("flood", "बाढ़"), ("holiday", "छुट्टी"), ("bandh", "बंद"), ("strike", "हड़ताल"))
+_CAUSE_HI = (("closure", "बाज़ार बंदी"), ("rain", "बारिश"), ("flood", "बाढ़"), ("holiday", "छुट्टी"),
+             ("bandh", "बंद"), ("strike", "हड़ताल"))
 
 
 def _cause_hi(cause: Any) -> str:
@@ -273,6 +274,11 @@ def template_reply(intent: str, resp: dict[str, Any], gst_entry: Optional[dict[s
             return f"{why} Reminder भेज दिया है, कल फिर debit होगा।"
         if status == "ALERT_RAISED":
             return f"{why} 1-tap UPI link भेजूँ? 48 घंटे की grace मिलेगी।"
+        if status == "REMEDIES_OFFERED":  # live 8002: UPI link to pay today, or a KFS 2-day pause
+            pause = any(r.get("offer_id") for r in data.get("remedies") or [])
+            return f"{why} 1-tap UPI link से आज भरिए, penalty नहीं{'; चाहें तो 2 दिन का KFS pause भी है' if pause else ''}।"
+        if status == "MANDATE_RESOLVED":
+            return f"{why} Paytm ने मामला सुलझा दिया है, penalty नहीं लगेगी।"
         return f"{why} 1-tap UPI link भेजा है, penalty नहीं लगेगी।"
     if intent == "DUPLICATE_RECONCILE" and status != "ESCALATED":
         if status == "NO_DUPLICATE_FOUND":
@@ -284,8 +290,9 @@ def template_reply(intent: str, resp: dict[str, Any], gst_entry: Optional[dict[s
         offer = data.get("offer") or h.get("growth_offer") or {}
         trend = data.get("six_month_trend_pct")
         grew = f"6 महीने में बिक्री {trend}% बढ़ी है। " if isinstance(trend, (int, float)) and trend > 0 else ""
+        # No rate is quoted: rate and tenure are the NBFC's to disclose in the KFS (same stance as 8002).
         return (f"{grew}{offer.get('lender') or h.get('active_lender')} का {_inr(offer.get('amount'))} working capital "
-                f"pre-approved है, KFS में APR {offer.get('apr_pct')}% साफ़ लिखा है।")
+                "pre-approved है; rate और tenure KFS में देखकर ही लें।")
     if intent == "CASHFLOW_EDI_SWITCH":
         gap = ctx.get("cashflow") or {}
         offer = data.get("edi_pause_offer") or {}
@@ -324,7 +331,8 @@ def template_reply(intent: str, resp: dict[str, Any], gst_entry: Optional[dict[s
         return (f"Bank account {data.get('bank_status')} होने से settlement रुका है। "
                 "Account update कीजिए, अगले cycle में पैसा आ जाएगा।")
     ticket = (resp.get("escalation_ticket") or {}).get("ticket_id", "")
-    hardware = data.get("device") or data.get("issue_type") == "HARDWARE_SOUNDBOX"
+    hardware = (data.get("device") or data.get("issue_type") == "HARDWARE_SOUNDBOX"
+                or ctx.get("issue_type") == "HARDWARE_SOUNDBOX")  # live 8002 doesn't echo the device back
     what = "Soundbox की खराबी का मामला" if hardware else "आपका मामला"
     return (
         f"मैंने {what} Paytm की L2 team को भेज दिया है{f', ticket {ticket}' if ticket else ''}। "
@@ -374,6 +382,10 @@ async def vernacular_reply(
         return reply, "llm"
     resolution = template_reply(intent, resp, gst_entry, {**(ctx or {}), "insight": insight})
     tip = None if is_fraud(resp) else insight.get("tip_hi")
+    # The tip names the duplicate payer from the merchant's books; if Paytm matched a different order, drop it.
+    paid_order = dl.digits((resp.get("data") or {}).get("order_id"))
+    if intent == "DUPLICATE_RECONCILE" and paid_order and paid_order != (insight.get("metrics") or {}).get("order_id"):
+        tip = None
     return compose(resolution, tip), "template"
 
 
@@ -393,7 +405,47 @@ def pending_action(resp: dict[str, Any]) -> Optional[dict[str, Any]]:
     ar = resp.get("action_required")
     if not isinstance(ar, dict) or not ar.get("type"):
         return None
-    return {**ar, **_NEXT_STEP.get(str(ar["type"]).upper(), {})}
+    out = {**ar, **_NEXT_STEP.get(str(ar["type"]).upper(), {})}
+    if str(ar["type"]).upper() == "CHOOSE_REMEDY":  # 8002 mandate: UPI link or a KFS pause (confirmable here)
+        out["remedies"] = (resp.get("data") or {}).get("remedies") or []
+        pause = next((r for r in out["remedies"] if r.get("offer_id")), None)
+        if pause:
+            out.update(offer_id=pause["offer_id"], pause_endpoint="/merchant/confirm-edi-pause")
+    return out
+
+
+def _register_remedy_offers(resp: dict[str, Any], request_id: str, insight: dict[str, Any],
+                            evaluation: dict[str, Any]) -> None:
+    """8002 offers a KFS hardship pause as a mandate remedy; keep it so /merchant/confirm-edi-pause can accept it."""
+    for r in (resp.get("data") or {}).get("remedies") or []:
+        if r.get("offer_id") and r.get("eligible", True) and r["offer_id"] not in STATE.edi_offers:
+            STATE.edi_offers[r["offer_id"]] = {
+                "offer_id": r["offer_id"], "eligible": True, "nbfc": r.get("nbfc"), "pause_days": r.get("pause_days", 2),
+                "edi_saved_inr": r.get("edi_saved_inr"), "kfs_clause": r.get("kfs_clause", "4.2"), "status": "OFFERED",
+                "request_id": request_id, "insight": insight, "evaluation": evaluation, "cashflow": None,
+                "source": "MANDATE_REMEDY"}
+
+
+def paytm_payload_aliases(intent: str, payload: dict[str, Any], ctx: dict[str, Any], from_document: bool) -> dict[str, Any]:
+    """Field names Person 2's 8002 reads (it answers 400 BAD_PAYLOAD without them); ours stay alongside."""
+    out: dict[str, Any] = {}
+    if payload.get("utr_number"):
+        out["utr"] = payload["utr_number"]
+    if intent == "UTR_VERIFY":
+        out["source"] = "screenshot" if from_document else "voice"
+        if payload.get("amount") is not None:
+            out["claimed_amount_inr"] = payload["amount"]
+    if intent == "CHARGEBACK_RESOLVE" and payload.get("pod_document") and "doc_confidence" not in payload:
+        out["doc_confidence"] = ctx.get("doc_confidence")
+    if intent == "ESCALATE_HUMAN" and not payload.get("reason_code"):
+        out["reason_code"] = "MERCHANT_REQUESTED_HUMAN"  # 8002 has no hardware code; the details go in reason_text
+        if payload.get("issue_type") == "HARDWARE_SOUNDBOX":
+            diag = payload.get("diagnostics") or {}
+            out["reason_text"] = "Soundbox hardware fault: needs a replacement device"
+            out["tried"] = [f"Device logs checked: battery health {diag.get('battery_health_pct', diag.get('battery_pct'))}%, "
+                            f"network {diag.get('network')}, {diag.get('announce_failures_24h', '?')} payments not announced"
+                            f" in 24h, speaker test {diag.get('speaker_test')}"]
+    return out
 
 
 # ----------------------------------------------------------------------------- core
@@ -459,6 +511,7 @@ async def run(
             }
         if extra_payload:
             payload.update(extra_payload)
+        payload.update(paytm_payload_aliases(intent, payload, ctx, doc_extract is not None))
         envelope = {
             "request_id": request_id,
             "mid": mid,
@@ -466,6 +519,10 @@ async def run(
             "selected_intervention": sel,
             "payload": payload,
             "consent_token": consent_token,
+            # Person 2's DispatchRequest: a session lets 8002 apply cross-call rules (repeated unknown UTRs).
+            # `merchant_said` is deliberately not sent (DPDP data minimisation, D8): structured slots only.
+            "session_id": STATE.session_id,
+            "language_code": "hi-IN",
         }
         STATE.log("MERCHANT_TO_PAYTM", ACTOR_MERCHANT, f"A2A request → Paytm: {intent} / {sel['action']}",
                   envelope, request_id)
@@ -478,6 +535,11 @@ async def run(
             {**resp, "_source": paytm_source},
             request_id,
         )
+
+    raw_resp = resp
+    resp = upstream.interpret(intent, resp, paytm_source)  # 8002's RESOLVED/ACTION_REQUIRED -> specific outcome
+    if intent == "MANDATE_TROUBLESHOOT":
+        _register_remedy_offers(resp, request_id, insight, evaluation)
 
     # Local merchant side-effects
     gst_entry: Optional[dict[str, Any]] = None
@@ -565,7 +627,8 @@ async def run(
         "intervention_evaluation": evaluation,
         "verified_outcome": outcome,
         "pending_action": pending_action(resp),
-        "paytm_response": resp,
+        # 8002's body as sent, plus the merchant-side reading of it (e.g. RESOLVED -> RELEASED)
+        "paytm_response": {**raw_resp, "status_detail": resp.get("status")} if raw_resp is not resp else resp,
         "paytm_source": paytm_source,
         "paytm_agent_trace": resp.get("agent_trace") if isinstance(resp.get("agent_trace"), list) else [],
         "hindi_reply": reply_text,

@@ -15,7 +15,7 @@ Along the way it keeps the GST ITC log, the khata (Tally export) and fraud alert
 cd services/merchant_agent          # must be started from this folder (flat imports)
 py -3.11 -m venv .venv; .\.venv\Scripts\pip install -r requirements.txt
 .\.venv\Scripts\uvicorn main:app --port 8003 --reload
-.\.venv\Scripts\python -m pytest -q        # offline tests (89), ~35s
+.\.venv\Scripts\python -m pytest -q        # offline tests (103), ~40s
 ```
 Config is read from a `.env` file in this folder; copy `.env.example` to start. The settings are:
 - `SARVAM_SERVICE_URL`, default `http://127.0.0.1:8001`. `SARVAM_URL` also works.
@@ -29,7 +29,10 @@ Config is read from a `.env` file in this folder; copy `.env.example` to start. 
 
 See `PLAN.md` for the team master plan and the demo script.
 
-## Team dataset (`dataset/` at the repo root)
+## Team dataset (`data/seed/` at the repo root)
+The dataset as it landed (CSV + JSON, see `data/seed/README.md`) is read by `seed_adapter.py` and is the default. `GET /health` → `dataset.files` shows `dataset (data/seed: …)` for each section.
+
+The older per-file layout below (`dataset/seed/*.json`) is still supported, and is used if `data/` is absent or `DATASET_DIR` points to it.
 Seed data, utterances and golden paths come from the shared dataset, which a teammate is building. `dataset_loader.py` reads it by the file names agreed for the team:
 
 | File | Used for |
@@ -83,6 +86,11 @@ Every call to 8001 or 8002 has a timeout and a deterministic fallback, so the se
 | `/doc-extract` | PoD for the chargeback order in the filename (default: first chargeback). For a UPI screenshot: a 12-digit UTR in the filename is used as-is, a name containing `fake`/`tamper` (e.g. `fake_upi.png`) gets an unknown UTR (the fraud path), and a name containing `pending` gets a PENDING UTR |
 
 If a host refuses a connection, the service skips it for 10s and uses the fallback straight away. `POST /reset` re-probes.
+
+**Person 2 (8002) compatibility:**
+- **What 8003 sends.** 8002 needs `utr` for UTR checks and `reason_code` for escalations, and answers 400 without them. 8003 sends both, plus `session_id` and `language_code`.
+- **How 8003 reads the answer.** 8002 answers `RESOLVED | ACTION_REQUIRED | ESCALATED` with the details in `data`. `upstream.interpret()` turns that into specific outcomes (RECONCILED, RELEASED, NOT_FOUND_SUSPECTED_FAKE, …). `paytm_response` is 8002's raw body plus `status_detail`.
+- **Not supported by 8002.** The 4 service-request intents (`UNKNOWN_INTENT`) and `FEE_GST_LOAN` / `REFUND_MANAGE` (501) are answered by the 8003 mock.
 
 **Person 1 (8001) compatibility:** their responses carry `source: "sarvam" | "mock"`, and we pass that through as `*_source: "live" | "mock"`. Their **mock `/llm` is deliberately ignored**: it keyword-matches canned replies and can't read Paytm's JSON (e.g. it would say "upload your PoD" right after a PoD was accepted). Our own routing and templates are used instead. Their `/doc-extract` field `utr` is read as `utr_number`.
 

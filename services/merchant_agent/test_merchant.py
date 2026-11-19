@@ -96,7 +96,8 @@ def test_all_intents_offline(client, text, intent, status):
     for t in ("DPDP_CONSENT_VERIFIED", "INTENT_CLASSIFIED", "MERCHANT_TO_PAYTM", "PAYTM_TO_MERCHANT", "VOICE_REPLY_READY"):
         assert t in types
     m2p = next(e for e in body["a2a_events"] if e["type"] == "MERCHANT_TO_PAYTM")["payload"]
-    assert set(m2p) == {"request_id", "mid", "intent", "selected_intervention", "payload", "consent_token"}
+    assert set(m2p) == {"request_id", "mid", "intent", "selected_intervention", "payload", "consent_token",
+                        "session_id", "language_code"}
     assert "text" not in m2p["payload"]  # data minimisation: raw utterance never leaves merchant side
 
 

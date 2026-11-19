@@ -297,6 +297,58 @@ A FastAPI service on **port 8003** that acts as the merchant-side AI teammate an
 
 ---
 
+## Phase 5: Integration check against the pulled code (main @ fa6c7b4)
+
+Pulled: Person 2's `services/paytm_agent` (8002), the team dataset at `data/seed/` (PR #7), and Person 1's V2 update (`use_sample_connector`). I ran all three real services together (8001 mock mode, 8002, 8003) and sent every scenario through 8003.
+
+### What didn't match, and what I changed (8003 only)
+- **D68 — The dataset is at `data/seed/` (CSV + JSON), not `dataset/seed/*.json`.** 8003 had been reading nothing.
+  - New `seed_adapter.py` turns `merchant_profile.json`, `settlement_breakdown_2026-11-18.json`, `utr_ledger.csv`, `refunds.csv`, `chargebacks.csv`, `loan.json`, `scenarios.json`, `daily_sales_summary.csv`, `edi_schedule.csv`, `device_logs.csv` and `strategy_memory.json` into the sections the loader already normalises.
+  - `data/` is now the default location, and `dataset/` still works.
+  - All 10 sections load, the settlement checks pass, and the 8 scenario triggers become preset chips and golden steps.
+- **D69 — The built-in seed now tells the dataset's story.**
+  - The dip is a market closure on 14–16 Nov, not rain.
+  - The bounce is on 17 Nov.
+  - The duplicate is order 4489: ₹1,180 paid twice on PhonePe by Sunita Yadav.
+  - Soundbox battery health is 18%, with 60 payments not announced.
+  - The PoD shows Rohit Verma, Demo Express Logistics, AWB DEX7781203345.
+- **D70 — The dip is measured against the same weekday.**
+  - Two of the closure days were Sat/Sun, which normally run 2.3x. Against the flat ₹32,000 average the dip looked like 23%, so the diagnosis said "needs review".
+  - Each day is now compared with the mean of the same weekday over the previous 4 ordinary weeks. That gives a 37% dip, so friction, not default.
+- **D71 — Strategy priors from the dataset.** `strategy_memory.json` mandate memories are added to the population priors. Its other intents use different A/B/C letters, so they are not mapped.
+- **D72 — Payload names 8002 reads.** 8002 answers 400 `BAD_PAYLOAD` without them, and 8003 then silently used its mock.
+  - UTR: `utr`, `source`, `claimed_amount_inr`.
+  - Escalation: `reason_code` (`MERCHANT_REQUESTED_HUMAN`), plus `reason_text` and `tried` carrying the Soundbox diagnostics.
+  - Envelope: `session_id` (one per demo run) and `language_code`.
+  - `merchant_said` is still not sent (data minimisation).
+- **D73 — `upstream.interpret()` reads 8002's answers.** 8002 always returns `RESOLVED | ACTION_REQUIRED | ESCALATED` with the specifics in `data`, so this maps them to specific outcomes:
+  - `lines` → itemised breakdown, so the ₹261 ITC is logged live
+  - `lookup_status: NOT_FOUND` → fraud alert
+  - `hold_status: RELEASED` → RELEASED
+  - `refund_status` → REFUND_INITIATED
+  - `remedies` → REMEDIES_OFFERED
+  - `credit_offer` → OFFER_PREAPPROVED
+
+  `paytm_response` is still 8002's raw body, plus `status_detail`. Replies, ITC, fraud, khata and learning use the interpreted view. Both intent names (`DUPLICATE_RECONCILE`/`DUPLICATE_PAYMENT_RECONCILE`, `GROWTH_ADVISORY`/`WORKING_CAPITAL_ADVISORY`) are read.
+- **D74 — Mandate: 8002 offers remedies, it doesn't send a link.**
+  - The reply no longer says "link भेजा है". It says "1-tap UPI link से आज भरिए… 2 दिन का KFS pause भी है".
+  - 8002's pause remedy (`EDIOFFER-0001`) is registered, so `/merchant/confirm-edi-pause` accepts it.
+  - The outcome is PENDING until something is resolved.
+- **D75 — No invented credit pricing.** The growth offer is now ₹1,50,000 with "rate और tenure KFS में", matching 8002's `CreditOffer`, which deliberately quotes no rate. The old "₹50,000 at 21% APR" was made up.
+- **D76 — Proactive chargeback uses Person 1's sample connector** (`/doc-extract use_sample_connector=true`, `samples/pod_9981.png`) when no local PoD file exists, so the real document is extracted.
+- **D77 — Duplicate tip guard.** If Paytm matched a different order than the merchant's books (8002 says 4455, the dataset says 4489), the "X आपके repeat customer हैं" tip is dropped rather than naming the wrong person.
+
+### Verification
+- `pytest -q`: **103 passed, 0 skipped**.
+  - The 5 real-dataset tests now run against `data/seed`.
+  - The new `test_paytm_live.py` pins 8002's recorded response shapes and its 400 rules.
+- Live run with 8001 + 8002 + 8003: settlement, UTR (good and fake), chargeback, duplicate, growth, mandate and escalation all show `paytm_source=live` with a 4-step trace.
+  - Proactive chargeback → sign-off → 8002 hold `RELEASED`.
+  - Cashflow offer → confirm → 8002 `loan_edi_status: PAUSED_2_DAYS`.
+  - All three ports were freed afterwards.
+
+---
+
 ## Open items for integration (6:30 PM)
 1. **Person 4:** share the response shape and event types (README + D1–D5). There is no frontend contract for these yet.
 2. **Person 2:** confirm two things:
