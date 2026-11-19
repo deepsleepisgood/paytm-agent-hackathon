@@ -430,3 +430,9 @@ img[alt="Paytm for Business"]{mix-blend-mode:multiply}
 .tabs:before{content:'';position:absolute;left:0;right:0;top:-34px;height:34px;background:linear-gradient(to bottom,rgba(249,249,249,0) 0%,rgba(249,249,249,.88) 70%,#f9f9f9 100%);pointer-events:none}
 .qr-fab{top:-17px;width:48px;height:48px;min-width:48px;border-width:4px;box-shadow:0 3px 10px rgba(0,30,80,.2)}
 .screen:not(.buddy){padding-bottom:44px}
+
+/* ===== slimmer bezels ===== */
+.phone{border-width:5px;border-radius:50px;box-shadow:0 0 0 1px #3a3a3c,0 40px 80px rgba(0,20,60,.3)}
+.notch{top:7px;height:30px;width:106px}
+.statusbar{padding:14px 28px 0}
+.home-ind{bottom:6px}
