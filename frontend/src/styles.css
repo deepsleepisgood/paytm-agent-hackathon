@@ -1253,3 +1253,24 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .col.right .acc-body .rbody{padding:0;border:0;box-shadow:none;background:transparent;margin-top:6px}
 .col.right .acc-body .row-card{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
 .col.right .acc-body .utr{width:100%;margin-top:6px}
+
+/* agent tree: parent on top, children below */
+.tr{display:flex;flex-direction:column;align-items:center;padding:6px 0 2px}
+.tr-root{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 18px 8px;border-radius:18px;background:#fff;border:1.5px solid #cfe0f6;min-width:150px;transition:all .4s var(--ease)}
+.tr-root b{font-size:13.5px;color:var(--navy)}.tr-root em{font-style:normal;font-size:11px;color:#7a8aa3}
+.tr-st{font-size:10.5px;font-weight:700;color:#1b4f9c;min-height:14px}
+.tr-root.work{border-color:#2d7be0;box-shadow:0 0 0 4px rgba(45,123,224,.12),0 8px 22px rgba(45,123,224,.18)}
+.tr-root.done{border-color:#1f9d6b}.tr-root.done .tr-st{color:#0e7a50}
+.tr-stem{width:2px;height:14px;background:#cfdcee}
+.tr-kids{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%;position:relative;padding-top:12px}
+.tr-kids:before{content:"";position:absolute;top:0;left:10%;right:10%;height:2px;background:#cfdcee}
+.tr-k{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px 7px;border-radius:14px;border:1.5px dashed #dbe3ee;background:#f7f9fc;transition:all .4s var(--ease)}
+.tr-up{position:absolute;top:-12px;left:50%;width:2px;height:12px;background:#cfdcee}
+.tr-k b{font-size:11px;color:var(--navy);text-align:center}.tr-k em{font-style:normal;font-size:9.5px;color:#8c99ae;text-align:center;line-height:1.2}
+.tr-k.standby{opacity:.5;filter:grayscale(.7)}
+.tr-k.idle{border:1.5px solid #d3e0f1;background:#fff;opacity:.85}
+.tr-k.work{border:1.5px solid #2d7be0;background:#fff;box-shadow:0 0 0 4px rgba(45,123,224,.12),0 8px 20px rgba(45,123,224,.16);transform:translateY(-2px)}
+.tr-k.work .tr-up{background:#2d7be0}
+.tr-k.done{border:1.5px solid #1f9d6b;background:#fff}.tr-k.done .tr-up{background:#1f9d6b}
+.tr-tick{position:absolute;top:-6px;right:-4px;width:16px;height:16px;border-radius:50%;background:#1f9d6b;color:#fff;display:none;align-items:center;justify-content:center}
+.tr-k.done .tr-tick{display:flex}
