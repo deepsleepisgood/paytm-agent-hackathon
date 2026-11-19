@@ -62,10 +62,28 @@ export const AIMarkNeural = ({ size = 48 }) => (
   </svg>
 )
 
-export const AIMark = ({ size = 48 }) => (
+export const AIMarkAura = ({ size = 48 }) => (
   <svg width={size} height={size} viewBox="0 0 120 120" role="img" aria-label="AI assistant" style={{ display: 'block' }}>
     <circle className="aura-ring" cx="60" cy="60" r="54" fill="none" stroke="#00BAF2" strokeWidth="6" strokeDasharray="46 9" strokeLinecap="round" />
     <circle cx="60" cy="60" r="41" fill="#002E6E" />
     <path d="M60 38 Q63.3 56.7 82 60 Q63.3 63.3 60 82 Q56.7 63.3 38 60 Q56.7 56.7 60 38 Z" fill="#FFFFFF" />
   </svg>
 )
+
+// Active AI mark (option I "Voice orb"): glowing blue orb with a waveform. Bars animate while the AI is working.
+export const AIMark = ({ size = 48 }) => {
+  const id = React.useId().replace(/:/g, '')
+  const bars = [[28, 50, 20], [42, 40, 40], [56, 28, 64], [70, 40, 40], [84, 50, 20]]
+  return (
+    <svg width={size} height={size} viewBox="0 0 120 120" role="img" aria-label="AI assistant" style={{ display: 'block' }}>
+      <defs>
+        <radialGradient id={`o${id}`} cx="0.35" cy="0.3" r="0.85">
+          <stop offset="0" stopColor="#3FCBFF" /><stop offset="0.5" stopColor="#0A6FD0" /><stop offset="1" stopColor="#002E6E" />
+        </radialGradient>
+      </defs>
+      <circle cx="60" cy="60" r="54" fill={`url(#o${id})`} />
+      <path d="M22 46 A40 40 0 0 1 58 21" fill="none" stroke="#FFFFFF" strokeOpacity="0.35" strokeWidth="4" strokeLinecap="round" />
+      {bars.map(([x, y, h], i) => <rect key={x} className={`wv wv${i + 1}`} x={x} y={y} width="8" height={h} rx="4" fill="#FFFFFF" />)}
+    </svg>
+  )
+}

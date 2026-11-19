@@ -459,3 +459,9 @@ img[alt="Paytm for Business"]{mix-blend-mode:multiply}
 .qr-fab{border-radius:50%;width:54px;height:54px;min-width:54px;top:-22px;background:#f9f9f9;padding:4px;filter:none;box-shadow:0 3px 10px rgba(0,30,80,.18)}
 .qr-fab svg{width:46px;height:46px}
 .tabs button.ctr.on .qr-fab{background:#f9f9f9;filter:none;box-shadow:0 3px 12px rgba(0,186,242,.4)}
+
+/* ===== option I: voice orb — waveform moves while the AI works ===== */
+.wv{transform-box:fill-box;transform-origin:center}
+.cc.busy .wv{animation:wave .8s ease-in-out infinite}
+.cc.busy .wv2{animation-delay:.1s}.cc.busy .wv3{animation-delay:.2s}.cc.busy .wv4{animation-delay:.3s}.cc.busy .wv5{animation-delay:.4s}
+@keyframes wave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.45)}}
