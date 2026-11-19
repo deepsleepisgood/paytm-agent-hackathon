@@ -29,7 +29,9 @@ log = logging.getLogger("merchant_agent.upstream")
 try:  # PLAN.md: URLs are configured via .env on the demo laptop
     from dotenv import load_dotenv
 
-    load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+    _here = os.path.dirname(os.path.abspath(__file__))
+    load_dotenv(os.path.join(_here, ".env"))  # service .env wins (load_dotenv never overrides)
+    load_dotenv(os.path.join(_here, "..", "..", ".env"))  # then the shared repo-root .env
 except ImportError:  # pragma: no cover
     pass
 

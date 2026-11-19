@@ -349,6 +349,34 @@ Pulled: Person 2's `services/paytm_agent` (8002), the team dataset at `data/seed
 
 ---
 
+## Phase 6: Shared .env + Vercel/Railway deployment prep (user request, 2026-11-19)
+The user asked for one `.env` connecting all four apps, plus deploy prep. Files outside this folder are new files
+only, at the repo root and in `deploy/`. No teammate's code was edited.
+
+- **D78 — One root `.env`.**
+  - 8001 and 8002 call `load_dotenv()` without a path, which in python-dotenv 1.2.4 searches upward from `app/config.py`, so they find `<repo>/.env` unchanged.
+  - 8003 now loads its own `.env` first, then the root one (`upstream.py`, `dataset_loader.py`). `load_dotenv` never overrides, so a service `.env` or real env vars win.
+  - Vite ignores it. `frontend/src/config.js` already defaults to localhost.
+- **D79 — New root `.gitignore`.** There was none, and `frontend/.gitignore` only covers `.env.local`, so a root `.env` holding the Sarvam key would have been committed. `.env.example` (no secrets) stays tracked.
+- **D80 — Railway via Dockerfiles in `deploy/`, built from the repo root.**
+  - Selected with `RAILWAY_DOCKERFILE_PATH`, not `railway.json`: Railway's docs mark config as code deprecated for older services after 2026-12-01.
+  - The repo root is the context because 8003 needs `data/seed`. Its image keeps the repo layout, so no `DATASET_DIR` is needed, and it copies Person 1's two sample PNGs.
+  - `.dockerignore` keeps `.env` and venvs out of every image.
+  - One replica each, because state is in memory.
+- **D81 — CORS.** The browser calls only 8003 and 8002 (`frontend/src/api.js`). The Vercel origin goes in `CORS_EXTRA_ORIGINS` (8003) and `ALLOWED_ORIGINS` (8002). 8001 is reached only from 8003, so it needs no Vercel origin.
+
+### Verification
+- `pytest -q`: 103 passed, with the root `.env` present. The conftest env wins, so the key doesn't leak into the tests.
+- All three services started like their containers (service folder as cwd, `--host 0.0.0.0 --port $PORT`), with no env passed in, so everything came from the root `.env`.
+  - 8001 `/health`: `mode: live`, `api_key_configured: true`.
+  - An off-script query to 8003 was classified by Sarvam's LLM (`intent_source=llm`, 4.9 s). 8002 answered live with the correct reply.
+  - Sarvam TTS returned real audio (`source=sarvam`), and the Sarvam Vision samples finished.
+- CORS preflight with deploy-style variables: a `*.vercel.app` origin is allowed on 8001, 8002 and 8003, and a foreign origin is rejected.
+- Vercel build simulated in a scratch copy (`frontend/` + `data/seed`, `npm ci && npm run build` with `VITE_*` = Railway URLs). It built in 1 s, the Railway URLs are in the bundle, and no localhost URL remains.
+- Docker isn't installed here, so the images themselves weren't built. Ports 8001–8003 were freed.
+
+---
+
 ## Open items for integration (6:30 PM)
 1. **Person 4:** share the response shape and event types (README + D1–D5). There is no frontend contract for these yet.
 2. **Person 2:** confirm two things:

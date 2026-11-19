@@ -35,7 +35,8 @@ DEFAULT_ROOT = _REPO / "data" if (_REPO / "data" / "seed" / "merchant_profile.js
 try:  # this module is imported first and loads DATA at import, so read .env (DATASET_DIR) here too
     from dotenv import load_dotenv
 
-    load_dotenv(HERE / ".env")
+    load_dotenv(HERE / ".env")  # service .env wins (load_dotenv never overrides)
+    load_dotenv(HERE.parents[1] / ".env")  # then the shared repo-root .env
 except ImportError:  # pragma: no cover
     pass
 
