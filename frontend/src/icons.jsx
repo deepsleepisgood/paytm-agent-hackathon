@@ -46,3 +46,52 @@ export function PaytmLogo({ size = 30 }) {
     </span>
   )
 }
+
+// Option B "Neural node" (alternate, not used right now): navy rounded square, white core node linked to three cyan agent nodes.
+// Nodes pulse while the AI is working. Active mark is AIMark below (option C aura ring).
+export const AIMarkNeural = ({ size = 48 }) => (
+  <svg width={size} height={size} viewBox="0 0 120 120" role="img" aria-label="AI assistant" style={{ display: 'block' }}>
+    <rect x="12" y="12" width="96" height="96" rx="30" fill="#002E6E" />
+    <g stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round">
+      <line x1="60" y1="60" x2="36" y2="40" /><line x1="60" y1="60" x2="84" y2="40" /><line x1="60" y1="60" x2="60" y2="88" />
+    </g>
+    <circle cx="60" cy="60" r="9" fill="#FFFFFF" />
+    <circle className="nd nd1" cx="36" cy="40" r="7" fill="#00BAF2" />
+    <circle className="nd nd2" cx="84" cy="40" r="7" fill="#00BAF2" />
+    <circle className="nd nd3" cx="60" cy="88" r="7" fill="#00BAF2" />
+  </svg>
+)
+
+export const AIMarkAura = ({ size = 48 }) => (
+  <svg width={size} height={size} viewBox="0 0 120 120" role="img" aria-label="AI assistant" style={{ display: 'block' }}>
+    <circle className="aura-ring" cx="60" cy="60" r="54" fill="none" stroke="#00BAF2" strokeWidth="6" strokeDasharray="46 9" strokeLinecap="round" />
+    <circle cx="60" cy="60" r="41" fill="#002E6E" />
+    <path d="M60 38 Q63.3 56.7 82 60 Q63.3 63.3 60 82 Q56.7 63.3 38 60 Q56.7 56.7 60 38 Z" fill="#FFFFFF" />
+  </svg>
+)
+
+// Active AI mark (option I "Voice orb"): glowing blue orb with a waveform. Bars animate while the AI is working.
+export const AIMark = ({ size = 48 }) => {
+  const id = React.useId().replace(/:/g, '')
+  const bars = [[28, 50, 20], [42, 40, 40], [56, 28, 64], [70, 40, 40], [84, 50, 20]]
+  return (
+    <svg width={size} height={size} viewBox="0 0 120 120" role="img" aria-label="AI assistant" style={{ display: 'block' }}>
+      <defs>
+        <radialGradient id={`o${id}`} cx="0.35" cy="0.3" r="0.85">
+          <stop offset="0" stopColor="#3FCBFF" /><stop offset="0.5" stopColor="#0A6FD0" /><stop offset="1" stopColor="#002E6E" />
+        </radialGradient>
+      </defs>
+      <circle cx="60" cy="60" r="54" fill={`url(#o${id})`} />
+      <path d="M22 46 A40 40 0 0 1 58 21" fill="none" stroke="#FFFFFF" strokeOpacity="0.35" strokeWidth="4" strokeLinecap="round" />
+      {bars.map(([x, y, h], i) => <rect key={x} className={`wv wv${i + 1}`} x={x} y={y} width="8" height={h} rx="4" fill="#FFFFFF" />)}
+    </svg>
+  )
+}
+
+// Merchant logo (image) with initials fallback.
+export function MerchantLogo({ d, size = 44 }) {
+  const [bad, setBad] = React.useState(false)
+  const initials = d.merchant.split(' ').map((w) => w[0]).slice(0, 2).join('')
+  if (d.logo && !bad) return <img className="m-logo" src={d.logo} alt={d.merchant} width={size} height={size} onError={() => setBad(true)} />
+  return <div className="avatar" style={{ width: size, height: size }}>{initials}</div>
+}
