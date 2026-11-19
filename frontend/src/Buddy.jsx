@@ -1,33 +1,56 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { I, PaytmLogo, AIMark } from './icons.jsx'
+import { AIMark } from './icons.jsx'
 import { SCENARIOS, liveOk } from './engine.js'
 import { inr } from './data.js'
 import Khata from './Khata.jsx'
 
+// Every scenario, grouped for the "Madad menu" sheet.
 const GROUPS = [
   { id: 'payout', label: 'Payout', items: [
-    { id: 'settle', ic: '💰', t: 'Paisa kahan kata?', s: 'Why is my settlement lower?' },
-    { id: 'hold', ic: '🔒', t: 'Settlement hold', s: 'Bank / KYC hold on my money' },
-    { id: 'sbrent', ic: '🔊', t: 'Soundbox rent kat raha', s: 'Charged after returning device' } ] },
+    { id: 'settle', t: 'Paisa kahan kata?', s: 'Why is my settlement lower?' },
+    { id: 'hold', t: 'Settlement hold', s: 'Bank / KYC hold on my money' },
+    { id: 'sbrent', t: 'Soundbox rent kat raha', s: 'Charged after returning device' } ] },
   { id: 'pay', label: 'Payments', items: [
-    { id: 'utr', ic: '🔎', t: 'UTR pending', s: 'Is this payment real?' },
-    { id: 'fake', ic: '🚫', t: 'Fake screenshot', s: 'Catch a tampered UPI proof' },
-    { id: 'refund', ic: '↩️', t: 'Refund karna hai', s: 'Auto up to ₹5,000, else human' } ] },
+    { id: 'utr', t: 'UTR pending', s: 'Is this payment real?' },
+    { id: 'fake', t: 'Fake screenshot', s: 'Catch a tampered UPI proof' },
+    { id: 'refund', t: 'Refund karna hai', s: 'Auto up to ₹5,000, else human' } ] },
   { id: 'loan', label: 'Loan', items: [
-    { id: 'edi', ic: '🏦', t: 'Loan EDI fail', s: 'Mandate failed, fix it' },
-    { id: 'noc', ic: '📄', t: 'Loan NOC', s: 'Paid negotiated settlement' },
-    { id: 'growth', ic: '📈', t: 'Business badhao', s: 'Ideas from my 6-month data' } ] },
-  { id: 'pro', label: 'Proactive', items: [
-    { id: 'shield_cb', ic: '🛡️', t: 'Chargeback incoming', s: 'AI pulls PoD, you sign off' },
-    { id: 'shield_edi', ic: '💸', t: 'Cashflow gap', s: 'AI offers a 2-day EDI pause' } ] },
+    { id: 'edi', t: 'Loan EDI fail', s: 'Mandate failed, fix it' },
+    { id: 'noc', t: 'Loan NOC', s: 'Paid negotiated settlement' },
+    { id: 'growth', t: 'Business badhao', s: 'Ideas from my 6-month data' } ] },
+  { id: 'pro', label: 'Alerts', items: [
+    { id: 'shield_cb', t: 'Chargeback incoming', s: 'AI pulls PoD, you sign off' },
+    { id: 'shield_edi', t: 'Cashflow gap', s: 'AI offers a 2-day EDI pause' } ] },
   { id: 'help', label: 'Help', items: [
-    { id: 'cb', ic: '⚖️', t: 'Chargeback proof', s: 'Send delivery proof, free the hold' },
-    { id: 'bank', ic: '🏛️', t: 'Bank account update', s: 'Change settlement account' },
-    { id: 'soundbox', ic: '🛠️', t: 'Soundbox kharab', s: 'Hardware issue → human ticket' } ] },
+    { id: 'cb', t: 'Chargeback proof', s: 'Send delivery proof, free the hold' },
+    { id: 'bank', t: 'Bank account update', s: 'Change settlement account' },
+    { id: 'soundbox', t: 'Soundbox kharab', s: 'Hardware issue, human ticket' } ] },
 ]
 
-function Insights({ m }) {
-  const [open, setOpen] = useState(false)
+// The four big starting suggestions on the home state.
+const SUGGEST = {
+  settle: ['Paisa kahan kata?', 'Settlement ka hisaab samjhein'],
+  utr: ['UTR check karo', 'Payment asli hai ya fake?'],
+  cb: ['Chargeback proof', 'Delivery proof bhejein, hold hatayein'],
+  hold: ['Settlement hold', 'Bank / KYC hold ka reason jaanein'],
+  edi: ['Loan EDI problem', 'Mandate fail? Hum theek karte hain'],
+}
+
+const SpeakerIcon = ({ on }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" />
+    {on ? <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11" /> : <path d="M16 9.5l5 5M21 9.5l-5 5" />}
+  </svg>
+)
+const PlusIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+)
+const MicIcon = () => (
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+)
+
+function Insights({ m, always }) {
+  const [open, setOpen] = useState(!!always)
   const i = m.insights
   const ms = i.monthly_sales
   const max = Math.max(...ms), min = Math.min(...ms)
@@ -70,7 +93,7 @@ function Insights({ m }) {
         </div>
       </div>
       <div className="ins-note">{i.peak_note}</div>
-      <button className="ins-close" onClick={() => setOpen(false)}>Hide ⌃</button>
+      {!always && <button className="ins-close" onClick={() => setOpen(false)}>Hide ⌃</button>}
     </div>
   )
 }
@@ -80,88 +103,140 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
   const [rec, setRec] = useState(false)
   const [micNote, setMicNote] = useState('')
   const [khata, setKhata] = useState(false)
+  const [menu, setMenu] = useState(false)
+  const [plus, setPlus] = useState(false)
   const [cat, setCat] = useState('payout')
   const end = useRef(null)
   const podRef = useRef(null)
   const shotRef = useRef(null)
 
+  const started = chat.some((c) => c.who === 'me')
+  const messages = chat.slice(1) // first entry is the welcome text, shown as the greeting
+  const firstName = m.profile.owner.replace(/^Mr\.?\s*/i, '').split(' ')[0]
+  const okFor = (id) => {
+    const s = SCENARIOS.find((x) => x.id === id)
+    return s && (!s.available || s.available(m)) && (mode !== 'live' || liveOk(s))
+  }
+  const tops = ['settle', 'utr', okFor('cb') ? 'cb' : 'hold', 'edi']
+
   useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [chat.length, busy])
 
-  const send = () => { if (text.trim() && !busy) { onText(text.trim()); setText('') } }
+  const send = () => { if (text.trim() && !busy) { onText(text.trim()); setText(''); setPlus(false) } }
+  const run = (id) => { setMenu(false); setPlus(false); onPreset(id) }
 
   const mic = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) return setMicNote('Mic not supported here. Tap a quick scenario.')
+    if (!SR) return setMicNote('Mic is not available in this browser. Use the suggestions.')
     if (rec) return
     const r = new SR()
     r.lang = 'hi-IN'
     r.onstart = () => { setRec(true); setMicNote('Sun raha hoon…') }
-    r.onerror = () => { setRec(false); setMicNote('Mic unavailable. Tap a quick scenario.') }
+    r.onerror = () => { setRec(false); setMicNote('Mic unavailable. Use the suggestions.') }
     r.onend = () => setRec(false)
-    r.onresult = (e) => { const t = e.results[0][0].transcript; setMicNote(''); onText(t) }
+    r.onresult = (e) => { setMicNote(''); onText(e.results[0][0].transcript) }
     try { r.start() } catch { setRec(false) }
   }
 
   return (
     <div className="screen buddy">
-      <div className="ios-nav">
-        <PaytmLogo size={17} />
-        <button className={`spk ${speak ? 'on' : ''}`} onClick={() => setSpeak(!speak)} title="Hindi voice reply" aria-label="Voice replies">{speak ? 'Voice on' : 'Voice off'}</button>
+      <div className="ai-head">
+        <AIMark size={36} />
+        <div className="ah-t"><b>Assistant</b><span>{m.profile.name}</span></div>
+        <button className={`spk ${speak ? 'on' : ''}`} onClick={() => setSpeak(!speak)} aria-label={speak ? 'Turn voice replies off' : 'Turn voice replies on'} title="Hindi voice replies"><SpeakerIcon on={speak} /></button>
       </div>
-      <div className="large-title"><div className="lt-row"><AIMark size={30} /><h1>Assistant</h1></div><p>{m.profile.name}</p></div>
 
       <div className="b-scroll">
-        <Insights m={m} />
-
-        <div className="ios-cap">KYA MADAD CHAHIYE?</div>
-        <div className="cats">
-          {GROUPS.map((g) => <button key={g.id} className={cat === g.id ? 'on' : ''} onClick={() => setCat(g.id)}>{g.label}</button>)}
-        </div>
-        <div className="rows">
-          {GROUPS.find((g) => g.id === cat).items.map((it) => {
-            const s = SCENARIOS.find((x) => x.id === it.id)
-            const ok = (!s.available || s.available(m)) && (mode !== 'live' || liveOk(s))
-            const why = mode === 'live' && !liveOk(s) ? 'Local demo only (not in contract yet)' : 'Not applicable for this merchant'
-            return (
-              <button key={it.id} className="row-btn" disabled={busy || !ok} onClick={() => onPreset(it.id)} title={ok ? s.utterance(m) : why}>
-                                <span className="r-t"><b>{it.t}</b><em>{ok ? it.s : why}</em></span>
-                <span className="r-go">›</span>
-              </button>
-            )
-          })}
-        </div>
-
-        <button className="khata-btn" onClick={() => setKhata(true)}>Khata & Tally Export <span>›</span></button>
-
-        <div className="chat">
-          {chat.map((c, k) => (
-            <div key={k} className={`msg ${c.who}`}>
-              {c.who === 'ai' && <span className="ai-dot sm"><I.Spark size={11} /></span>}
-              <div className={`bubble ${c.tone || ''}`}>{c.text}{c.confirm && (
-                <button className="confirm-btn" disabled={busy || c.done} onClick={() => onConfirm(c, k)}>{c.done ? '✓ Sign-off sent' : c.confirm.label}</button>
-              )}</div>
+        {!started && (
+          <>
+            <div className="greet-ai">
+              <h2>Namaste, {firstName} ji</h2>
+              <p>Aaj main aapki kya madad karun?</p>
             </div>
-          ))}
-          {busy && <div className="msg ai"><span className="ai-dot sm"><I.Spark size={11} /></span><div className="bubble typing"><i /><i /><i /></div></div>}
-          <div ref={end} />
-        </div>
+            <div className="sugs">
+              {tops.map((id, k) => {
+                const ok = okFor(id)
+                const [t, s] = SUGGEST[id]
+                return (
+                  <button key={id} className={`sug ${k === 0 ? 'primary' : ''}`} disabled={busy || !ok} onClick={() => run(id)}>
+                    <b>{t}</b><span>{s}</span>
+                  </button>
+                )
+              })}
+            </div>
+            <button className="sum-row" onClick={() => setMenu(true)}>
+              <span className="sr-l"><b>Aapka business</b><em>Sales trend, busiest days, cash health</em></span>
+              <span className="sr-r">Dekhein</span>
+            </button>
+          </>
+        )}
+
+        {started && (
+          <div className="chat">
+            {messages.map((c, k) => (
+              <div key={k} className={`msg ${c.who}`}>
+                <div className={`bubble ${c.tone || ''}`}>{c.text}{c.confirm && (
+                  <button className="confirm-btn" disabled={busy || c.done} onClick={() => onConfirm(c, k + 1)}>{c.done ? 'Sign-off sent' : c.confirm.label}</button>
+                )}</div>
+              </div>
+            ))}
+            {busy && <div className="msg ai"><div className="bubble typing"><i /><i /><i /></div></div>}
+            <div ref={end} />
+          </div>
+        )}
       </div>
+
+      {menu && (
+        <div className="msheet-wrap" onClick={() => setMenu(false)}>
+          <div className="msheet" onClick={(e) => e.stopPropagation()}>
+            <div className="grab" />
+            <div className="ms-h"><b>Madad menu</b><button onClick={() => setMenu(false)}>Done</button></div>
+            <div className="ms-b">
+              <Insights m={m} always />
+              <div className="ios-cap">KYA MADAD CHAHIYE?</div>
+              <div className="cats">
+                {GROUPS.map((g) => <button key={g.id} className={cat === g.id ? 'on' : ''} onClick={() => setCat(g.id)}>{g.label}</button>)}
+              </div>
+              <div className="rows">
+                {GROUPS.find((g) => g.id === cat).items.map((it) => {
+                  const ok = okFor(it.id)
+                  const sc = SCENARIOS.find((x) => x.id === it.id)
+                  const why = mode === 'live' && !liveOk(sc) ? 'Local demo only (not in contract yet)' : 'Not applicable for this merchant'
+                  return (
+                    <button key={it.id} className="row-btn" disabled={busy || !ok} onClick={() => run(it.id)}>
+                      <span className="r-t"><b>{it.t}</b><em>{ok ? it.s : why}</em></span>
+                      <span className="r-go">›</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {khata && <Khata m={m} L={L} onClose={() => setKhata(false)} />}
 
       <div className="composer">
-        <div className="upl">
-          <button disabled={busy} onClick={() => podRef.current.click()}>Delivery proof</button>
-          <button disabled={busy} onClick={() => shotRef.current.click()}>UPI screenshot</button>
-          <input ref={podRef} type="file" hidden accept="image/*,.pdf" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('pod', f); e.target.value = '' }} />
-          <input ref={shotRef} type="file" hidden accept="image/*" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('shot', f); e.target.value = '' }} />
+        <div className="strip">
+          <button onClick={() => setMenu(true)}>Madad menu</button>
+          <button onClick={() => setKhata(true)}>Khata & Tally</button>
         </div>
         {micNote && <div className="mic-note">{micNote}</div>}
+        {plus && (
+          <div className="plus-menu">
+            <button disabled={busy} onClick={() => { setPlus(false); podRef.current.click() }}>Delivery proof</button>
+            <button disabled={busy} onClick={() => { setPlus(false); shotRef.current.click() }}>UPI screenshot</button>
+          </div>
+        )}
         <div className="inp">
-          <button className={`mic ${rec ? 'rec' : ''}`} onClick={mic} aria-label="Voice"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-          <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} placeholder="Hindi / Hinglish mein poochiye…" />
-          <button className="send" onClick={send} disabled={busy || !text.trim()} aria-label="Send">↑</button>
+          <button className={`plus ${plus ? 'on' : ''}`} onClick={() => setPlus(!plus)} aria-label="Attach"><PlusIcon /></button>
+          <div className="field">
+            <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} placeholder="Poochiye, Hindi ya English…" />
+            {text.trim() ? <button className="send" onClick={send} disabled={busy} aria-label="Send">↑</button> : <button className={`mic ${rec ? 'rec' : ''}`} onClick={mic} aria-label="Voice"><MicIcon /></button>}
+          </div>
         </div>
+        <input ref={podRef} type="file" hidden accept="image/*,.pdf" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('pod', f); e.target.value = '' }} />
+        <input ref={shotRef} type="file" hidden accept="image/*" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('shot', f); e.target.value = '' }} />
       </div>
     </div>
   )
