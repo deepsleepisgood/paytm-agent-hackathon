@@ -52,51 +52,114 @@ const FLOW = [
     now: 'Recording what happened', tasks: ['Writing entries to the ledger', 'Updating counters and status', 'Logging for audit (DPDP)'], tools: ['Ledger DB', 'Audit log', 'Counters'] },
 ]
 
-// Little AI robots, one personality each (same head, different eyes / mouth / gear).
+// Cyberpunk cartoon AI faces: one character per agent (skin, neon hair/gear, expression).
+const INK = '#0a0f2c'
+const FACE = 'M9.5 17.5c0-7 4.6-12 10.5-12s10.5 5 10.5 12v6.5c0 5.4-4.4 10.2-10.5 10.2S9.5 29.4 9.5 24z'
+const SKIN = { buddy: '#ffd2b8', consent: '#bfe9f6', intelligence: '#e4d3ff', risk: '#ffc3dd', resolution: '#ffdca3', ledger: '#cfe0ff' }
+
 function Robot({ id, size }) {
-  const eyes = {
-    buddy: <><circle className="rb-eye" cx="15.6" cy="19.2" r="2.2" /><circle className="rb-eye" cx="24.4" cy="19.2" r="2.2" /></>,
-    consent: <><circle className="rb-eye" cx="15.6" cy="19.2" r="2.2" /><circle className="rb-eye" cx="24.4" cy="19.2" r="2.2" /></>,
-    intelligence: <><circle className="rb-eye" cx="15.6" cy="19.2" r="2.4" /><circle className="rb-eye" cx="24.4" cy="19.2" r="2.4" /><circle cx="15.6" cy="19.2" r="4.6" fill="none" className="rb-neon" strokeWidth="1" opacity=".8" /><circle cx="24.4" cy="19.2" r="4.6" fill="none" className="rb-neon" strokeWidth="1" opacity=".8" /><path d="M20 19.2h0" className="rb-neon" /></>,
-    risk: <rect className="rb-eye rb-bar" x="13" y="17.6" width="14" height="3.4" rx="1.7" />,
-    resolution: <><path className="rb-eye" d="M13.2 20.4a2.4 2.4 0 0 1 4.8 0" fill="none" className="rb-neon" strokeWidth="1.9" strokeLinecap="round" /><path className="rb-eye" d="M22 20.4a2.4 2.4 0 0 1 4.8 0" fill="none" className="rb-neon" strokeWidth="1.9" strokeLinecap="round" /></>,
-    ledger: <><rect className="rb-eye" x="13.2" y="17.2" width="4.6" height="4.2" rx="1.2" /><rect className="rb-eye" x="22.2" y="17.2" width="4.6" height="4.2" rx="1.2" /></>,
-  }[id]
-  const mouth = id === 'buddy'
-    ? <g className="rb-mouth">{[0, 1, 2, 3, 4].map((k) => <rect key={k} x={15.6 + k * 2.2} y="23" width="1.3" height="2.2" rx=".65" className="rb-fill" style={{ '--k': k }} />)}</g>
-    : id === 'ledger'
-      ? <path d="M16 24.1h8" className="rb-neon" strokeWidth="1.3" strokeLinecap="round" strokeDasharray="1.6 1.6" />
-      : <path d="M17 24.1c1.8 1.2 4.2 1.2 6 0" fill="none" className="rb-neon" strokeWidth="1.3" strokeLinecap="round" />
-  const gear = {
-    buddy: <path d="M8 18a12 12 0 0 1 24 0" fill="none" className="rb-neon" strokeWidth="1.7" strokeLinecap="round" />,
-    consent: <path d="M9 11.5h22" className="rb-neon" strokeWidth="2.4" strokeLinecap="round" opacity=".9" />,
-    intelligence: <g className="rb-fill"><circle cx="13" cy="5" r="1.3" /><circle cx="27" cy="5" r="1.3" /><path d="M13 6l7 3.5M27 6l-7 3.5" className="rb-neon" strokeWidth=".9" /></g>,
-    risk: <path d="M12 11.5l8-3.2 8 3.2" fill="none" className="rb-neon" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />,
-    resolution: <path d="M10 10.5a10 4.2 0 0 1 20 0z" className="rb-fill" opacity=".92" />,
-    ledger: <rect x="12.5" y="6.6" width="15" height="2.4" rx="1.2" className="rb-fill" opacity=".9" />,
+  const sk = SKIN[id]
+  // eyes (whites + neon pupils); each character tweaks size / shape
+  const Eyes = ({ ry = 3.5, brow = null, cyber = false }) => (
+    <g>
+      <g className="rb-lid">
+        <ellipse cx="15.2" cy="20.6" rx="3.1" ry={ry} fill="#fff" stroke={INK} strokeWidth=".9" />
+        {cyber ? <rect className="rb-fill" x="21.2" y="18.6" width="7.2" height="4" rx="2" /> : <ellipse cx="24.8" cy="20.6" rx="3.1" ry={ry} fill="#fff" stroke={INK} strokeWidth=".9" />}
+      </g>
+      <circle className="rb-eye rb-pupil" cx="15.6" cy="21" r="1.9" />
+      {!cyber && <circle className="rb-eye rb-pupil" cx="24.4" cy="21" r="1.9" />}
+      <circle cx="16.2" cy="20.2" r=".6" fill="#fff" /><circle cx="25" cy="20.2" r=".6" fill="#fff" opacity={cyber ? 0 : 1} />
+      {brow}
+    </g>
+  )
+  const smile = (d, extra = {}) => <path className="rb-mouth" d={d} fill="none" stroke={INK} strokeWidth="1.3" strokeLinecap="round" {...extra} />
+  const ear = (neon = true) => <><circle className={neon ? 'rb-fill rb-ear' : ''} cx="8.6" cy="21" r="1.7" fill={neon ? undefined : sk} stroke={INK} strokeWidth=".8" /><circle className={neon ? 'rb-fill rb-ear' : ''} cx="31.4" cy="21" r="1.7" fill={neon ? undefined : sk} stroke={INK} strokeWidth=".8" /></>
+
+  const art = {
+    // friendly host: spiky neon hair + headset
+    buddy: (
+      <>
+        <path className="rb-fill rb-hair" d="M9.2 16L10.6 7.4 14.4 11 17 4.6 20 10 23 4.6 25.6 11 29.4 7.4 30.8 16Q20 9.6 9.2 16z" stroke={INK} strokeWidth="1.1" strokeLinejoin="round" />
+        <path d={FACE} fill={sk} stroke={INK} strokeWidth="1.4" />
+        <path className="rb-hair" d="M9.4 15.6Q20 9.2 30.6 15.6" fill="none" stroke={INK} strokeWidth="0" />
+        <path className="rb-neon" d="M8 19a12 12 0 0 1 24 0" fill="none" strokeWidth="1.8" strokeLinecap="round" /><rect x="6.6" y="18.5" width="3.2" height="6" rx="1.5" fill="#141a40" stroke="var(--neon)" strokeWidth=".9" /><rect x="30.2" y="18.5" width="3.2" height="6" rx="1.5" fill="#141a40" stroke="var(--neon)" strokeWidth=".9" />
+        <path className="rb-neon" d="M32 24.5v3.2l-4 1.8" fill="none" strokeWidth="1.2" strokeLinecap="round" /><circle className="rb-fill" cx="27.6" cy="29.5" r="1.3" />
+        <Eyes ry={3.7} />
+        {smile('M15.6 27c2.4 3.2 6.4 3.2 8.8 0')}
+        <ellipse cx="12" cy="25.4" rx="1.9" ry="1.1" fill="#ff7aa8" opacity=".35" /><ellipse cx="28" cy="25.4" rx="1.9" ry="1.1" fill="#ff7aa8" opacity=".35" />
+      </>
+    ),
+    // stern gatekeeper: helmet with lock emblem
+    consent: (
+      <>
+        <path d={FACE} fill={sk} stroke={INK} strokeWidth="1.4" />
+        <path d="M9.2 18v-1.4c0-7 4.4-11.8 10.8-11.8s10.8 4.8 10.8 11.8V18c-4-1.6-7-2.4-10.8-2.4S13.2 16.4 9.2 18z" fill="#12d6a8" stroke={INK} strokeWidth="1.4" strokeLinejoin="round" />
+        <rect x="17" y="8.6" width="6" height="5" rx="1.4" fill="#06231f" stroke={INK} strokeWidth=".8" /><path d="M18.6 8.6v-1a1.4 1.4 0 0 1 2.8 0v1" fill="none" stroke="#06231f" strokeWidth="1" />
+        <path className="rb-neon" d="M9.6 17.6c3.6-1.4 6.8-2.1 10.4-2.1s6.8.7 10.4 2.1" fill="none" strokeWidth="1" opacity=".8" />
+        <Eyes ry={2.6} brow={<g stroke={INK} strokeWidth="1.2" strokeLinecap="round"><path d="M11.6 17.4l7 1.3M28.4 17.4l-7 1.3" /></g>} />
+        {smile('M16.8 28h6.4')}
+        {ear(true)}
+      </>
+    ),
+    // genius: swoosh hair + big neon goggles + circuit temple
+    intelligence: (
+      <>
+        <path className="rb-fill rb-hair" d="M9.2 17C9.6 9.6 14.4 5 20.6 5 27 5 30.8 9.6 30.8 17c-3.4-3.8-8.8-5-13.6-3.8-3 .8-5.6 2.2-8 3.8z" stroke={INK} strokeWidth="1.2" strokeLinejoin="round" />
+        <path d={FACE} fill={sk} stroke={INK} strokeWidth="1.4" />
+        <path className="rb-fill rb-hair" d="M9.4 16.6C10 9.8 14.6 5.4 20.6 5.4c5.8 0 9.6 4.4 10 11.2-3.2-3.4-8.4-4.6-13-3.4-3 .8-5.6 2-8.2 3.4z" stroke={INK} strokeWidth="1.1" strokeLinejoin="round" />
+        <circle cx="15" cy="20.8" r="5.4" fill="#050819" stroke="var(--neon)" strokeWidth="1.5" /><circle cx="25" cy="20.8" r="5.4" fill="#050819" stroke="var(--neon)" strokeWidth="1.5" /><path d="M20.2 20.2h-0.4" stroke="var(--neon)" strokeWidth="1.5" /><path className="rb-neon" d="M9.6 19.8H8M31 19.8h1.6" strokeWidth="1.2" />
+        <circle className="rb-eye rb-pupil" cx="15.4" cy="21" r="2.3" /><circle className="rb-eye rb-pupil" cx="24.6" cy="21" r="2.3" />
+        <circle cx="16.3" cy="20" r=".7" fill="#fff" /><circle cx="25.5" cy="20" r=".7" fill="#fff" />
+        <path className="rb-neon rb-circ" d="M30.6 22.6h-2.4v2.2h-2" fill="none" strokeWidth=".9" strokeLinecap="round" />
+        {smile('M16.4 28c3 2.6 7 1.4 8.4-1')}
+      </>
+    ),
+    // punk risk officer: mohawk + scanner eye + scar
+    risk: (
+      <>
+        <path className="rb-fill rb-hair" d="M16.6 12.4 17.2 2.8 19 7.2 20 1.8 21 7.2 22.8 2.8 23.4 12.4z" stroke={INK} strokeWidth="1.1" strokeLinejoin="round" />
+        <path d={FACE} fill={sk} stroke={INK} strokeWidth="1.4" />
+        <path d="M9.6 15.4c1.6-4 5.4-6.6 10.4-6.6s8.8 2.6 10.4 6.6c-3.2-2-6.6-3-10.4-3s-7.2 1-10.4 3z" fill="#1a1236" stroke={INK} strokeWidth="1" />
+        <path className="rb-fill rb-hair" d="M18.6 9.2l1.4-4.6 1.4 4.6z" />
+        <Eyes ry={3.4} cyber brow={<g stroke={INK} strokeWidth="1.3" strokeLinecap="round"><path d="M11.4 17.2l7.2 1.4" /><path d="M21.4 17.4l7.4-1.8" /></g>} />
+        <rect className="rb-neon rb-scan" x="21" y="18.2" width="7.6" height="4.8" rx="2.4" fill="none" strokeWidth="1.1" />
+        <path d="M27.4 16.4l2.4 7.2" stroke="#ff2f76" strokeWidth="1.1" strokeLinecap="round" /><path d="M26.4 19.4l2.6.6M27 21.6l2.4.6" stroke="#ff2f76" strokeWidth=".8" strokeLinecap="round" />
+        {smile('M16 27.4c2.2 1.8 5.6 1.8 8.4-.6')}
+        <circle className="rb-fill rb-ear" cx="8.6" cy="22.6" r="1.4" /><circle className="rb-fill rb-ear" cx="31.4" cy="22.6" r="1.4" />
+      </>
+    ),
+    // engineer: hard hat with pushed-up goggles, confident grin
+    resolution: (
+      <>
+        <path d={FACE} fill={sk} stroke={INK} strokeWidth="1.4" />
+        <path d="M8.6 16.6C8.6 9 13.4 4.4 20 4.4S31.4 9 31.4 16.6z" fill="#ffb23d" stroke={INK} strokeWidth="1.4" strokeLinejoin="round" />
+        <rect x="7" y="15.4" width="26" height="3" rx="1.5" fill="#ff8f1f" stroke={INK} strokeWidth="1.1" />
+        <path d="M17 5v10M23 5v10" stroke={INK} strokeWidth=".8" opacity=".5" /><circle className="rb-fill" cx="20" cy="9.2" r="1.7" />
+        <circle cx="14" cy="14.2" r="2.7" fill="#0a0f2c" stroke="var(--neon)" strokeWidth="1.1" /><circle cx="26" cy="14.2" r="2.7" fill="#0a0f2c" stroke="var(--neon)" strokeWidth="1.1" />
+        <Eyes ry={3.1} brow={<g stroke={INK} strokeWidth="1.3" strokeLinecap="round"><path d="M11.8 18.6l6-.6M28.2 18.6l-6-.6" /></g>} />
+        <path d="M15.2 26.2h9.6a4.8 4.8 0 0 1-9.6 0z" fill="#fff" stroke={INK} strokeWidth="1.2" strokeLinejoin="round" /><path d="M20 26.4v4" stroke={INK} strokeWidth=".6" />
+        {ear(true)}
+      </>
+    ),
+    // accountant: side-parted hair, square glasses, number ticker on cheek
+    ledger: (
+      <>
+        <path className="rb-fill rb-hair" d="M9.2 17.2C9.6 9.4 14.2 5 20.4 5c6.2 0 10 4.2 10.4 12.2-3.8-3.4-9-4.2-13.6-2-3 1.4-5.2 2.6-8 2z" stroke={INK} strokeWidth="1.2" strokeLinejoin="round" />
+        <path d={FACE} fill={sk} stroke={INK} strokeWidth="1.4" />
+        <path className="rb-fill rb-hair" d="M9.4 16.8C9.8 9.8 14.4 5.5 20.4 5.5c5.8 0 9.4 4 10 11.1-3.6-3-8.8-3.6-13-1.6-2.8 1.2-5.2 2.4-8 1.8z" stroke={INK} strokeWidth="1.1" strokeLinejoin="round" />
+        <rect x="10.2" y="17.4" width="9" height="7" rx="2.2" fill="#050819" stroke="var(--neon)" strokeWidth="1.4" /><rect x="20.8" y="17.4" width="9" height="7" rx="2.2" fill="#050819" stroke="var(--neon)" strokeWidth="1.4" /><path className="rb-neon" d="M19.2 20.4h1.6M10.2 19H8.6M29.8 19h1.6" strokeWidth="1.2" />
+        <rect className="rb-eye rb-pupil" x="13" y="19.4" width="3.8" height="3.4" rx="1" /><rect className="rb-eye rb-pupil" x="23.2" y="19.4" width="3.8" height="3.4" rx="1" />
+        <path className="rb-neon rb-circ" d="M26.6 28.4h2.6M27.6 30.2h2" strokeWidth="1" strokeLinecap="round" />
+        {smile('M17 28.4h6.2')}
+      </>
+    ),
   }[id]
   return (
     <svg className={`rb rb-${id}`} viewBox="0 0 40 40" width={size} height={size} aria-hidden="true">
-      {/* neon antenna */}
-      <line className="rb-neon" x1="20" y1="5.4" x2="20" y2="9.4" strokeWidth="1.6" strokeLinecap="round" />
-      <circle className="rb-ant rb-fill" cx="20" cy="3.8" r="2.3" />
-      {gear}
-      {/* ear lights */}
-      <rect className="rb-fill rb-ear" x="3.4" y="17" width="3.4" height="7.8" rx="1.7" />
-      <rect className="rb-fill rb-ear" x="33.2" y="17" width="3.4" height="7.8" rx="1.7" />
-      {/* cartoon metal head with neon rim */}
-      <rect className="rb-head" x="7" y="9.4" width="26" height="22.4" rx="7.5" />
-      <path className="rb-shine" d="M10.5 12.6h10" strokeWidth="1.2" strokeLinecap="round" />
-      {/* circuit cheeks */}
-      <path className="rb-neon rb-circ" d="M9.4 27.6h3.6v2.2h2.8M30.6 27.6H27v2.2h-2.8" fill="none" strokeWidth=".9" strokeLinecap="round" strokeLinejoin="round" />
-      {/* glowing visor */}
-      <rect className="rb-visor" x="10.2" y="13.6" width="19.6" height="12.6" rx="5.2" />
-      {eyes}{mouth}
-      {/* shoulders + badge */}
-      <path className="rb-body" d="M12.5 38.8v-2.6a3.8 3.8 0 0 1 3.8-3.8h7.4a3.8 3.8 0 0 1 3.8 3.8v2.6z" />
-      <path className="rb-neon" d="M16 35.2h8" strokeWidth="1" strokeLinecap="round" opacity=".8" />
-      <circle className="rb-badge" cx="31" cy="33.2" r="5.6" />
-      <g transform="translate(26.4 28.6) scale(.385)" fill="none" className="rb-neon" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">{id === 'buddy' ? <path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" /> : ICONS[id]}</g>
+      <path className="rb-body" d="M10.4 39.6c.8-3.6 4.6-5.8 9.6-5.8s8.8 2.2 9.6 5.8z" />
+      <path className="rb-neon" d="M14.6 37.4h10.8" strokeWidth="1" strokeLinecap="round" opacity=".85" />
+      <rect x="16.6" y="31.6" width="6.8" height="4" rx="1.6" fill={sk} stroke={INK} strokeWidth="1" />
+      {art}
     </svg>
   )
 }
@@ -104,7 +167,7 @@ function Robot({ id, size }) {
 function Avatar({ n, size = 44 }) {
   return (
     <div className="ag-av" style={{ '--s': size + 'px' }}>
-      <Robot id={n.id} size={Math.round(size * 0.86)} />
+      <Robot id={n.id} size={Math.round(size * 0.94)} />
     </div>
   )
 }

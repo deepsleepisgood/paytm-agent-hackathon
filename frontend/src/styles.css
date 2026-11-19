@@ -1209,3 +1209,22 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .hist-r .ag-av{box-shadow:0 0 0 1.2px rgba(var(--nr),.7),0 0 12px rgba(var(--nr),.3)}
 .hist-r>div:not(.ag-av){flex:1;min-width:0}
 .hist-r>.ag-av{flex:none;width:30px;height:30px}
+
+/* ===== cyberpunk cartoon faces ===== */
+.rb .rb-fill.rb-hair{filter:drop-shadow(0 0 2.4px var(--neon))}
+.rb .rb-hair{stroke:#0a0f2c}
+.rb-body{fill:#141a40;stroke:var(--neon);stroke-width:1}
+.rb .rb-eye.rb-pupil{filter:drop-shadow(0 0 2px var(--neon))}
+.rb-lid{transform-box:fill-box;transform-origin:center;animation:rbBlink 4.6s infinite}
+.rb-ear{filter:drop-shadow(0 0 2px var(--neon))}
+.rb-scan{animation:rbScanBox 1.6s ease-in-out infinite}
+@keyframes rbScanBox{0%,100%{opacity:.4}50%{opacity:1}}
+.rb .rb-mouth{transform-box:fill-box;transform-origin:center}
+.work .rb-mouth,.rl-n.work .rb-mouth{animation:rbTalk .5s ease-in-out infinite}
+@keyframes rbTalk{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.7)}}
+.work .rb-pupil,.rl-n.work .rb-pupil{animation:rbScan 1s ease-in-out infinite}
+.work .rb-hair,.rl-n.work .rb-hair{animation:rbHair 1.2s ease-in-out infinite}
+@keyframes rbHair{0%,100%{filter:drop-shadow(0 0 2px var(--neon))}50%{filter:drop-shadow(0 0 6px var(--neon))}}
+.rb{filter:none}
+.ag-av{overflow:visible}
+.rb-circ{opacity:.85}
