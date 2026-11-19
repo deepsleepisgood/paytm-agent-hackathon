@@ -328,3 +328,68 @@ body{background:#eef3fa}
 .col.center,.col.right{box-shadow:0 1px 2px rgba(16,37,80,.05),0 8px 24px rgba(16,37,80,.05)}
 .tcard,.rcard{border-color:#eef2f8}
 .cc-top{box-shadow:0 1px 0 #e9eff7;border-bottom:0}
+
+/* ================= iOS skin (SF fonts, iPhone chrome) ================= */
+:root{--ios-blue:#0a84ff;--ios-gray:#e9e9eb;--ios-sep:rgba(60,60,67,.18);--ios-bg:#f2f2f7;--ios-label2:rgba(60,60,67,.6)}
+html,body,button,input,select{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Helvetica Neue',Helvetica,Arial,sans-serif}
+body{-webkit-font-smoothing:antialiased;letter-spacing:-.011em}
+/* device */
+.phone{border:11px solid #0c0c0e;border-radius:56px;background:var(--ios-bg);box-shadow:0 0 0 1.5px #3a3a3c,0 40px 80px rgba(0,20,60,.3)}
+.notch{top:9px;width:112px;height:32px;border-radius:20px;background:#000;z-index:25}
+.statusbar{height:50px;padding:16px 30px 0;color:#000;font-size:15px;font-weight:600;letter-spacing:-.01em}
+.home-ind{bottom:7px;width:134px;height:5px;background:#000;opacity:.9;border-radius:3px;z-index:30}
+/* tab bar: translucent, 5 equal items */
+.tabs{background:rgba(249,249,249,.94);backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid var(--ios-sep);padding:7px 4px 26px;align-items:center}
+.tabs button{flex:1;gap:3px;font-size:10px;font-weight:500;color:#8e8e93;letter-spacing:0}
+.tabs button.on{color:var(--blue);font-weight:600}.tabs button.on:before{display:none}
+.tabs button.ctr{flex:1;margin:0;height:auto;justify-content:center}
+.qr-fab{position:static;width:30px;height:30px;border:0;border-radius:50%;background:var(--navy);box-shadow:none;color:#fff;display:grid;place-items:center}
+.tabs button.ctr.on .qr-fab{background:var(--blue)}
+.ghostlbl{visibility:hidden}
+/* Assistant screen */
+.screen.buddy{background:var(--ios-bg)}
+.ios-nav{display:flex;justify-content:space-between;align-items:center;padding:54px 18px 2px}
+.ios-nav .spk{font-size:18px;opacity:1}
+.large-title{padding:2px 18px 10px}.large-title h1{font-size:32px;font-weight:700;letter-spacing:-.025em;line-height:1.1;color:#000}.large-title p{font-size:13px;color:var(--ios-label2);margin-top:2px}
+.b-scroll{padding:0 16px 12px}
+.ios-cap{font-size:12px;color:var(--ios-label2);letter-spacing:.02em;margin:16px 16px 6px}
+.ins-min{border-radius:12px;box-shadow:none;padding:12px 14px;font-size:14px}
+.ins{border-radius:12px;box-shadow:none}
+.cats{background:rgba(118,118,128,.12);border-radius:9px;padding:2px;gap:2px}
+.cats button{font-size:12px;font-weight:500;color:#000;padding:6px 2px;border-radius:7px}
+.cats button.on{background:#fff;font-weight:600;box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04)}
+.rows{background:#fff;border-radius:12px;overflow:hidden;gap:0;margin-top:10px}
+.row-btn{border-radius:0;box-shadow:none;background:#fff;padding:10px 14px;border-bottom:.5px solid var(--ios-sep);margin-left:0;transform:none!important}
+.row-btn:last-child{border-bottom:0}.row-btn:hover:not(:disabled){background:#f2f2f7;box-shadow:none}
+.r-ic{width:30px;height:30px;border-radius:7px;font-size:16px}
+.row-btn:nth-child(1) .r-ic{background:#ffe9c7}.row-btn:nth-child(2) .r-ic{background:#d8f5e0}.row-btn:nth-child(3) .r-ic{background:#d6e8ff}
+.r-t b{font-size:15px;font-weight:500;color:#000}.r-t em{font-size:12.5px;color:var(--ios-label2)}
+.r-go{color:#c7c7cc;font-size:22px;font-weight:300}
+.khata-btn{background:#fff;border-radius:12px;box-shadow:none;margin-top:16px;padding:12px 14px;font-size:15px;font-weight:500;color:#000}
+.khata-btn span{color:#c7c7cc;font-size:22px;font-weight:300}
+/* iMessage-style chat */
+.chat{padding:14px 0 4px;gap:4px}
+.msg{animation:in .2s ease}.ai-dot.sm{display:none}
+.bubble{font-size:15px;line-height:1.32;padding:8px 13px;border-radius:18px;letter-spacing:-.01em}
+.msg.me .bubble{background:var(--ios-blue);color:#fff;border-bottom-right-radius:5px}
+.msg.ai .bubble{background:var(--ios-gray);color:#000;box-shadow:none;border-bottom-left-radius:5px}
+.msg.ai .bubble.bad{background:#ffe5e5;color:#b3261e;box-shadow:none;font-weight:500}
+.typing i{background:#8e8e93}
+.confirm-btn{border-radius:10px;background:var(--ios-blue);font-size:14px;padding:9px 10px}
+/* composer */
+.composer{background:rgba(249,249,249,.94);backdrop-filter:blur(20px);border-top:.5px solid var(--ios-sep);box-shadow:none;padding:8px 12px 10px;gap:8px}
+.upl{gap:8px}.upl button{flex:none;background:#fff;color:var(--ios-blue);font-size:12.5px;font-weight:500;padding:6px 12px;border-radius:99px;box-shadow:0 0 0 .5px var(--ios-sep)}
+.inp{gap:8px}.inp input{background:#fff;border:.5px solid rgba(60,60,67,.3);border-radius:19px;padding:8px 14px;font-size:15px}
+.mic{width:34px;height:34px;background:transparent;font-size:18px}
+.send{width:32px;height:32px;background:var(--ios-blue);font-size:17px;font-weight:700;line-height:1}
+/* sheet + phone screens (iOS nav bar) */
+.sheet{border-radius:14px 14px 0 0}
+.hdr{background:rgba(249,249,249,.94);backdrop-filter:blur(20px);border-bottom:.5px solid var(--ios-sep);color:#000;font-size:17px;font-weight:600;padding-top:56px}
+.hdr .icon-btn{color:var(--ios-blue)}
+.card{border-radius:12px;box-shadow:none}
+.screen{background:var(--ios-bg)}
+.content{background:var(--ios-bg)}
+.ga-ic{border-radius:14px}
+/* desktop chrome in same type system */
+.cc-title b{font-weight:600;letter-spacing:-.015em}
+.col-h b{font-weight:600;letter-spacing:-.015em}

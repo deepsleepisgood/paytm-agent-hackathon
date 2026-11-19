@@ -507,8 +507,8 @@ export default function App() {
             <nav className="tabs">
               {TABS.map((t) => (
                 <button key={t.id} aria-label={t.label} className={`${tab === t.id && !sub ? 'on' : ''} ${t.center ? 'ctr' : ''}`} onClick={() => go(t.id)}>
-                  {t.center ? <span className="qr-fab"><t.icon size={24} /></span> : <t.icon size={22} />}
-                  {!t.center && <span>{t.label}</span>}
+                  {t.center ? <span className="qr-fab"><t.icon size={17} /></span> : <t.icon size={24} />}
+                  {t.center ? <span className="ghostlbl">.</span> : <span>{t.label}</span>}
                 </button>
               ))}
             </nav>

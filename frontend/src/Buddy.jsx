@@ -104,18 +104,16 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
 
   return (
     <div className="screen buddy">
-      <div className="topbar tight">
-        <PaytmLogo size={20} />
-        <div className="tb-r">
-          <button className={`spk ${speak ? 'on' : ''}`} onClick={() => setSpeak(!speak)} title="Hindi voice reply">🔊</button>
-        </div>
+      <div className="ios-nav">
+        <PaytmLogo size={17} />
+        <button className={`spk ${speak ? 'on' : ''}`} onClick={() => setSpeak(!speak)} title="Hindi voice reply" aria-label="Voice replies">{speak ? '🔊' : '🔈'}</button>
       </div>
-      <div className="b-title"><span className="ai-dot"><I.Spark size={14} /></span><div><b>Merchant AI Buddy</b><div className="muted xs">{m.profile.name} · {m.mid}</div></div></div>
+      <div className="large-title"><h1>Assistant</h1><p>{m.profile.name}</p></div>
 
       <div className="b-scroll">
         <Insights m={m} />
 
-        <div className="pk-h"><b>Kya madad chahiye?</b><span className="muted xs">Tap one, watch the AI work →</span></div>
+        <div className="ios-cap">KYA MADAD CHAHIYE?</div>
         <div className="cats">
           {GROUPS.map((g) => <button key={g.id} className={cat === g.id ? 'on' : ''} onClick={() => setCat(g.id)}>{g.label}</button>)}
         </div>
@@ -154,7 +152,7 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
 
       <div className="composer">
         <div className="upl">
-          <button disabled={busy} onClick={() => podRef.current.click()}>📄 PoD upload</button>
+          <button disabled={busy} onClick={() => podRef.current.click()}>📄 Delivery proof</button>
           <button disabled={busy} onClick={() => shotRef.current.click()}>📱 UPI screenshot</button>
           <input ref={podRef} type="file" hidden accept="image/*,.pdf" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('pod', f); e.target.value = '' }} />
           <input ref={shotRef} type="file" hidden accept="image/*" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('shot', f); e.target.value = '' }} />
@@ -163,7 +161,7 @@ export default function Buddy({ m, L, chat, busy, mode, onPreset, onText, onUplo
         <div className="inp">
           <button className={`mic ${rec ? 'rec' : ''}`} onClick={mic} aria-label="Voice">🎙️</button>
           <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} placeholder="Hindi / Hinglish mein poochiye…" />
-          <button className="send" onClick={send} disabled={busy || !text.trim()}>➤</button>
+          <button className="send" onClick={send} disabled={busy || !text.trim()} aria-label="Send">↑</button>
         </div>
       </div>
     </div>
