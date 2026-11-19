@@ -421,6 +421,30 @@ Then the production build was served on :3000 and driven in Chromium (Playwright
 
 ---
 
+## Phase 8: Supabase connector wired in (user request, 2026-11-19)
+The user approved changes in `frontend/` for this, so they're outside my usual folder.
+
+- **D88 — Frontend reads Supabase live.**
+  - Installed `@supabase/supabase-js` and copied `supabase/frontend/useLedgerRealtime.js` into `src/` unchanged.
+  - `App.jsx` calls the hook, shows a "Supabase live" badge, and calls `refetch()` after Reset (Realtime doesn't stream TRUNCATE).
+  - `live.js` has `overlaySupabase()`, which in live mode moves chargeback #9981 to RELEASED and the EDI to PAUSED when the Supabase rows say so.
+  - **Forward-only on purpose.** With the backends on `USE_SUPABASE=false`, the rows stay at their seeded HELD/ACTIVE values and must never undo a live result. Going back is Reset's job.
+  - `frontend/.env` holds the URL and the public anon key (git-ignored by the root `.gitignore`). `.env.example` has a placeholder.
+- **D89 — Backends stay off for now.** `USE_SUPABASE=false` in the root `.env`. Turning it on needs the `paytm_svc` / `merchant_svc` passwords (supabase/README step 1), which we don't have. Until then the 4 live tables (`utr_checks`, `verified_outcomes`, `agent_trace`, `a2a_events`) stay empty. Railway and Vercel variables are in `deploy/README.md`.
+
+### Verification
+- The anon key reads all 8 tables (HTTP 200). No write was attempted against the shared database.
+- `npm run build` passes. supabase-js pushes the bundle past Vite's 500 kB advisory warning, which isn't an error.
+- `overlaySupabase` passes 6 checks: seed rows change nothing, a released row releases and a paused row pauses, stale rows never undo, another order's WON is ignored, and nothing happens until connected.
+- Browser (production build + live stack):
+  - the badge shows "Supabase live" and 40 REST reads all returned 200;
+  - after the guided demo and confirm, EDI is PAUSED and the chargeback RELEASED;
+  - Reset goes back to ACTIVE/HELD and reloads;
+  - the only console error is the missing `favicon.ico`.
+- `pytest` (merchant): 111 passed, 3 skipped. Ports 3000 and 8001–8003 were freed.
+
+---
+
 ## Open items for integration (6:30 PM)
 1. **Person 4:** share the response shape and event types (README + D1–D5). There is no frontend contract for these yet.
 2. **Person 2:** confirm two things:

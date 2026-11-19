@@ -8,7 +8,8 @@ import { loadLang, saveLang, t as tr } from './i18n.js'
 import Center from './Center.jsx'
 import Right from './Right.jsx'
 import { checkServices, getLedger, resetLive, getStrategyMemory, queryAudio } from './api.js'
-import { callLive, responseToRun, overlayLedger, overlayStrategy } from './live.js'
+import { callLive, responseToRun, overlayLedger, overlayStrategy, overlaySupabase } from './live.js'
+import { useLedgerRealtime } from './useLedgerRealtime.js'
 
 const TABS = [
   { id: 'home', label: 'Home', icon: I.Home },
@@ -354,6 +355,11 @@ export default function App() {
   const modeRef = useRef(mode)
   const autoLive = useRef(false)
   modeRef.current = mode
+  // Supabase Realtime (read-only anon key). Disabled without VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY.
+  const sb = useLedgerRealtime()
+  useEffect(() => {
+    if (mode === 'live') setLedger((L) => overlaySupabase(L, sb))
+  }, [mode, sb.status, sb.chargebacks, sb.loan])
 
   useEffect(() => { scroller.current?.scrollTo(0, 0) }, [tab, sub])
   // Poll which backends are reachable (8003 needed for live mode; 8002 optional — 8003 mocks Paytm if it is down).
@@ -372,7 +378,8 @@ export default function App() {
     clear()
     const nm = MERCHANTS[key]
     setLedger(initLedger(nm)); setChat(welcome(nm)); setRun(null); setReveal(0); setBusy(false); setTab('buddy'); setSub(null)
-    if (resetServices && modeRef.current === 'live') resetLive()
+    // Realtime doesn't stream the reset's TRUNCATE, so re-read Supabase once the services are back to the start state.
+    if (resetServices && modeRef.current === 'live') resetLive().then(() => sb.refetch())
   }
   const pickMerchant = (key) => {
     setMkey(key)
@@ -531,6 +538,11 @@ export default function App() {
         <PaytmLogo size={20} />
         <div className="cc-title"><b>AI Teammate for Paytm merchants</b><span className="muted xs">Merchant AI Buddy ⇄ Paytm AI agents · solves problems end to end</span></div>
         <div className="cc-r">
+          {sb.enabled && (
+            <span className={`badge ${sb.status === 'live' ? 'ok' : sb.error ? 'warn' : 'info'}`} title={sb.error || 'Supabase Realtime: Paytm ledger rows, read-only'}>
+              {sb.status === 'live' ? 'Supabase live' : `Supabase ${sb.status}`}
+            </span>
+          )}
           <div className="mode">
             <button className={mode === 'local' ? 'on' : ''} onClick={() => switchMode('local')}>Local demo</button>
             <button className={mode === 'live' ? 'on' : ''} disabled={!svc.merchant} onClick={() => switchMode('live')} title={svc.merchant ? 'Use the real services (merchant 8003' + (svc.paytm ? ' + Paytm 8002)' : ', Paytm mocked)') : 'Start the merchant agent on :8003 to enable'}>
