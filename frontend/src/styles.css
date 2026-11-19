@@ -563,3 +563,11 @@ img[alt="Paytm for Business"]{mix-blend-mode:multiply}
 .cats button.on{color:var(--navy)}
 .field{box-shadow:0 0 0 1px rgba(20,62,143,.10);border:0}
 .plus.on{background:linear-gradient(135deg,var(--ai-a),var(--ai-c))}
+
+/* ===== normal, comfortable chat bubbles (not stuck to the edges) ===== */
+.chat{padding:8px 22px;gap:8px}
+.msg{gap:0}
+.bubble{max-width:76%;border-radius:20px;padding:9px 14px;font-size:15px;line-height:1.36}
+.msg.me .bubble{border-bottom-right-radius:7px;box-shadow:0 2px 8px rgba(10,42,99,.18);background:linear-gradient(135deg,#12347a 0%,#1b4a9c 100%)}
+.msg.ai .bubble{border-bottom-left-radius:7px;box-shadow:0 0 0 1px rgba(20,62,143,.08),0 2px 8px rgba(10,42,99,.05)}
+.confirm-btn{border-radius:12px}
