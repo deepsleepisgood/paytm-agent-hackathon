@@ -1531,3 +1531,8 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .lg-learn{padding:10px 2px;border-top:1px solid #eef3fa}.lg-learn:first-child{border-top:0}
 .lg-learn b{display:block;font-size:13.5px;color:var(--navy)}.lg-learn span{font-size:12.5px;color:#7a8aa3;line-height:1.45}
 .lg-learn.new b{color:#0e7a50}
+
+/* a single id (order, UTR) is a small tag, not a hero number; only rupee amounts get the big treatment */
+.a-meta{display:inline-flex;align-items:baseline;gap:8px;background:#f4f7fc;border-radius:99px;padding:7px 14px}
+.a-meta span{font-size:12.5px;color:#6b7a90}.a-meta b{font-size:14.5px;font-weight:700;color:var(--navy);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.a-hero b{font-size:26px}

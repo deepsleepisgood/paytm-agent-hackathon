@@ -97,6 +97,11 @@ export function summarize(run, reply, lang = 'hi') {
     if (bd.tail) rest = [bd.tail, ...rest]
     break
   }
+  // A very long first sentence reads like a wall: keep the first clause as the headline, the rest becomes a short note.
+  if (!usedBreakdown && headline.length > 90) {
+    const cut = headline.match(/^(.{28,}?)(?:,\s+and\s+|;\s+|\s+[—–]\s+|,\s+but\s+)(.+)$/i)
+    if (cut) { headline = cut[1].replace(/[.,;:]\s*$/, ''); rest = [cut[2].replace(/^./, (x) => x.toUpperCase()).replace(/[.]?$/, '.'), ...rest] }
+  }
   // Keep only what the merchant must act on (a question or a next step); drop extra information.
   const detail = (usedBreakdown ? rest.filter((x) => needsYou.test(x)) : rest).slice(0, 2).join(' ').slice(0, 190)
   return { kind, chip, headline, context, factsTitle, detail, facts }
