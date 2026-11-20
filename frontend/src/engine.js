@@ -36,7 +36,7 @@ export const SCENARIOS = [
           ledger: itc ? { say: `GST ITC ${inr(gst)} logged to merchant sheet`, effects: [{ t: 'ITC', amount: gst }] } : { say: 'GST ITC not applicable for this merchant (unregistered/composition)' },
         },
         reply: `${inr(s.variance)} kate: MDR ${inr(ded(m, 'MDR_FEE'))}, GST ${inr(gst)}, refund ${inr(ded(m, 'CUSTOMER_REFUND'))}, Soundbox ₹149${cb ? `, aur ${inr(cb.amount)} chargeback hold (${cb.order})` : ''}.${cb ? ' Delivery proof bhejo, hold khul jayega.' : ''}`,
-        replies: { hi: `${inr(s.variance)} कटे: MDR ${inr(ded(m, 'MDR_FEE'))}, GST ${inr(gst)}, रिफंड ${inr(ded(m, 'CUSTOMER_REFUND'))}, साउंडबॉक्स ₹149${cb ? `, और ${inr(cb.amount)} का चार्जबैक होल्ड (${cb.order})` : ''}।${cb ? ' डिलीवरी का सबूत भेजिए, होल्ड हट जाएगा।' : ''}`, en: `${inr(s.variance)} was deducted: MDR ${inr(ded(m, 'MDR_FEE'))}, GST ${inr(gst)}, refund ${inr(ded(m, 'CUSTOMER_REFUND'))}, Soundbox ₹149${cb ? `, and a ${inr(cb.amount)} chargeback hold (${cb.order})` : ''}.${cb ? ' Send the delivery proof and the hold will be released.' : ''}` },
+        replies: { hi: `${inr(s.variance)} kate: MDR ${inr(ded(m, 'MDR_FEE'))}, GST ${inr(gst)}, refund ${inr(ded(m, 'CUSTOMER_REFUND'))}, Soundbox ₹149${cb ? `, aur ${inr(cb.amount)} ka chargeback hold (${cb.order})` : ''}.${cb ? ' Delivery ka proof bhejiye, hold hat jayega.' : ''}`, en: `${inr(s.variance)} was deducted: MDR ${inr(ded(m, 'MDR_FEE'))}, GST ${inr(gst)}, refund ${inr(ded(m, 'CUSTOMER_REFUND'))}, Soundbox ₹149${cb ? `, and a ${inr(cb.amount)} chargeback hold (${cb.order})` : ''}.${cb ? ' Send the delivery proof and the hold will be released.' : ''}` },
         win: true,
       }
     },
@@ -59,7 +59,7 @@ export const SCENARIOS = [
           ledger: { say: 'Check recorded on UTR table', effects: [{ t: 'UTR_CHECK', utr: t.utr, result: 'PENDING' }] },
         },
         reply: `UTR ${t.utr}: ${inr(t.amount)} (${t.app}) abhi PENDING hai. NPCI T+1 tak settle ya auto-reverse ho jayega. Tab tak saamaan mat dena.`,
-        replies: { hi: `UTR ${t.utr}: ${inr(t.amount)} (${t.app}) अभी पेंडिंग है। NPCI T+1 तक सेटल या ऑटो-रिवर्स हो जाएगा। तब तक सामान मत दीजिए।`, en: `UTR ${t.utr}: ${inr(t.amount)} (${t.app}) is still pending. NPCI will settle or auto-reverse it by T+1. Do not hand over goods until then.` },
+        replies: { hi: `UTR ${t.utr}: ${inr(t.amount)} (${t.app}) abhi pending hai. NPCI T+1 tak settle ya auto-reverse kar dega. Tab tak saman mat dijiye.`, en: `UTR ${t.utr}: ${inr(t.amount)} (${t.app}) is still pending. NPCI will settle or auto-reverse it by T+1. Do not hand over goods until then.` },
         win: true,
       }
     },
@@ -82,7 +82,7 @@ export const SCENARIOS = [
           ledger: { say: `Refund ${inr(amt)} processed · order reconciled to one payment`, effects: [{ t: 'REFUND_AUTO', order, amount: amt }, { t: 'DEFLECT' }] },
         },
         reply: `Order ${order} ke ${inr(amt)} do baar kate. Duplicate payment ka refund shuru kar diya, T+1 mein pahunch jayega.`,
-        replies: { hi: `ऑर्डर ${order} के ${inr(amt)} दो बार कटे। दूसरे पेमेंट का रिफंड शुरू कर दिया, T+1 में पहुँच जाएगा।`, en: `Order ${order} was charged ${inr(amt)} twice. I started a refund for the second payment; it arrives by T+1.` },
+        replies: { hi: `Order ${order} ke ${inr(amt)} do baar kate. Doosre payment ka refund shuru kar diya, T+1 mein pahunch jayega.`, en: `Order ${order} was charged ${inr(amt)} twice. I started a refund for the second payment; it arrives by T+1.` },
         win: true,
       }
     },
@@ -105,7 +105,7 @@ export const SCENARIOS = [
           ledger: { say: 'Fraud counter +1 · UTR flagged', effects: [{ t: 'UTR_ADD', row: { utr: FAKE_UTR, amount: amt, app: 'PhonePe', status: 'NOT_FOUND_SUSPECTED_FAKE', time: 'now', name: 'Screenshot upload' } }] },
         },
         reply: `Ye UTR hamare ledger mein nahi hai — screenshot nakli lag raha hai. Saamaan mat dena!`,
-        replies: { hi: `सावधान! यह UTR हमारे लेजर में नहीं है — स्क्रीनशॉट नकली लगता है। सामान मत दीजिए!`, en: `Warning! This UTR is not in our ledger — the screenshot looks fake. Do not hand over the goods!` },
+        replies: { hi: `Dhyan dijiye! Yeh UTR aapke Paytm account mein nahi hai. Jab tak paisa na dikhe, saman mat dijiye.`, en: `Warning! This UTR is not in our ledger — the screenshot looks fake. Do not hand over the goods!` },
         win: true, tone: 'bad',
       }
     },
@@ -129,7 +129,7 @@ export const SCENARIOS = [
           ledger: { say: `Hold ${c.order} HELD → RELEASED (T+1)`, effects: [{ t: 'DEFLECT' }] },
         },
         reply: `Delivery proof mil gaya (Order ${c.order}). ${inr(c.amount)} ka hold RELEASED — T+1 mein bank mein aa jayega.`,
-        replies: { hi: `डिलीवरी का सबूत मिल गया (ऑर्डर ${c.order})। ${inr(c.amount)} का होल्ड छूट गया — T+1 में बैंक में आ जाएगा।`, en: `Delivery proof received (order ${c.order}). The ${inr(c.amount)} hold is released and reaches your bank by T+1.` },
+        replies: { hi: `Delivery ka proof mil gaya (order ${c.order}). ${inr(c.amount)} ka hold chhoot gaya — T+1 mein bank mein aa jayega.`, en: `Delivery proof received (order ${c.order}). The ${inr(c.amount)} hold is released and reaches your bank by T+1.` },
         win: true,
       }
     },
@@ -154,7 +154,7 @@ export const SCENARIOS = [
             : { say: `Ticket ${id} created`, effects: [{ t: 'TICKET', id, reason: `Refund ${inr(amt)} > ₹5,000` }] },
         },
         reply: auto ? `${inr(amt)} ka refund shuru kar diya (${order}). Customer ko 1–2 din mein mil jayega.` : `${inr(amt)} ₹5,000 se upar hai, isliye L2 ticket ${id} bana diya. Team jaldi approve karegi.`,
-        replies: { hi: auto ? `${inr(amt)} का रिफंड शुरू कर दिया (${order})। ग्राहक को 1–2 दिन में मिल जाएगा।` : `${inr(amt)} ₹5,000 से ऊपर है, इसलिए L2 टिकट ${id} बना दिया। टीम जल्दी मंज़ूर करेगी।`, en: auto ? `Refund of ${inr(amt)} started (${order}). The customer gets it in 1–2 days.` : `${inr(amt)} is above ₹5,000, so I created L2 ticket ${id}. The team will approve it soon.` },
+        replies: { hi: auto ? `${inr(amt)} ka refund shuru kar diya (${order}). Customer ko 1–2 din mein mil jayega.` : `${inr(amt)} ₹5,000 se upar hai, isliye L2 ticket ${id} bana diya. Team jaldi approve karegi.`, en: auto ? `Refund of ${inr(amt)} started (${order}). The customer gets it in 1–2 days.` : `${inr(amt)} is above ₹5,000, so I created L2 ticket ${id}. The team will approve it soon.` },
         win: auto,
       }
     },
@@ -178,7 +178,7 @@ export const SCENARIOS = [
           ledger: { say: 'Mandate flagged · UPI link sent', effects: [{ t: 'LOAN', status: 'LINK_SENT', note: `${inr(e)} bounced · 1-tap UPI link sent · penalty waived` }] },
         },
         reply: `Aapka ${inr(e)} ka EDI fail hua, ye default nahi hai. 1-tap UPI link bhej diya hai, penalty nahi lagegi.`,
-        replies: { hi: `आपकी ${inr(e)} की EDI फेल हुई थी — यह डिफ़ॉल्ट नहीं है। 1-टैप UPI लिंक भेज दिया है, पेनल्टी नहीं लगेगी।`, en: `Your ${inr(e)} EDI failed — this is not a default. I sent a 1-tap UPI link and no penalty will apply.` },
+        replies: { hi: `Aapki ${inr(e)} ki EDI fail hui thi — yeh default nahi hai. 1-tap UPI link bhej diya hai, penalty nahi lagegi.`, en: `Your ${inr(e)} EDI failed — this is not a default. I sent a 1-tap UPI link and no penalty will apply.` },
         win: true,
       }
     },
@@ -203,7 +203,7 @@ export const SCENARIOS = [
           ledger: { say: 'Strategy saved to learning memory' },
         },
         reply: `Pichle 6 mahine mein sale ${pct}% badhi. ${g1.hinglish} Saath mein: ${g2.hinglish}`,
-        replies: { hi: `पिछले 6 महीनों में बिक्री ${pct}% बढ़ी। ${g1.hi || g1.hinglish} साथ में: ${g2.hi || g2.hinglish}`, en: `Sales grew ${pct}% in the last 6 months. ${g1.en || g1.title} Also: ${g2.en || g2.title}` },
+        replies: { hi: `Pichhle 6 mahine mein sale ${pct}% badhi. ${g1.hinglish || g1.hi} Saath mein: ${g2.hinglish || g2.hi}`, en: `Sales grew ${pct}% in the last 6 months. ${g1.en || g1.title} Also: ${g2.en || g2.title}` },
         win: true,
       }
     },
@@ -226,7 +226,7 @@ export const SCENARIOS = [
           ledger: { say: `Ticket ${id} created`, effects: [{ t: 'TICKET', id, reason: 'Soundbox hardware' }] },
         },
         reply: `Soundbox hardware issue lag raha hai. L2 ticket ${id} bana diya, engineer 24 ghante mein contact karega.`,
-        replies: { hi: `साउंडबॉक्स में हार्डवेयर की दिक्कत लग रही है। L2 टिकट ${id} बना दिया, इंजीनियर 24 घंटे में संपर्क करेगा।`, en: `This looks like a Soundbox hardware fault. I created L2 ticket ${id}; an engineer will contact you within 24 hours.` },
+        replies: { hi: `Soundbox mein hardware ki dikkat lag rahi hai. L2 ticket ${id} bana diya, engineer 24 ghante mein contact karega.`, en: `This looks like a Soundbox hardware fault. I created L2 ticket ${id}; an engineer will contact you within 24 hours.` },
         win: false,
       }
     },
@@ -249,7 +249,7 @@ export const SCENARIOS = [
           ledger: { say: 'No ledger change required' },
         },
         reply: `Aapka bank account ACTIVE hai, koi bank hold nahi; ${inr(net)} credit ho chuka hai.${cb ? ` Sirf ${cb.order} ka ${inr(cb.amount)} chargeback hold hai.` : ''}`,
-        replies: { hi: `आपका बैंक खाता चालू है, कोई बैंक होल्ड नहीं; ${inr(net)} जमा हो चुका है।${cb ? ` सिर्फ़ ${cb.order} का ${inr(cb.amount)} चार्जबैक होल्ड है।` : ''}`, en: `Your bank account is active with no bank hold; ${inr(net)} has been credited.${cb ? ` Only ${cb.order} has a ${inr(cb.amount)} chargeback hold.` : ''}` },
+        replies: { hi: `Aapka bank account chalu hai, koi bank hold nahi; ${inr(net)} jama ho chuka hai.${cb ? ` Sirf ${cb.order} ka ${inr(cb.amount)} chargeback hold hai.` : ''}`, en: `Your bank account is active with no bank hold; ${inr(net)} has been credited.${cb ? ` Only ${cb.order} has a ${inr(cb.amount)} chargeback hold.` : ''}` },
         win: true,
       }
     },
@@ -272,7 +272,7 @@ export const SCENARIOS = [
           ledger: { say: 'Rental stops from the next billing cycle', effects: [{ t: 'SOUNDBOX_FIX', note: ticket }] },
         },
         reply: `Soundbox ki pickup 48 ghante mein hogi, ticket ${ticket}. ₹149 ka rental agle cycle se band ho jayega, aakhri bill pro-rata katega.`,
-        replies: { hi: `साउंडबॉक्स की पिकअप 48 घंटे में होगी, टिकट ${ticket}। ₹149 का किराया अगले साइकिल से बंद हो जाएगा, आखिरी बिल अनुपात में कटेगा।`, en: `Soundbox pickup will happen within 48 hours, ticket ${ticket}. The ₹149 rent stops from the next cycle and the final bill is pro-rata.` },
+        replies: { hi: `Soundbox ki pickup 48 ghante mein hogi, ticket ${ticket}. ₹149 ka rent agle cycle se band ho jayega, aakhri bill pro-rata katega.`, en: `Soundbox pickup will happen within 48 hours, ticket ${ticket}. The ₹149 rent stops from the next cycle and the final bill is pro-rata.` },
         win: true,
       }
     },
@@ -295,7 +295,7 @@ export const SCENARIOS = [
           ledger: { say: 'Quote saved to the lending ledger', effects: [{ t: 'LOAN', status: 'QUOTE', note: `Pay ${inr(bal)} to close · NOC in 7 days` }] },
         },
         reply: `${lender} loan ka baaki ${inr(bal)} hai, foreclosure charge ₹0. Bhugtan ke 7 din mein NOC mil jayega.`,
-        replies: { hi: `${lender} लोन का बाकी ${inr(bal)} है, क्लोज़र चार्ज ₹0। भुगतान के 7 दिन में NOC मिल जाएगा।`, en: `Your ${lender} loan balance is ${inr(bal)} with ₹0 closure charge. You get the NOC within 7 days of payment.` },
+        replies: { hi: `${lender} loan ka baaki ${inr(bal)} hai, closure charge ₹0. Payment ke 7 din mein NOC mil jayega.`, en: `Your ${lender} loan balance is ${inr(bal)} with ₹0 closure charge. You get the NOC within 7 days of payment.` },
         win: true,
       }
     },
@@ -318,7 +318,7 @@ export const SCENARIOS = [
           ledger: { say: 'Account change pending verification', effects: [{ t: 'BANK_UPDATE' }] },
         },
         reply: 'Naya bank account jodne ka secure link bhej diya hai. Penny-drop verify hote hi 24-48 ghante mein settlement naye account mein aayega, tab tak purane mein aayega.',
-        replies: { hi: `नया बैंक खाता जोड़ने का सुरक्षित लिंक भेज दिया है। पेनी-ड्रॉप वेरिफाई होते ही 24-48 घंटे में सेटलमेंट नए खाते में आएगा, तब तक पुराने में आएगा।`, en: `I sent a secure link to add the new bank account. Once the ₹1 penny-drop verifies, settlements move to it within 24–48 hours; until then they go to the old account.` },
+        replies: { hi: `Naya bank account jodne ka secure link bhej diya hai. Penny-drop verify hote hi 24-48 ghante mein settlement naye account mein aayega, tab tak purane mein aayega.`, en: `I sent a secure link to add the new bank account. Once the ₹1 penny-drop verifies, settlements move to it within 24–48 hours; until then they go to the old account.` },
         win: true,
       }
     },
@@ -343,7 +343,7 @@ export const SCENARIOS = [
         },
         reply: `${c.order} par ${inr(c.amount)} ka chargeback aaya hai. Shiprocket se delivery proof mil gaya, dispute taiyaar hai. Bhej doon?`,
         confirm: { kind: 'dispute', packet, label: 'Haan, delivery proof bhej do' },
-        replies: { hi: `${c.order} पर ${inr(c.amount)} का चार्जबैक आया है। Shiprocket से डिलीवरी का सबूत मिल गया, डिस्प्यूट तैयार है। भेज दूँ?`, en: `A ${inr(c.amount)} chargeback arrived on ${c.order}. I found the delivery proof in Shiprocket and the dispute is ready. Shall I send it?` },
+        replies: { hi: `${c.order} par ${inr(c.amount)} ka chargeback aaya hai. Shiprocket se delivery ka proof mil gaya, dispute taiyaar hai. Bhej doon?`, en: `A ${inr(c.amount)} chargeback arrived on ${c.order}. I found the delivery proof in Shiprocket and the dispute is ready. Shall I send it?` },
         win: false,
       }
     },
@@ -366,7 +366,7 @@ export const SCENARIOS = [
           ledger: { say: `Hold ${c.order} HELD → RELEASED (T+1)`, effects: [{ t: 'DEFLECT' }] },
         },
         reply: `Dispute bhej diya. ${inr(c.amount)} ka hold RELEASED — T+1 mein bank mein aa jayega.`,
-        replies: { hi: `डिस्प्यूट भेज दिया। ${inr(c.amount)} का होल्ड छूट गया — T+1 में बैंक में आ जाएगा।`, en: `Dispute sent. The ${inr(c.amount)} hold is released and reaches your bank by T+1.` },
+        replies: { hi: `Dispute bhej diya. ${inr(c.amount)} ka hold chhoot gaya — T+1 mein bank mein aa jayega.`, en: `Dispute sent. The ${inr(c.amount)} hold is released and reaches your bank by T+1.` },
         win: true,
       }
     },
@@ -395,7 +395,7 @@ export const SCENARIOS = [
         },
         reply: `Kal ${inr(refund)} ka refund jayega to payout sirf ${inr(proj)} bachega, jabki ${inr(stock)} ka stock dena hai. Loan EDI 2 din ke liye pause kar doon? ${inr(saved)} bachenge.`,
         confirm: { kind: 'edi', offer_id: 'EDIOFFER-0001', pause_days: 2, saved, label: `Haan, EDI 2 din pause karo` },
-        replies: { hi: `कल ${inr(refund)} का रिफंड जाएगा तो पेआउट सिर्फ़ ${inr(proj)} बचेगा, जबकि ${inr(stock)} का स्टॉक देना है। लोन EDI 2 दिन के लिए रोक दूँ? ${inr(saved)} बचेंगे।`, en: `After tomorrow's ${inr(refund)} refund your payout is only ${inr(proj)}, but ${inr(stock)} is due for stock. Pause the loan EDI for 2 days? You save ${inr(saved)}.` },
+        replies: { hi: `Kal ${inr(refund)} ka refund jayega toh payout sirf ${inr(proj)} bachega, jabki ${inr(stock)} ka stock dena hai. Loan EDI 2 din ke liye rok doon? ${inr(saved)} bachenge.`, en: `After tomorrow's ${inr(refund)} refund your payout is only ${inr(proj)}, but ${inr(stock)} is due for stock. Pause the loan EDI for 2 days? You save ${inr(saved)}.` },
         win: false,
       }
     },
@@ -418,7 +418,7 @@ export const SCENARIOS = [
           ledger: { say: `EDI ACTIVE → PAUSED_2_DAYS · saved ${inr(saved)}`, effects: [{ t: 'LOAN', status: 'PAUSED', note: `Paused 2 days · saved ${inr(saved)}` }] },
         },
         reply: `EDI 2 din ke liye pause ho gaya. ${inr(saved)} bache, koi penalty nahi.`,
-        replies: { hi: `EDI 2 दिन के लिए रुक गया। ${inr(saved)} बचे, कोई पेनल्टी नहीं।`, en: `EDI paused for 2 days. You save ${inr(saved)} with no penalty.` },
+        replies: { hi: `EDI 2 din ke liye ruk gaya. ${inr(saved)} bache, koi penalty nahi.`, en: `EDI paused for 2 days. You save ${inr(saved)} with no penalty.` },
         win: true,
       }
     },
@@ -428,26 +428,26 @@ export const SCENARIOS = [
 
 // What the merchant says, shown as their own words in each language. (Live mode still sends the backend-tested phrase.)
 const SAY = {
-  settle: { hi: (m) => `कल ₹${m.d.settlement.gross.toLocaleString('en-IN')} की बिक्री थी, बैंक में ${inr(m.d.settlement.net)} आए — ${inr(m.d.settlement.variance)} कहाँ कटे?`, en: (m) => `Yesterday's sales were ₹${m.d.settlement.gross.toLocaleString('en-IN')} but the bank got ${inr(m.d.settlement.net)} — where was ${inr(m.d.settlement.variance)} deducted?` },
-  utr: { hi: (m) => `UTR ${m.d.transactions.find((t) => t.status === 'PENDING').utr} का पेमेंट चेक करो`, en: (m) => `Check the payment for UTR ${m.d.transactions.find((t) => t.status === 'PENDING').utr}` },
-  dup: { hi: (m) => `PhonePe से ${inr(DUP_AMT[m.mid] || 1180)} दो बार कट गया`, en: (m) => `${inr(DUP_AMT[m.mid] || 1180)} was charged twice on PhonePe` },
-  fake: { hi: () => 'ग्राहक ने यह स्क्रीनशॉट दिखाया, पैसा आया या नहीं?', en: () => 'The customer showed this screenshot — did the money arrive?' },
-  cb: { hi: (m) => `हाँ, डिलीवरी का सबूत भेजो (ऑर्डर ${m.d.chargeback.order})`, en: (m) => `Yes, send the delivery proof (order ${m.d.chargeback.order})` },
-  refund: { hi: (m) => `ग्राहक को ${inr(REFUND_ASK[m.mid] || 6500)} वापस करना है`, en: (m) => `I need to refund ${inr(REFUND_ASK[m.mid] || 6500)} to a customer` },
-  edi: { hi: (m) => `मेरी ${inr(m.d.loan.edi)} की लोन EDI फेल हो गई`, en: (m) => `My ${inr(m.d.loan.edi)} loan EDI failed` },
-  growth: { hi: () => 'मेरे पिछले 6 महीने के डेटा से धंधा बढ़ाने का सुझाव दो', en: () => 'Based on my last 6 months of data, tell me how to grow my business' },
-  soundbox: { hi: () => 'साउंडबॉक्स बोल नहीं रहा, काम नहीं कर रहा', en: () => 'My Soundbox is not speaking or working' },
-  hold: { hi: (m) => `मेरा ${inr(HOLD_AMT[m.mid] || 18500)} का सेटलमेंट बैंक/KYC होल्ड पर क्यों है?`, en: (m) => `Why is my ${inr(HOLD_AMT[m.mid] || 18500)} settlement on bank/KYC hold?` },
-  sbrent: { hi: () => 'साउंडबॉक्स लौटा दिया फिर भी ₹149 किराया कट रहा है', en: () => 'I returned the Soundbox but ₹149 rent is still being charged' },
-  noc: { hi: () => 'नेगोशिएटेड लोन सेटलमेंट भर दिया, NOC दीजिए', en: () => 'I paid the negotiated loan settlement — please give me the NOC' },
-  bank: { hi: () => 'मेरा सेटलमेंट बैंक खाता बदल दो', en: () => 'Please change my settlement bank account' },
-  shield_cb: { hi: (m) => `Paytm अलर्ट: ऑर्डर ${m.d.chargeback.order} पर चार्जबैक आया है`, en: (m) => `Paytm alert: chargeback received on order ${m.d.chargeback.order}` },
-  shield_edi: { hi: () => 'Paytm अलर्ट: बड़ा रिफंड, पेआउट कम पड़ सकता है', en: () => 'Paytm alert: large refund, payout may fall short' },
-  confirm_cb: { hi: () => 'हाँ, डिलीवरी का सबूत भेज दो', en: () => 'Yes, send the delivery proof' },
-  confirm_edi: { hi: () => 'हाँ, EDI 2 दिन रोक दो', en: () => 'Yes, pause EDI for 2 days' },
+  settle: { hi: (m) => `Kal ₹${m.d.settlement.gross.toLocaleString('en-IN')} ki sale thi, bank mein ${inr(m.d.settlement.net)} aaye — ${inr(m.d.settlement.variance)} kahan kate?`, en: (m) => `Yesterday's sales were ₹${m.d.settlement.gross.toLocaleString('en-IN')} but the bank got ${inr(m.d.settlement.net)} — where was ${inr(m.d.settlement.variance)} deducted?` },
+  utr: { hi: (m) => `UTR ${m.d.transactions.find((t) => t.status === 'PENDING').utr} ka payment check karo`, en: (m) => `Check the payment for UTR ${m.d.transactions.find((t) => t.status === 'PENDING').utr}` },
+  dup: { hi: (m) => `PhonePe se ${inr(DUP_AMT[m.mid] || 1180)} do baar kat gaya`, en: (m) => `${inr(DUP_AMT[m.mid] || 1180)} was charged twice on PhonePe` },
+  fake: { hi: () => 'Customer ne yeh screenshot dikhaya, paisa aaya ya nahi?', en: () => 'The customer showed this screenshot — did the money arrive?' },
+  cb: { hi: (m) => `Haan, delivery ka proof bhejo (order ${m.d.chargeback.order})`, en: (m) => `Yes, send the delivery proof (order ${m.d.chargeback.order})` },
+  refund: { hi: (m) => `Customer ko ${inr(REFUND_ASK[m.mid] || 6500)} wapas karna hai`, en: (m) => `I need to refund ${inr(REFUND_ASK[m.mid] || 6500)} to a customer` },
+  edi: { hi: (m) => `Meri ${inr(m.d.loan.edi)} ki loan EDI fail ho gayi`, en: (m) => `My ${inr(m.d.loan.edi)} loan EDI failed` },
+  growth: { hi: () => 'Mere pichhle 6 mahine ke data se business badhane ka suggestion do', en: () => 'Based on my last 6 months of data, tell me how to grow my business' },
+  soundbox: { hi: () => 'Soundbox bol nahi raha, kaam nahi kar raha', en: () => 'My Soundbox is not speaking or working' },
+  hold: { hi: (m) => `Mera ${inr(HOLD_AMT[m.mid] || 18500)} ka settlement bank/KYC hold par kyon hai?`, en: (m) => `Why is my ${inr(HOLD_AMT[m.mid] || 18500)} settlement on bank/KYC hold?` },
+  sbrent: { hi: () => 'Soundbox wapas kar diya phir bhi ₹149 rent kat raha hai', en: () => 'I returned the Soundbox but ₹149 rent is still being charged' },
+  noc: { hi: () => 'Negotiated loan settlement bhar diya, NOC dijiye', en: () => 'I paid the negotiated loan settlement — please give me the NOC' },
+  bank: { hi: () => 'Mera settlement bank account badal do', en: () => 'Please change my settlement bank account' },
+  shield_cb: { hi: (m) => `Paytm alert: order ${m.d.chargeback.order} par chargeback aaya hai`, en: (m) => `Paytm alert: chargeback received on order ${m.d.chargeback.order}` },
+  shield_edi: { hi: () => 'Paytm alert: bada refund, payout kam pad sakta hai', en: () => 'Paytm alert: large refund, payout may fall short' },
+  confirm_cb: { hi: () => 'Haan, delivery ka proof bhej do', en: () => 'Yes, send the delivery proof' },
+  confirm_edi: { hi: () => 'Haan, EDI 2 din rok do', en: () => 'Yes, pause EDI for 2 days' },
 }
 export const sayText = (sc, m, lang = 'hi') => (SAY[sc.id] && SAY[sc.id][lang] ? SAY[sc.id][lang](m) : sc.utterance(m))
-export const CONFIRM_LABEL = { dispute: { hi: 'हाँ, डिलीवरी का सबूत भेज दो', en: 'Yes, send the delivery proof' }, edi: { hi: 'हाँ, EDI 2 दिन रोक दो', en: 'Yes, pause EDI for 2 days' } }
+export const CONFIRM_LABEL = { dispute: { hi: 'Haan, delivery ka proof bhej do', en: 'Yes, send the delivery proof' }, edi: { hi: 'Haan, EDI 2 din rok do', en: 'Yes, pause EDI for 2 days' } }
 
 export function runScenario(sc, m, ctx = {}) {
   const lang = ctx.lang || 'hi'

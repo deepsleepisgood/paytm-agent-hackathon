@@ -89,6 +89,16 @@ export function responseToRun(sc, m, r, utterance, elapsed) {
   if (status === 'FORECLOSURE_QUOTE_READY') eff.push({ t: 'LOAN', status: 'QUOTE', note: `Pay ${inr(pd.payable)} to close · NOC in ${pd.noc_eta_days} days` })
   if (status === 'KYC_UPDATE_LINK_SENT') eff.push({ t: 'BANK_UPDATE' })
   if (r.intent === 'DUPLICATE_RECONCILE' && pd.duplicates_found) eff.push({ t: 'REFUND_AUTO', order: '#' + pd.order_id, amount: pd.order_amount_inr }, { t: 'DEFLECT' })
+  // No-UTR payment check (8003 payments.py): what the buddy found in Paytm's feed and what Paytm did about it.
+  const pcx = r.payment_check
+  if (pcx) {
+    for (const f of pcx.findings || []) if (f.kind === 'STUCK') eff.push({ t: 'UTR_CHECK', utr: f.utr, result: 'PENDING' })
+    for (const a of pcx.actions || []) {
+      if (a.type === 'TICKET') eff.push({ t: 'TICKET', id: a.id, reason: a.what })
+      if (a.type === 'REFUND') eff.push({ t: 'REFUND_AUTO', order: '#' + a.order, amount: a.amount_inr }, { t: 'DEFLECT' })
+    }
+  }
+  const pcFound = pcx && ((pcx.findings || []).map((f) => `${f.kind} ₹${f.amount_inr}${f.customer ? ' (' + f.customer + ')' : ''}`).join(', ') || 'nothing wrong')
 
   const agentStep = (key, title, fallback, extra = {}) => {
     const t = byAgent[key]
@@ -102,9 +112,9 @@ export function responseToRun(sc, m, r, utterance, elapsed) {
        : { key: 'eval', title: 'Intent routing', live: true, route: { intent: r.intent, source: r.intent_source, slots, transcript: r.transcript, doc: r.doc_extract }, ms: 0 },
     { key: 'consent', title: 'DPDP consent', consent: { token: r.consent_token, purpose: String(pro?.scenario || r.intent).toLowerCase(), scope: 'a2a:dispatch', ttl_min: 15, issued: new Date().toISOString().slice(11, 19) + 'Z', mid: r.mid }, ms: 0 },
     { key: 'dispatch', title: 'A2A dispatch', request: { request_id: r.request_id, mid: r.mid, intent: r.intent, payload: slots, consent_token: r.consent_token }, response: pro ? { proactive: pro } : pr, ms: 0 },
-    agentStep('intelligence', 'Intelligence', alert ? `Paytm alert: ${JSON.stringify(alert).slice(0, 110)}…` : `Paytm ledger (${r.paytm_source}) → ${status}`),
+    agentStep('intelligence', 'Intelligence', pcx ? `No UTR needed: scanned ${pcx.scanned} payments in Paytm's feed → ${pcFound}` : alert ? `Paytm alert: ${JSON.stringify(alert).slice(0, 110)}…` : `Paytm ledger (${r.paytm_source}) → ${status}`),
     agentStep('risk', 'Risk', fraud ? (r.fraud_alert?.message || 'UTR not found across payer apps → SUSPECTED FAKE') : 'DPDP consent token valid · no fraud flag', { tone: fraud ? 'bad' : undefined }),
-    agentStep('resolution', 'Resolution', ticket ? `Escalation ticket ${ticket.ticket_id || ticket.id || ''}` : `Intent ${r.intent} handled (${status})`, { tone: ticket ? 'warn' : undefined }),
+    agentStep('resolution', 'Resolution', pcx ? ((pcx.actions || []).map((a) => a.what).join(' · ') || 'Nothing to fix') : ticket ? `Escalation ticket ${ticket.ticket_id || ticket.id || ''}` : `Intent ${r.intent} handled (${status})`, { tone: ticket ? 'warn' : undefined }),
     { ...agentStep('ledger', 'Ledger Ops', r.gst_itc_logged ? `GST ITC ${inr(r.gst_itc_logged.amount)} logged to merchant sheet` : 'Paytm ledger updated'), effects: eff },
     { key: 'reply', title: 'Reply to merchant', reply: r.reply_text, tone: fraud ? 'bad' : undefined, confirm, ms: 0, effects: [] },
   ]

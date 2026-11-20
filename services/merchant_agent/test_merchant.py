@@ -184,7 +184,7 @@ def test_golden_path_settlement(client):
     assert body["gst_itc_logged"]["amount"] == 261
     assert "9981" in body["reply_text"] and "₹800" in body["reply_text"]
     # every deduction labelled correctly (GST_ON_MDR once came out as "MDR ₹261")
-    for part in ("MDR ₹1,450", "GST ₹261", "refund ₹1,500", "soundbox ₹149", "#9981 का ₹800 chargeback hold"):
+    for part in ("MDR ₹1,450", "GST ₹261", "refund ₹1,500", "soundbox ₹149", "#9981 ka ₹800 chargeback hold"):
         assert part in body["reply_text"], (part, body["reply_text"])
 
 

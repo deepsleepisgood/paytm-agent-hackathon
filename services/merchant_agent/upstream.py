@@ -190,12 +190,50 @@ async def sarvam_mode() -> str:
     return mode
 
 
+SARVAM_API_BASE = os.getenv("SARVAM_API_BASE", "https://api.sarvam.ai").rstrip("/")
+TRANSLIT_TIMEOUT_S = float(os.getenv("TRANSLIT_TIMEOUT_S", "4"))
+_DEVANAGARI = re.compile("[ऀ-ॿ]")
+_translit_cache: dict[str, str] = {}
+
+
+async def speak_form(text: str) -> str:
+    """Roman Hinglish -> Devanagari for the voice only ("Aapka payment aa gaya" -> "आपका पेमेंट आ गया"), via Sarvam's
+    transliterate API (~1.3 s; 8001 has no endpoint for it). Text already in Devanagari, no key, or any failure:
+    the text is returned unchanged and Bulbul reads it as it is."""
+    key = os.getenv("SARVAM_API_KEY", "").strip()
+    if not text or not key or _DEVANAGARI.search(text) or os.getenv("SARVAM_MODE", "auto").lower() == "mock":
+        return text
+    if text in _translit_cache:
+        return _translit_cache[text]
+    try:
+        r = await client().post(f"{SARVAM_API_BASE}/transliterate", headers={"api-subscription-key": key},
+                                json={"input": text[:1000], "source_language_code": "en-IN",
+                                      "target_language_code": "hi-IN"}, timeout=TRANSLIT_TIMEOUT_S)
+        r.raise_for_status()
+        out = str((r.json() or {}).get("transliterated_text") or "").strip()
+        if out:
+            # Rupee amounts come back as "Rs. 2,400"; Bulbul says "₹2,400" as rupees, so keep the symbol.
+            out = re.sub(r"\bRs\.\s*", "₹", out)
+            if len(_translit_cache) > 256:
+                _translit_cache.clear()
+            _translit_cache[text] = out
+            return out
+    except Exception as exc:  # noqa: BLE001
+        log.warning("transliterate failed (%s): %s; speaking the Roman text", type(exc).__name__, exc)
+    return text
+
+
 async def tts(text: str, language_code: str = "hi-IN") -> tuple[Optional[str], str]:
     """Sarvam voice for the reply. Measured live: a 30-35 word Hindi reply takes Sarvam 4-8 s, so this call
     gets its own TTS_TIMEOUT_S (and 8001 needs SARVAM_LATENCY_BUDGET ≥ 12, set in .env).
 
     8001's mock audio is a placeholder tone: forwarding it made the app beep instead of speak. So mock audio
-    is dropped and the frontend speaks the text with the browser's own voice instead."""
+    is dropped and the frontend speaks the text with the browser's own voice instead.
+
+    Hindi replies are shown in Roman Hinglish but spoken from Devanagari (speak_form): Bulbul reads Hindi script
+    natively, and Roman Hindi read as English sounds wrong."""
+    if language_code.startswith("hi"):
+        text = await speak_form(text)
     try:
         r = await _post(SARVAM_URL, "/tts", json={"text": text, "language_code": language_code},
                         timeout=httpx.Timeout(TTS_TIMEOUT_S, connect=min(2.0, TTS_TIMEOUT_S)))
@@ -344,6 +382,20 @@ async def execute_edi_pause(body: dict[str, Any]) -> tuple[dict[str, Any], str]:
     except Exception as exc:  # noqa: BLE001
         log.warning("execute-edi-pause failed (%s): %s", type(exc).__name__, exc)
     return mock_execute_edi_pause(body), "mock"
+
+
+async def paytm_ledger(mid: str) -> Optional[dict[str, Any]]:
+    """8002 GET /ledger/{mid}: Paytm's own state, including every UPI payment (`transactions`)."""
+    if _down_until.get(PAYTM_URL, 0) > time.monotonic():
+        return None
+    try:
+        r = await client().get(f"{PAYTM_URL}/ledger/{mid}")
+        r.raise_for_status()
+        body = r.json()
+        return body if isinstance(body, dict) else None
+    except Exception as exc:  # noqa: BLE001
+        log.warning("ledger read failed (%s): %s", type(exc).__name__, exc)
+        return None
 
 
 async def paytm_reset() -> bool:

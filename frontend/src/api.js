@@ -53,6 +53,8 @@ export async function resetLive() {
 }
 
 export const getStrategyMemory = () => req(`${MERCHANT_URL}/merchant/strategy-memory`, {}, 3000).catch(() => null)
+// Stuck payments the buddy is watching; `message` appears once one lands or goes back (payments.py on 8003).
+export const getPaymentWatch = (lang = 'hi') => req(`${MERCHANT_URL}/merchant/payment-watch?lang=${lang}`, {}, 4000).catch(() => null)
 export const getKhataExport = () => req(`${MERCHANT_URL}/merchant/khata-export`, {}, 5000).catch(() => null)
 export const khataCsvUrl = () => `${MERCHANT_URL}/merchant/khata-export?format=csv`
 

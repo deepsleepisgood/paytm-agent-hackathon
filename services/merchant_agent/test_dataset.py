@@ -291,7 +291,7 @@ def test_chargeback_state_persists_until_reset(client, dir_a):
     assert upload(client, "pod_9981.png", PNG, "pod").json()["paytm_response"]["status"] == "RELEASED"
     after = ask(client, "settlement kam kyun aaya").json()
     hold = next(i for i in after["paytm_response"]["data"]["breakdown"] if i["head"] == "CHARGEBACK_HOLD")
-    assert hold["status"] == "RELEASED" and "छुड़वा" not in after["reply_text"]  # no "send PoD" nudge any more
+    assert hold["status"] == "RELEASED" and "chhudwa" not in after["reply_text"]  # no "send PoD" nudge any more
     client.post("/reset")
     assert ask(client, "chargeback 9981 ka kya hua").json()["paytm_response"]["status"] == "HELD"
 
@@ -299,7 +299,7 @@ def test_chargeback_state_persists_until_reset(client, dir_a):
 # ----------------------------------------------------------------------------- 3. Person 1 (8001) compatibility
 
 
-def _fake_8001(monkeypatch, *, llm_source="mock", llm_intent="REFUND_MANAGE", llm_reply="रिफंड हो गया है।"):
+def _fake_8001(monkeypatch, *, llm_source="mock", llm_intent="REFUND_MANAGE", llm_reply="Refund ho gaya hai."):
     """Stand in for services/sarvam_service with its real response shapes (schemas.py, mock.py)."""
     async def fake_post(base, path, **kwargs):
         req = httpx.Request("POST", f"{base}{path}")
@@ -358,8 +358,8 @@ def test_person1_live_llm_is_used(client, monkeypatch):
     body = ask(client, "order chaar chaar ek do wale customer ka paisa lauta do").json()
     assert (body["intent"], body["intent_source"], body["slots"]["order_id"]) == ("REFUND_MANAGE", "llm", "4412")
     # the LLM phrases the resolution; the verified business tip is appended verbatim
-    assert body["reply_source"] == "llm" and body["reply_text"].startswith("रिफंड हो गया है।")
-    assert "Refund उसी UPI app में जाता है" in body["reply_text"]
+    assert body["reply_source"] == "llm" and body["reply_text"].startswith("Refund ho gaya hai.")
+    assert "Refund usi UPI app mein jaata hai" in body["reply_text"]
 
 
 def test_person1_mock_stt_is_labelled(client, monkeypatch):
@@ -368,7 +368,7 @@ def test_person1_mock_stt_is_labelled(client, monkeypatch):
                        data={"mid": "PAYTM_MERCH_8821", "consent_granted": "true"}).json()
     # 8001's mock STT returns a canned line: not something the merchant said, so the buddy says voice is off
     assert body["transcript_source"] == "mock" and body["transcript"] is None and body["intent"] == "UNCLEAR"
-    assert body["pending_action"]["reason"] == "voice_off" and "टाइप" in body["reply_text"]
+    assert body["pending_action"]["reason"] == "voice_off" and "type" in body["reply_text"]
 
 
 # ----------------------------------------------------------------------------- 4. the real team dataset

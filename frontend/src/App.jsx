@@ -8,7 +8,7 @@ import { loadLang, saveLang, t as tr } from './i18n.js'
 import { buildAlerts } from './alerts.js'
 import Center from './Center.jsx'
 import Right from './Right.jsx'
-import { checkServices, getLedger, resetLive, getStrategyMemory, transcribe } from './api.js'
+import { checkServices, getLedger, resetLive, getStrategyMemory, transcribe, getPaymentWatch } from './api.js'
 import { callLive, responseToRun, overlayLedger, overlayStrategy, overlaySupabase } from './live.js'
 import { useLedgerRealtime } from './useLedgerRealtime.js'
 
@@ -304,7 +304,7 @@ function Soundbox({ back }) {
         <div className="pill ok mt">Battery 82%</div>
       </div>
       <div className="card">
-        <div className="row between line"><span>Language</span><b>हिन्दी</b></div>
+        <div className="row between line"><span>Language</span><b>Hinglish</b></div>
         <div className="row between line"><span>Volume</span><b>High</b></div>
         <div className="row between line"><span>Monthly rental</span><b>{inr(149)}</b></div>
         <div className="row between line"><span>Last payment announced</span><b>{inr(3200)}</b></div>
@@ -461,6 +461,22 @@ export default function App() {
     const t = setInterval(poll, 6000)
     return () => { off = true; clearInterval(t) }
   }, [])
+
+  // Live: the buddy keeps watching stuck payments it found; tell the merchant the moment one lands or goes back.
+  const announced = useRef(new Set())
+  useEffect(() => {
+    if (mode !== 'live') return
+    const poll = () => getPaymentWatch(lang).then((w) => {
+      for (const x of w?.watching || []) {
+        if (x.message && !announced.current.has(x.utr)) {
+          announced.current.add(x.utr)
+          setChat((c) => [...c, { who: 'ai', text: x.message, tone: x.outcome === 'ARRIVED' ? 'good' : undefined }])
+        }
+      }
+    })
+    const i = setInterval(poll, 15000)
+    return () => clearInterval(i)
+  }, [mode, lang])
 
   const clear = () => { timers.current.forEach(clearTimeout); timers.current = [] }
   useEffect(() => clear, [])

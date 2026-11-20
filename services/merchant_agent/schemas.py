@@ -132,6 +132,8 @@ class MerchantResponse(BaseModel):
     local_gst_itc_log: list[dict[str, Any]]
     proactive: Optional[dict[str, Any]] = None
     a2a_events: list[A2AEvent]
+    # payments.py: the buddy found the payment itself (no UTR) - what it found and what Paytm did about it
+    payment_check: Optional[dict[str, Any]] = None
 
 
 class EventsResponse(BaseModel):
