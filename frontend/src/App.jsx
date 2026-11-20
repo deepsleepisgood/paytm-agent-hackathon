@@ -149,7 +149,7 @@ function Home({ d, go, m, L, lang, onAlert, onUpload }) {
       <div className="topbar">
         <PaytmLogo size={22} />
         <div className="tb-r">
-          <button className="ai-badge lockup" onClick={() => go('buddy')} aria-label="Open Buddy"><BuddyLockup size={20} on="light" sparkle={false} /></button>
+          <button className="ai-badge lockup" onClick={() => go('buddy')} aria-label="Open Buddy"><img className="nav-logo" src="/brand/buddy-logo.png?v=2" alt="Buddy" height="20" /></button>
           <button className="dotwrap bell" aria-label="Notifications" onClick={() => { setNotifOpen((o) => !o); setSeen(sorted.length) }}><I.Bell size={22} />{unread && <em />}</button>
         </div>
       </div>
@@ -674,7 +674,7 @@ export default function App() {
   return (
     <div className={`cc ${busy ? 'busy' : ''}`}>
       <header className="cc-top">
-        <BuddyLockup size={24} on="light" sparkle={false} />
+        <img className="cc-logo" src="/brand/buddy-logo.png?v=2" alt="Buddy" height="26" />
         <div className="cc-title"><span className="cc-by">First proven on Paytm for Business</span></div>
         <div className="cc-r">
           {mode === 'live' && svc.sarvam && svc.sarvam !== 'live' && (
