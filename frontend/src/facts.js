@@ -15,6 +15,16 @@ function tone(lang, status, fraud, escalated, awaiting) {
 }
 
 const AMT = /₹\s?[\d,]+(?:\.\d+)?/g
+// Plain words an SME owner uses, no order numbers or jargon.
+const SIMPLE = [
+  [/chargeback|dispute|held|hold/i, 'On hold (customer dispute)'],
+  [/refund/i, 'Customer refund'],
+  [/soundbox/i, 'Soundbox rent'],
+  [/gst/i, 'GST on fees'],
+  [/mdr|payment fee|processing|fee/i, 'Payment fees'],
+]
+const simpleLabel = (l) => { for (const [re, out] of SIMPLE) if (re.test(l)) return out; return l.replace(/\s*(for|on)?\s*order\s*#?\d+/i, '').replace(/\s*\(#?\d+\)/, '').trim() }
+const needsYou = /\?|\b(send|share|upload|confirm|approve|tap|reply|provide|please|bhejiye|bhejo|batao|dijiye|कीजिए|भेजिए)\b/i
 const tidy = (s) => s.replace(/\s+/g, ' ').replace(/^[\s,;:—-]+|[\s,;:—.-]+$/g, '').replace(/\s+(hai|है|hain)$/i, '')
 function breakdown(sentence, lang) {
   let main = sentence, tail = ''
@@ -40,6 +50,7 @@ function breakdown(sentence, lang) {
     if (ref) { before = ''; after = `${after} (${ref[1]})` }
     let label = tidy(`${before} ${after}`).replace(/^(a|an|the|and|aur|और)\s+/i, '')
     if (!label) continue
+    label = simpleLabel(label)
     items.push({ k: label.charAt(0).toUpperCase() + label.slice(1), v: m[2].replace(/\s/g, '') })
   }
   if (items.length < 3) return null
@@ -76,10 +87,14 @@ export function summarize(run, reply, lang = 'hi') {
     const bd = breakdown(parts[j], lang)
     if (!bd) continue
     facts.length = 0; facts.push(...bd.items)
-    if (j === 0) { headline = bd.intro; rest = parts.slice(1) } else { context = parts[0]; headline = bd.intro + ':'; rest = parts.filter((_, k) => k !== 0 && k !== j) }
+    const amt = (bd.intro.match(AMT) || [])[0]
+    const cut = amt && /differ|deduct|kate|कटे|cut|less/i.test(bd.intro)
+    headline = cut ? (lang === 'en' ? `${amt} was cut from your payout` : lang === 'hi' ? `${amt} आपके पेमेंट से कटे` : `${amt} aapke payout se kate`) : bd.intro
+    rest = parts.filter((_, k) => k !== j && !(j > 0 && k === 0))
     if (bd.tail) rest = [bd.tail, ...rest]
     break
   }
-  const detail = rest.join(' ')
+  // Keep only what the merchant must act on (a question or a next step); drop extra information.
+  const detail = rest.filter((x) => needsYou.test(x)).slice(0, 2).join(' ').slice(0, 170)
   return { kind, chip, headline, context, factsTitle, detail, facts }
 }

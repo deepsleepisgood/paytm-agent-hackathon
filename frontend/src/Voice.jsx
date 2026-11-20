@@ -239,9 +239,6 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
         <div className="reflect"><i /></div>
         <div className="state-lbl">{state === 'listening' ? T('listen') : state === 'thinking' ? T('think') : state === 'speaking' ? T('speak') : reply ? T('more') : T('idle')}</div>
         {state === 'idle' && <button className="upbtn" onClick={() => onAttach()}><CameraIcon /> {T('up')}</button>}
-        {state === 'thinking' && (
-          <div className="agent-dots">{AGENT_NAMES.map((n, i) => <span key={n} className={i < agentsDone ? 'on' : ''}><i />{n}</span>)}</div>
-        )}
       </div>
 
       <div className="v-cap" ref={capRef}>
