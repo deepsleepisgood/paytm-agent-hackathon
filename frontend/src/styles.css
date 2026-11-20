@@ -1454,3 +1454,5 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 @keyframes meshGlow{0%,100%{box-shadow:0 0 0 1px #5ad1ff,0 0 14px rgba(90,209,255,.35),0 6px 18px rgba(2,6,30,.5)}50%{box-shadow:0 0 0 1px #5ad1ff,0 0 30px rgba(90,209,255,.7),0 6px 18px rgba(2,6,30,.5)}}
 @media (prefers-reduced-motion:reduce){.af .mn.work{animation:none}}
 .af .mn .pt-av b{color:#012b72;font-size:inherit}.af .mn .pt-av i{color:#00baf2}
+.pt-av.logo{background:#fff;padding:0;overflow:hidden}
+.pt-av.logo img{width:78%;height:78%;object-fit:contain;display:block;mix-blend-mode:normal}

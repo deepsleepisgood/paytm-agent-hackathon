@@ -223,7 +223,7 @@ function Robot({ id, size }) {
 
 function Avatar({ n, size = 44 }) {
   if (n.glyph) return <div className="ag-av" style={{ '--s': size + 'px' }}><span className="pt-av gl" style={{ width: size * .94, height: size * .94 }}>{ico(n.glyph === 'memory' ? <><ellipse cx="12" cy="6" rx="7" ry="2.8" /><path d="M5 6v6c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8V6" /><path d="M5 12v6c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-6" /></> : <><path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 16h-7l-4.5 3.5V16H5a1.5 1.5 0 0 1-1.5-1.5v-8A1.5 1.5 0 0 1 5 5z" /><path d="M8 9.5h8M8 12.3h5" /></>, Math.round(size * .5))}</span></div>
-  if (n.pt) return <div className="ag-av" style={{ '--s': size + 'px' }}><span className="pt-av" style={{ width: size * .94, height: size * .94, fontSize: size * .3 }}><b>pay</b><i>tm</i></span></div>
+  if (n.pt) return <div className="ag-av" style={{ '--s': size + 'px' }}><span className="pt-av logo" style={{ width: size * .94, height: size * .94 }}><img src="/paytm-business-logo.png" alt="Paytm for Business" /></span></div>
   return (
     <div className="ag-av" style={{ '--s': size + 'px' }}>
       <Robot id={n.art || n.id} size={Math.round(size * 0.94)} />
