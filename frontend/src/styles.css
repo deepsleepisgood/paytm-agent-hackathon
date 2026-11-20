@@ -1796,3 +1796,8 @@ button,label,.az-eyebrow{text-transform:none!important}
 
 .cc-grid{grid-template-areas:"phone stage" "replay replay"!important;grid-template-rows:minmax(calc(100vh - 56px),auto) auto!important;padding-bottom:40px}
 @media (max-width:1060px){.cc-grid{grid-template-areas:"phone" "stage" "replay"!important;grid-template-rows:none!important}}
+
+/* one clean area beside the phone: the replay when idle, the live agent mesh when a question is running */
+.cc-grid{grid-template-areas:"phone stage"!important;grid-template-rows:auto!important}
+.cc-replay{grid-area:stage;align-self:start}
+@media (max-width:1060px){.cc-grid{grid-template-areas:"phone" "stage"!important}}
