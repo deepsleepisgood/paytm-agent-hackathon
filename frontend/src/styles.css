@@ -1650,3 +1650,14 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 
 /* mesh: Buddy avatar is the exact logo B on a light disc so its dark bowl stays visible on the dark panel */
 .ag-av .bd-wrap{background:radial-gradient(circle at 35% 28%,#ffffff,#dbe9ff 70%)!important;box-shadow:0 0 0 2px rgba(122,170,255,.5),0 0 14px rgba(90,150,255,.45)!important}
+
+/* ===== page layout: phone with the ledger underneath, agents beside the phone ===== */
+.cc-grid{grid-template-columns:430px minmax(440px,880px);grid-template-areas:"phone agents" "ledger agents";gap:26px 48px;padding:26px 44px 56px;justify-content:center;align-items:start}
+.col.left{grid-area:phone;position:static}
+.col.right{grid-area:ledger;grid-column:auto;width:100%}
+.col.center{grid-area:agents;position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:auto;padding-right:2px}
+@media (max-width:1060px){
+  .cc-grid{grid-template-columns:minmax(0,430px);grid-template-areas:"phone" "agents" "ledger";gap:24px;padding:20px 16px 48px}
+  .col.center{position:static;max-height:none;overflow:visible}
+}
+@media (max-width:760px){.cc-grid{display:block;padding:0}}
