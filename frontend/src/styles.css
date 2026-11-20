@@ -1647,3 +1647,8 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .nav-logo-wrap:before{background:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,0) 55%)}
 .nav-logo-wrap:after{background:linear-gradient(105deg,transparent 32%,rgba(255,255,255,.95) 48%,rgba(210,235,255,.7) 53%,transparent 68%);background-size:320% 100%;background-position:160% 0;animation:logoSweep 7s ease-in-out 2.5s infinite}
 @media (prefers-reduced-motion:reduce){.nav-logo-wrap:after{animation:none;opacity:0}}
+
+/* no mirror reflection: just a light shine on the logos */
+.cc-logo-wrap .cc-logo,.nav-logo-wrap .nav-logo{-webkit-box-reflect:none!important}
+.cc-logo-wrap:before{background:linear-gradient(180deg,rgba(255,255,255,.3) 0%,rgba(255,255,255,0) 48%)}
+.nav-logo-wrap:before{background:linear-gradient(180deg,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 50%)}
