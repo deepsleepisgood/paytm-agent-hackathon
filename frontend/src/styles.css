@@ -1681,3 +1681,9 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
   .col.stage-agents .mesh{height:410px}
 }
 @media (max-width:760px){.cc-grid{display:block;padding:0}.col.stage-agents{display:none}}
+
+/* first screen = phone + mesh only, blank below; ledger and trace card start after scrolling */
+.cc-grid{grid-template-rows:minmax(calc(100vh - 56px),auto) auto;row-gap:0}
+.col.stage-agents{align-self:start}
+.col.right,.col.center{margin-top:40px}
+@media (max-width:1060px){.cc-grid{grid-template-rows:none;row-gap:24px}.col.right,.col.center{margin-top:0}}
