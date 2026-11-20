@@ -38,6 +38,14 @@ function bestVoice(lang) {
 }
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices() }
 
+function AnswerIcon({ kind }) {
+  const p = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2.4, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  if (kind === 'bad') return <svg {...p}><path d="M12 3.2l7 2.8v5.4c0 4.4-2.9 7.6-7 9.4-4.1-1.8-7-5-7-9.4V6z" /><path d="M9.4 9.4l5.2 5.2M14.6 9.4l-5.2 5.2" /></svg>
+  if (kind === 'warn') return <svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>
+  if (kind === 'info') return <svg {...p}><circle cx="12" cy="8.5" r="3.4" /><path d="M5.5 19.5c.8-3.4 3.5-5 6.5-5s5.7 1.6 6.5 5" /></svg>
+  return <svg {...p}><path d="M5 12.5l4.4 4.4L19 7.2" /></svg>
+}
+
 export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mode, prompts, nudge, lang, setLang, onText, onAudio, onPreset, onConfirm, onMenu, onKhata, onAttach }) {
   const [phase, setPhase] = useState('idle') // idle | listening | speaking (thinking comes from `busy`)
   const [live, setLive] = useState('')
@@ -247,14 +255,23 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
         {(state === 'speaking' || state === 'idle') && reply && info && (
           <div className="answer">
             {lastMe && <div className="a-q">“{lastMe.text}”</div>}
-            <span className={`a-chip ${info.kind}`}>{info.chip}</span>
-            {info.context && <p className="a-ctx">{info.context}</p>}
-            <h3 className="a-head">{info.headline}</h3>
-            {info.factsTitle && info.facts.length > 0 && <div className="facts-t">{info.factsTitle}</div>}
-            {info.facts.length > 0 && (
-              <div className="facts">{info.facts.map((f) => <div key={f.k}><span>{f.k}</span><b>{f.v}</b></div>)}</div>
-            )}
-            {info.detail && <p className="a-detail">{info.detail}</p>}
+            <div className={`a-card ${info.kind}`}>
+              <div className="a-top">
+                <span className={`a-badge ${info.kind}`}><AnswerIcon kind={info.kind} /></span>
+                <span className="a-chip-t">{info.chip}</span>
+              </div>
+              {info.context && <p className="a-ctx">{info.context}</p>}
+              <h3 className="a-head">{info.headline.replace(/[.:]\s*$/, '')}</h3>
+              {info.facts.length === 1 && (
+                <div className={`a-hero ${/save|releas|credit|receiv|back|refund/i.test(info.facts[0].k) ? 'pos' : ''}`}>
+                  <span>{info.facts[0].k}</span><b>{info.facts[0].v}</b>
+                </div>
+              )}
+              {info.facts.length > 1 && (
+                <div className="facts">{info.facts.map((f) => <div key={f.k}><span>{f.k}</span><b>{f.v}</b></div>)}</div>
+              )}
+              {info.detail && <div className="a-next"><i aria-hidden="true">→</i><p>{info.detail}</p></div>}
+            </div>
           </div>
         )}
         {state === 'idle' && !reply && !note && (
