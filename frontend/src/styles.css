@@ -1344,3 +1344,9 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .v-cap{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%)}
 .sign.pinned{position:relative;z-index:3;margin-top:4px;padding:0 22px 6px;flex:none}
 
+
+.facts-t{font-size:12.5px;font-weight:700;letter-spacing:.02em;color:#6b7a90;margin:2px 4px 8px}
+.facts div{align-items:flex-start}.facts span{padding-right:10px}
+
+.a-ctx{font-size:14px;line-height:1.4;color:#6b7a90;margin:8px 0 0}
+.a-ctx+.a-head{margin-top:6px}

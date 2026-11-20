@@ -14,6 +14,38 @@ function tone(lang, status, fraud, escalated, awaiting) {
   return ['ok', STATUS[lang][status] && !['SUCCESS'].includes(status) ? STATUS[lang][status] : t(lang, 'cHold')]
 }
 
+const AMT = /₹\s?[\d,]+(?:\.\d+)?/g
+const tidy = (s) => s.replace(/\s+/g, ' ').replace(/^[\s,;:—-]+|[\s,;:—.-]+$/g, '').replace(/\s+(hai|है|hain)$/i, '')
+function breakdown(sentence, lang) {
+  let main = sentence, tail = ''
+  const dash = main.split(/\s+[—–]\s+/)
+  if (dash.length > 1) { main = dash[0]; tail = dash.slice(1).join(' — ') }
+  let intro = '', list = main
+  const colon = main.match(/^([^:]{3,90}):\s*(.+)$/)
+  if (colon) { intro = colon[1]; list = colon[2] }
+  const chunks = list.split(/\s*;\s*|,\s+(?:and\s+|aur\s+|और\s+)?|\s+(?:aur|and|और)\s+/).map((x) => x.trim()).filter(Boolean)
+  if (chunks.filter((x) => (x.match(AMT) || []).length >= 1).length < 3) return null
+  const first = chunks[0].match(AMT) || []
+  if (!colon && first.length >= 2) { // "₹4,160 mein MDR ₹1,450, GST …": the first amount is the total
+    const i = chunks[0].indexOf(first[0]) + first[0].length
+    intro = chunks[0].slice(0, i); chunks[0] = chunks[0].slice(i).replace(/^\s*(mein|में|is|was|are|of)\s+/i, '')
+    if (!/[A-Za-z\u0900-\u097F]/.test(intro.replace(first[0], ''))) intro = lang === 'en' ? `${first[0]} was deducted` : lang === 'hi' ? `${first[0]} कटे` : `${first[0]} kate`
+  }
+  const items = []
+  for (const ch of chunks) {
+    const m = ch.match(/^(.*?)\s*(₹\s?[\d,]+(?:\.\d+)?)\s*(.*)$/)
+    if (!m) { if (items.length && !/[₹]/.test(ch)) continue; return null }
+    let before = m[1], after = m[3].replace(/\s+(hai|है|hain)\s*$/i, '')
+    const ref = before.match(/^(#?[\w-]+)\s+(ka|ki|ke|of|for|का|की|के)$/i)
+    if (ref) { before = ''; after = `${after} (${ref[1]})` }
+    let label = tidy(`${before} ${after}`).replace(/^(a|an|the|and|aur|और)\s+/i, '')
+    if (!label) continue
+    items.push({ k: label.charAt(0).toUpperCase() + label.slice(1), v: m[2].replace(/\s/g, '') })
+  }
+  if (items.length < 3) return null
+  return { intro: tidy(intro) || sentence, items, tail: tail ? tidy(tail) + '.' : '' }
+}
+
 export function summarize(run, reply, lang = 'hi') {
   if (!reply) return null
   const disp = run?.steps?.find((s) => s.key === 'dispatch')
@@ -36,17 +68,18 @@ export function summarize(run, reply, lang = 'hi') {
   }
 
   const parts = reply.text.split(/(?<=[.।!?])\s+/).filter(Boolean)
+  // A sentence that lists 3+ "label ₹amount" items (using : ; , and/aur) becomes a short headline + one clean row per item.
   let headline = parts[0] || reply.text
-  // "₹4,160 was deducted: MDR ₹1,450, GST ₹261, …" → short headline + one clean row per item
-  const m = headline.match(/^([^:]{4,60}):\s*(.+?)[.।]?$/)
-  if (m) {
-    const items = m[2].split(/,\s+(?:and\s+|aur\s+|और\s+)?/).map((t) => {
-      const a = t.match(/^(.*?)\s*(₹\s?[\d,]+(?:\.\d+)?)\s*(.*)$/)
-      if (!a) return null
-      const label = `${a[1]} ${a[3]}`.replace(/^(a|an|the|और|aur)\s+/i, '').replace(/\s+/g, ' ').trim()
-      return label ? { k: label.charAt(0).toUpperCase() + label.slice(1), v: a[2].replace(/\s/g, '') } : null
-    })
-    if (items.length >= 3 && items.every(Boolean)) { headline = m[1]; facts.length = 0; facts.push(...items) }
+  let rest = parts.slice(1)
+  let factsTitle = '', context = ''
+  for (let j = 0; j < parts.length; j++) {
+    const bd = breakdown(parts[j], lang)
+    if (!bd) continue
+    facts.length = 0; facts.push(...bd.items)
+    if (j === 0) { headline = bd.intro; rest = parts.slice(1) } else { context = parts[0]; headline = bd.intro + ':'; rest = parts.filter((_, k) => k !== 0 && k !== j) }
+    if (bd.tail) rest = [bd.tail, ...rest]
+    break
   }
-  return { kind, chip, headline, detail: parts.slice(1).join(' '), facts }
+  const detail = rest.join(' ')
+  return { kind, chip, headline, context, factsTitle, detail, facts }
 }

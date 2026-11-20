@@ -251,7 +251,9 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
           <div className="answer">
             {lastMe && <div className="a-q">“{lastMe.text}”</div>}
             <span className={`a-chip ${info.kind}`}>{info.chip}</span>
+            {info.context && <p className="a-ctx">{info.context}</p>}
             <h3 className="a-head">{info.headline}</h3>
+            {info.factsTitle && info.facts.length > 0 && <div className="facts-t">{info.factsTitle}</div>}
             {info.facts.length > 0 && (
               <div className="facts">{info.facts.map((f) => <div key={f.k}><span>{f.k}</span><b>{f.v}</b></div>)}</div>
             )}
