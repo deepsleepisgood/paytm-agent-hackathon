@@ -140,6 +140,13 @@ Not spoken: business tips, ITC/bookkeeping notes, ticket and case ids; 12-digit 
 digits. Deterministic (no extra LLM call), and shorter speech is faster: Sarvam TTS takes 4-8 s for 30-35 words.
 `VOICE_MAX_WORDS` (24) caps the optional sentences. Across the 8 demo scenarios, 257 words on screen → 174 spoken.
 
+**Hinglish voice.** Following Sarvam's Bulbul v3 guidance (English words in English script, Hindi words in
+Devanagari), only the Hindi words are transliterated before TTS: "Aapka settlement kal aa jayega" is sent as
+"आपका settlement कल आ जायेगा", so settlement / refund / UTR / Paytm sound English and the rest sounds Hindi.
+The English words come from a curated list (`upstream.ENGLISH_WORDS`, plus acronyms, brands and numbers), not a
+dictionary, because many Roman Hindi words are also English ("do baar", "main", "mat", "din"). `VOICE_SCRIPT=mixed`
+(default) | `devanagari` (the old all-Hindi voice) | `roman` (send as typed), to compare by ear.
+
 ## Response shape (every `/merchant/*` action endpoint)
 ```jsonc
 {

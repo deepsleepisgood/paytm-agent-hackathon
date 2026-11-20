@@ -92,3 +92,43 @@ def test_ticket_and_case_ids_are_not_read_out():
     said = voice.spoken("Maine Soundbox ki kharabi ka maamla Paytm ki L2 team ko bhej diya hai, ticket tkt_002. 2 ghante "
                         "mein aapko callback aayega.", voice_line="Paytm specialist (case HND-0001) 2 ghante mein call karenge.")
     assert "tkt_002" not in said and "HND-0001" not in said and "bhej diya hai." in said
+
+
+# ----------------------------------------------------------------------------- Hinglish voice (upstream.speak_form)
+import asyncio  # noqa: E402
+
+import upstream  # noqa: E402
+
+
+def test_english_words_stay_english_and_hindi_lookalikes_stay_hindi():
+    runs = upstream.mixed_segments("Customer ne order #4489 ke ₹1,180 do baar diye the. Main refund karunga, saman mat dijiye.")
+    hindi = " ".join(seg for is_hi, seg in runs if is_hi)
+    english = " ".join(seg for is_hi, seg in runs if not is_hi)
+    for w in ("Customer", "order", "#4489", "₹1,180", "refund"):
+        assert w in english
+    for w in ("do baar", "Main", "mat dijiye"):      # also English words, but Hindi here
+        assert w in hindi
+
+
+def test_mixed_script_is_what_bulbul_gets(monkeypatch):
+    async def fake(text, key):
+        return f"<{text}>"
+    monkeypatch.setattr(upstream, "_translit", fake)
+    monkeypatch.setenv("SARVAM_API_KEY", "k")
+    monkeypatch.setenv("SARVAM_MODE", "auto")
+    out = asyncio.run(upstream.speak_form("Aapka settlement kal aa jayega"))
+    assert out == "<Aapka> settlement <kal aa jayega>"
+    monkeypatch.setenv("VOICE_SCRIPT", "devanagari")
+    assert asyncio.run(upstream.speak_form("Aapka settlement kal aa jayega")) == "<Aapka settlement kal aa jayega>"
+    monkeypatch.setenv("VOICE_SCRIPT", "roman")
+    assert asyncio.run(upstream.speak_form("Aapka settlement kal aa jayega")) == "Aapka settlement kal aa jayega"
+
+
+def test_voice_falls_back_to_the_typed_text(monkeypatch):
+    async def broken(text, key):
+        raise RuntimeError("sarvam down")
+    monkeypatch.setattr(upstream, "_translit", broken)
+    monkeypatch.setenv("SARVAM_API_KEY", "k")
+    monkeypatch.setenv("SARVAM_MODE", "auto")
+    monkeypatch.delenv("VOICE_SCRIPT", raising=False)
+    assert asyncio.run(upstream.speak_form("Aapka settlement kal aa jayega")) == "Aapka settlement kal aa jayega"
