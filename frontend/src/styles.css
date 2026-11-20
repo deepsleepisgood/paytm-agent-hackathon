@@ -1339,7 +1339,7 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .mn.work{border-color:#2d7be0;animation:trGlow 1.6s ease-in-out infinite;transform:translate(-50%,-50%) scale(1.06)}
 .mn.work em{color:#1b4f9c;font-weight:700}
 @media (prefers-reduced-motion:reduce){.mn.work,.mesh-e .e.go{animation:none}}
-=======
+
 /* the answer area scrolls under the orb label: fade its edges instead of letting text collide with it */
 .v-cap{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%)}
 .sign.pinned{position:relative;z-index:3;margin-top:4px;padding:0 22px 6px;flex:none}
