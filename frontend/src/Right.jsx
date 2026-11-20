@@ -19,119 +19,147 @@ function Drop({ title, sub, badge, tone, def, watch, children }) {
   )
 }
 
-function Waterfall({ m, L }) {
-  const s = m.d.settlement
-  const rows = []
-  let run = s.gross
-  rows.push({ label: 'Gross sales', amount: s.gross, start: 0, end: s.gross, kind: 'total' })
-  for (const x of s.deductions) {
-    const released = x.key === 'CHARGEBACK_HOLD' && L.chargeback?.status === 'RELEASED'
-    rows.push({ label: x.label, amount: x.amount, start: run - x.amount, end: run, kind: released ? 'released' : x.key === 'CHARGEBACK_HOLD' ? 'hold' : 'ded', note: released ? 'Released T+1' : undefined })
-    if (!released) run -= x.amount
-  }
-  rows.push({ label: 'Bank credit', amount: run, start: 0, end: run, kind: 'net' })
-  const pct = (v) => (v / s.gross) * 100
-  return (
-    <div className="rbody">
-      {rows.map((r, i) => (
-        <div key={i} className="wf">
-          <div className="wf-l"><span>{r.label}</span><em>{r.note}</em></div>
-          <div className="wf-track"><i className={r.kind} style={{ left: pct(Math.min(r.start, r.end)) + '%', width: Math.max(pct(Math.abs(r.end - r.start)), 1.6) + '%' }} /></div>
-          <div className={`wf-a ${r.kind}`}>{r.kind === 'ded' || r.kind === 'hold' ? '−' : ''}{inr(r.amount)}</div>
-        </div>
-      ))}
-    </div>
-  )
+// Plain words a shop owner uses for each deduction.
+const PLAIN = [
+  [/chargeback|dispute|held|hold/i, 'On hold (customer dispute)'],
+  [/refund/i, 'Customer refund'],
+  [/soundbox/i, 'Soundbox rent'],
+  [/gst/i, 'GST on fees'],
+  [/mdr|fee/i, 'Payment fees'],
+]
+const plain = (l) => (PLAIN.find(([re]) => re.test(l)) || [0, l])[1]
+
+// "What changed" feed, newest first, built from the ledger itself. Every line says what the AI did, in one sentence.
+function changes(L) {
+  const out = []
+  if (L.chargeback?.status === 'RELEASED') out.push({ k: 'cb', t: `${inr(L.chargeback.amount)} released for ${L.chargeback.order}`, s: 'Delivery proof accepted. It arrives in your next settlement.' })
+  if (L.loan.status === 'PAUSED') out.push({ k: 'edi', t: 'Loan EDI paused for 2 days', s: 'No instalment is taken until it restarts.' })
+  if (L.loan.status === 'LINK_SENT') out.push({ k: 'edi', t: 'Payment link sent for your EDI', s: 'Pay with one tap to avoid a penalty.' })
+  if (L.loan.status === 'QUOTE') out.push({ k: 'edi', t: 'Loan closure quote ready', s: 'You get the no-dues letter after you pay it.' })
+  if (L.itc > 0) out.push({ k: 'itc', t: `GST credit of ${inr(L.itc)} noted`, s: 'Added to your GST sheet.' })
+  L.refunds.forEach((r) => out.push({ k: 'refund', t: `Refund of ${inr(r.amount)} sent for ${r.order}`, s: 'The duplicate payment went back to the customer.' }))
+  L.tickets.forEach((t) => out.push({ k: 'ticket', t: t.reason ? `Support ticket raised: ${t.reason}` : 'Support ticket raised', s: `Reference ${t.id}` }))
+  if (L.bank.status === 'LINK_SENT') out.push({ k: 'bank', t: 'Bank update link sent', s: 'Your settlement moves once the new account is verified.' })
+  if (L.soundbox.status === 'PICKUP') out.push({ k: 'sb', t: 'Soundbox pickup booked', s: 'Rent stops from the pickup date.' })
+  if (L.utrs.some((u) => u.check === 'FAKE')) out.push({ k: 'fraud', t: 'A fake payment was caught', s: 'The money never reached your account. Do not hand over the goods.', bad: true })
+  return out.reverse().slice(0, 6)
 }
+
+const loanWords = {
+  ACTIVE: ['Running normally', 'ok'], PAUSED: ['Paused for 2 days', 'warn'], LINK_SENT: ['Payment link sent', 'info'],
+  MANDATE_FIXED: ['Mandate fixed', 'info'], QUOTE: ['Closure quote ready', 'info'],
+}
+const payWords = (u) => (u.check === 'FAKE' || u.status === 'NOT_FOUND_SUSPECTED_FAKE' ? ['Looks fake', 'bad'] : u.status === 'SUCCESS' ? ['Paid', 'ok'] : u.status === 'PENDING' ? ['Pending', 'warn'] : [String(u.status).toLowerCase().replace(/^./, (c) => c.toUpperCase()), 'info'])
+
+function Pill({ tone = 'ok', children }) { return <span className={`lg-pill ${tone}`}>{children}</span> }
+function Row({ k, v, tone }) { return <div className="lg-row"><span>{k}</span><b className={tone || ''}>{v}</b></div> }
 
 export default function Right({ m, L, mode }) {
   const lo = L.loan
-  const stat = { ACTIVE: 'ok', PAUSED: 'warn', MANDATE_FIXED: 'info', LINK_SENT: 'info', QUOTE: 'info' }[lo.status]
+  const s = m.d.settlement
+  const feed = changes(L)
+  const released = L.chargeback?.status === 'RELEASED'
+  const deducted = s.deductions.reduce((a, x) => a + (x.key === 'CHARGEBACK_HOLD' && released ? 0 : x.amount), 0)
+  const inBank = s.gross - deducted
+  const [loanTxt, loanTone] = loanWords[lo.status] || [lo.status, 'info']
+  const fakeCount = L.utrs.filter((u) => u.check === 'FAKE' || u.status === 'NOT_FOUND_SUSPECTED_FAKE').length
+
   return (
-    <div className="col right">
+    <div className="col right lg">
       <div className="col-h">
-        <div className="rh-m"><MerchantLogo d={m.d} size={34} /><div><b>What changed in Paytm’s books</b><div className="muted xs">{m.profile.name} · {m.mid}</div></div></div>
-        <span className="state done"><i className="live" /> {mode === 'live' ? 'Live ledger' : 'Demo ledger'}</span>
+        <div className="rh-m"><MerchantLogo d={m.d} size={34} /><div><b>Your ledger</b><div className="muted xs">What changed in Paytm’s books · {m.profile.name}</div></div></div>
+        <span className="state done"><i className="live" /> {mode === 'live' ? 'Live' : 'Demo'}</span>
       </div>
 
-      <div className="sec">Impact so far</div>
-      <div className="kpis">
-        <div className="kpi k1"><b key={L.verified}>{L.verified}</b><span>Solved by AI</span></div>
-        <div className="kpi k2"><b key={L.learned}>{L.learned}</b><span>Strategies learned</span></div>
-        <div className="kpi"><b key={L.deflected}>{L.deflected}</b><span>Tickets avoided</span></div>
-        <div className="kpi k4"><b key={L.fraud}>{L.fraud}</b><span>Frauds blocked</span></div>
+      <div className="lg-sum">
+        <div><b key={L.verified} className={L.verified ? 'g' : ''}>{L.verified}</b><span>Solved by AI</span></div>
+        <div><b key={L.fraud} className={L.fraud ? 'r' : ''}>{L.fraud}</b><span>Fraud blocked</span></div>
+        <div><b key={L.deflected}>{L.deflected}</b><span>Tickets avoided</span></div>
       </div>
-      {L.learnedLog.length > 0 && (
-        <div className="learn">{L.learnedLog.map((t, i) => <div key={i}>{t}</div>)}</div>
+
+      <div className="lg-h"><b>Latest changes</b><span>{feed.length ? 'Newest first' : ''}</span></div>
+      {feed.length === 0 ? (
+        <div className="lg-empty"><b>Nothing has changed yet</b><span>Ask the assistant something. Every fix shows up here, in plain words.</span></div>
+      ) : (
+        <div className="lg-feed">
+          {feed.map((x, i) => (
+            <div key={x.k + i} className={`lg-f ${x.bad ? 'bad' : ''}`}>
+              <span className="lg-dot">{x.bad ? '!' : '✓'}</span>
+              <div><b>{x.t}</b><em>{x.s}</em></div>
+            </div>
+          ))}
+        </div>
       )}
 
-      <div className="sec">Money & account</div>
-      <Drop title="Money" sub={`Settlement ${m.d.settlement.date} · ${L.chargeback ? 'chargeback ' + L.chargeback.status.toLowerCase() : 'no disputes'}`} badge={L.chargeback ? (L.chargeback.status === 'HELD' ? 'Held' : 'Released') : ''} tone={L.chargeback?.status === 'HELD' ? 'esc' : 'good'} def watch={L.chargeback?.status}>
-        <Waterfall m={m} L={L} />
-        {L.chargeback && (
-          <div className="row-card rbody">
-            <div><b>Chargeback {L.chargeback.order}</b><div className="muted xs">{inr(L.chargeback.amount)} · PoD due 48h</div></div>
-            <span className={`st ${L.chargeback.status === 'HELD' ? 'warn' : 'ok'}`}>{L.chargeback.status === 'HELD' ? 'HELD' : 'RELEASED — T+1'}</span>
-          </div>
+      <div className="lg-h"><b>Your money and accounts</b></div>
+
+      <Drop title="Settlement" sub={`${s.date} · ${L.chargeback && !released ? 'part of it is on hold' : 'all clear'}`} badge={L.chargeback ? (released ? 'Released' : 'On hold') : ''} tone={L.chargeback && !released ? 'esc' : 'good'} def watch={L.chargeback?.status}>
+        <div className="lg-3">
+          <div><span>You sold</span><b>{inr(s.gross)}</b></div>
+          <div><span>Deducted</span><b className="r">−{inr(deducted)}</b></div>
+          <div><span>In your bank</span><b className="g">{inr(inBank)}</b></div>
+        </div>
+        <div className="lg-list">
+          {s.deductions.map((x) => {
+            const isHold = x.key === 'CHARGEBACK_HOLD'
+            return (
+              <div key={x.key} className="lg-row">
+                <span>{plain(x.label)}{isHold && L.chargeback && <Pill tone={released ? 'ok' : 'warn'}>{released ? 'Released' : 'Held'}</Pill>}</span>
+                <b className={isHold && released ? 'g' : ''}>{isHold && released ? '' : '−'}{inr(x.amount)}</b>
+              </div>
+            )
+          })}
+        </div>
+        {L.chargeback && !released && (
+          <div className="lg-note warn"><b>{inr(L.chargeback.amount)} is on hold for {L.chargeback.order}</b><span>Send the delivery proof within 48 hours to get it back.</span></div>
         )}
       </Drop>
 
-      <Drop title="Loan EDI" sub={`Daily ${inr(lo.edi)} · balance ${inr(lo.balance)}`} badge={lo.status.replace(/_/g, ' ')} tone={stat === 'warn' ? 'esc' : ''} watch={lo.status}>
-        <div className="rbody">
-          <div className="steps3">
-            {[['ACTIVE', 'ACTIVE'], ['LINK_SENT', 'UPI LINK SENT'], ['PAUSED', 'PAUSED'], ['QUOTE', 'CLOSURE QUOTE']].map(([k, lab]) => <span key={k} className={lo.status === k ? 'on ' + k : ''}>{lab}</span>)}
-          </div>
-          {lo.note && <div className="learn">{lo.note}</div>}
-          <div className="kv2"><span>Daily EDI</span><b>{inr(lo.edi)}</b><span>Balance</span><b>{inr(lo.balance)}</b></div>
+      <Drop title="Loan EDI" sub={`${inr(lo.edi)} a day · ${inr(lo.balance)} left to pay`} badge={loanTxt} tone={loanTone === 'warn' ? 'esc' : ''} watch={lo.status}>
+        <div className="lg-3">
+          <div><span>Daily instalment</span><b>{inr(lo.edi)}</b></div>
+          <div><span>Balance</span><b>{inr(lo.balance)}</b></div>
+          <div><span>Status</span><b className={loanTone === 'warn' ? 'a' : loanTone === 'ok' ? 'g' : ''}>{loanTxt}</b></div>
+        </div>
+        {lo.note && <div className="lg-note"><span>{lo.note}</span></div>}
+      </Drop>
+
+      <Drop title="Account and devices" sub="Bank, hold and Soundbox" watch={L.bank.status + L.soundbox.status}>
+        <div className="lg-list">
+          <div className="lg-row"><span>Bank hold on settlement</span><Pill tone="ok">None</Pill></div>
+          <div className="lg-row"><span>Settlement bank · {L.bank.acct}</span><Pill tone={L.bank.status === 'LINK_SENT' ? 'warn' : 'ok'}>{L.bank.status === 'LINK_SENT' ? 'Verify pending' : 'Active'}</Pill></div>
+          <div className="lg-row"><span>Soundbox · {inr(L.soundbox.rent)}/month</span><Pill tone={L.soundbox.status === 'PICKUP' ? 'info' : 'ok'}>{L.soundbox.status === 'PICKUP' ? 'Pickup booked' : 'Active'}</Pill></div>
+          {L.soundbox.note && <div className="lg-note"><span>{L.soundbox.note}</span></div>}
         </div>
       </Drop>
 
-      <Drop title="Account & device status" sub="Bank, hold and Soundbox" watch={L.bank.status + L.soundbox.status}>
-        <div className="rbody">
-          <div className="sts"><span>Bank hold</span><span className="st ok">NONE</span></div>
-          <div className="sts"><span>Settlement bank · {L.bank.acct}</span><span className={`st ${L.bank.status === 'LINK_SENT' ? 'warn' : 'ok'}`}>{L.bank.status === 'LINK_SENT' ? 'VERIFY PENDING' : 'ACTIVE'}</span></div>
-          <div className="sts"><span>Soundbox rent {inr(L.soundbox.rent)}/mo{L.soundbox.note ? ` · ${L.soundbox.note}` : ''}</span><span className={`st ${L.soundbox.status === 'PICKUP' ? 'info' : 'ok'}`}>{L.soundbox.status === 'PICKUP' ? 'PICKUP · RENT STOPS' : 'ACTIVE'}</span></div>
+      <Drop title="Payments we checked" sub={`${L.utrs.length} payments${fakeCount ? ` · ${fakeCount} looks fake` : ''}`} badge={fakeCount ? 'Fake found' : ''} tone={fakeCount ? 'bad' : ''} watch={L.utrs.length + ':' + L.utrs.map((u) => u.check).join()}>
+        <div className="lg-list">
+          {L.utrs.map((u) => {
+            const [w, tone] = payWords(u)
+            return (
+              <div key={u.utr} className={`lg-row two ${tone === 'bad' ? 'bad' : ''}`}>
+                <span><b>{inr(u.amount)}</b><em>{u.app} · {u.name}</em><code>{u.utr}</code></span>
+                <Pill tone={tone}>{w}</Pill>
+              </div>
+            )
+          })}
         </div>
       </Drop>
 
-      <Drop title="UTR verification" sub={`${L.utrs.length} payments checked`} badge={L.utrs.some((u) => u.check === 'FAKE') ? 'Fake found' : ''} tone={L.utrs.some((u) => u.check === 'FAKE') ? 'bad' : ''} watch={L.utrs.length + ':' + L.utrs.map((u) => u.check).join()}>
-        <table className="utr">
-          <tbody>
-            {L.utrs.map((u) => (
-              <tr key={u.utr} className={u.check === 'FAKE' ? 'fake' : ''}>
-                <td><code>{u.utr}</code><div className="muted xs">{u.app} · {u.name}</div></td>
-                <td className="r">{inr(u.amount)}</td>
-                <td><span className={`st ${u.status === 'SUCCESS' ? 'ok' : u.status === 'PENDING' ? 'warn' : 'bad'}`}>{u.status === 'NOT_FOUND_SUSPECTED_FAKE' ? 'FAKE' : u.status}</span>{u.check === 'PENDING' && <div className="xs muted">✓ checked</div>}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <Drop title="What the AI has learned" sub={`${m.policies ? m.policies.length : 0} habits remembered · ${L.learned} new`}>
+        <div className="lg-list">
+          {(m.policies || []).map((p, i) => <div key={i} className="lg-learn"><b>{p.intent.replace(/_/g, ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase())}</b><span>{p.policy}</span></div>)}
+          {L.learnedLog.map((t, i) => <div key={'l' + i} className="lg-learn new"><b>New</b><span>{t}</span></div>)}
+        </div>
       </Drop>
-
-      {(L.tickets.length > 0 || L.refunds.length > 0 || L.itc > 0) && (
-        <Drop title="Actions taken" sub="What the AI changed for you" badge={String(L.tickets.length + L.refunds.length + (L.itc > 0 ? 1 : 0))} tone="good" def watch={L.tickets.length + L.refunds.length + L.itc}>
-          <div className="rbody">
-            {L.itc > 0 && <div className="act">GST ITC logged <b>{inr(L.itc)}</b></div>}
-            {L.refunds.map((r) => <div key={r.order} className="act">Auto-refund {r.order} <b>{inr(r.amount)}</b></div>)}
-            {L.tickets.map((t) => <div key={t.id} className="act"><b>{t.id}</b> · {t.reason}</div>)}
-          </div>
-        </Drop>
-      )}
 
       {m.profile.connectors && (
-        <Drop title="Connected data sources" sub="DPDP consent">
-          <div className="rbody">
+        <Drop title="Data you have shared" sub="Only with your permission">
+          <div className="lg-list">
             {Object.entries(m.profile.connectors).map(([k, v]) => (
-              <div key={k} className="sts"><span>{k.replace(/_/g, ' ')}</span><span className="st ok">{v.consent === 'GRANTED' || v.consent_status === 'GRANTED' ? 'GRANTED' : 'ACTIVE'}</span></div>
+              <div key={k} className="lg-row"><span>{k.replace(/_/g, ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase())}</span><Pill tone="ok">{v.consent === 'GRANTED' || v.consent_status === 'GRANTED' ? 'Allowed' : 'Active'}</Pill></div>
             ))}
-          </div>
-        </Drop>
-      )}
-
-      {m.policies && (
-        <Drop title="What the AI already learned" sub={`${m.policies.length} strategies remembered`}>
-          <div className="rbody">
-            {m.policies.map((p, i) => <div key={i} className="pol"><b>{p.intent.replace(/_/g, ' ')}</b><span>{p.policy}</span></div>)}
           </div>
         </Drop>
       )}
