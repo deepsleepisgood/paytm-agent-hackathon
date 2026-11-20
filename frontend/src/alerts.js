@@ -7,6 +7,19 @@ export function buildAlerts(m, L, lang = 'hi') {
   const hi = lang === 'hi'
   const f = m.facts || {}
   const items = []
+  const st = m.d.settlement
+  if (st && st.variance > 0) {
+    items.push({
+      id: 'settle', level: 'urgent', run: 'settle',
+      chip: hi ? 'आज का ज़रूरी काम' : 'Needs your attention today', photo: false,
+      title: hi ? `बैंक में ${inr(st.variance)} कम आए` : `${inr(st.variance)} less than expected in your bank`,
+      text: hi ? `बिक्री ${inr(st.gross)} थी, पर बैंक में ${inr(st.net)} आए। देखिए ये ${inr(st.variance)} कहाँ कटे।` : `You sold ${inr(st.gross)} but ${inr(st.net)} reached your bank. See exactly where the ${inr(st.variance)} went.`,
+      cta: hi ? 'कटौती देखें' : 'See where it went',
+      stats: [{ k: hi ? 'कटा' : 'Cut', v: inr(st.variance) }, { k: hi ? 'बैंक में' : 'In your bank', v: inr(st.net) }, { k: hi ? 'बिक्री का' : 'Of your sales', v: ((st.variance / st.gross) * 100).toFixed(1) + '%' }],
+      done: L.itc > 0,
+      sorted: hi ? null : `Explained: ${inr(st.variance)} went to fees, GST, a refund, rent and a held dispute`,
+    })
+  }
   const cb = m.d.chargeback
   if (cb) {
     items.push({
