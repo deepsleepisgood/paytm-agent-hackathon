@@ -11,7 +11,7 @@ export function buildAlerts(m, L, lang = 'hi') {
   if (st && st.variance > 0) {
     items.push({
       id: 'settle', level: 'urgent', run: 'settle',
-      chip: hi ? 'Aaj ka zaroori kaam' : 'Needs your attention today', photo: false,
+      chip: hi ? 'Attention chahiye' : 'Needs your attention today', photo: false,
       title: hi ? `Bank mein ${inr(st.variance)} kam aaye` : `${inr(st.variance)} less than expected in your bank`,
       text: hi ? `Sale ${inr(st.gross)} ki thi, par bank mein ${inr(st.net)} aaye. Dekhiye ye ${inr(st.variance)} kahan kate.` : `You sold ${inr(st.gross)} but ${inr(st.net)} reached your bank. See exactly where the ${inr(st.variance)} went.`,
       cta: hi ? 'Kahan kata, dekhiye' : 'See where it went',
@@ -24,7 +24,7 @@ export function buildAlerts(m, L, lang = 'hi') {
   if (cb) {
     items.push({
       id: 'cb', level: 'urgent', run: 'cb',
-      chip: hi ? 'Aaj ka zaroori kaam' : 'Needs your attention today', photo: true,
+      chip: hi ? 'Attention chahiye' : 'Needs your attention today', photo: true,
       title: hi ? `${cb.order} ka ${inr(cb.amount)} ruka hua hai` : `${inr(cb.amount)} is on hold for ${cb.order}`,
       text: hi ? 'Customer ne dispute kiya hai. 48 ghante mein delivery ka proof bhejiye, paisa chhoot jayega.' : 'A customer raised a dispute. Send proof of delivery within 48 hours to get the money released.',
       cta: hi ? 'Proof ki photo bhejiye' : 'Send proof photo',
