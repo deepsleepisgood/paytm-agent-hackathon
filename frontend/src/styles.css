@@ -1693,3 +1693,49 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 *{text-transform:none}
 button,label,.az-eyebrow{text-transform:none!important}
 .sp-id,.sp-id *{text-transform:none!important;letter-spacing:0!important}
+
+/* ---- Replays: other problems, agents talking ---- */
+.cc-grid{grid-template-areas:"phone stage" "replay replay" "ledger center"!important;grid-template-rows:minmax(calc(100vh - 56px),auto) auto auto!important}
+.cc-replay{grid-area:replay;min-width:0}
+@media (max-width:1060px){.cc-grid{grid-template-areas:"phone" "stage" "replay" "center" "ledger"!important;grid-template-rows:none!important}}
+@media (max-width:760px){.cc-replay{display:none}}
+.rp{background:#fff;border:1px solid var(--line);border-radius:24px;padding:26px 28px 28px;box-shadow:0 10px 34px rgba(10,42,99,.07)}
+.rp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.rp-head b{display:block;font-size:22px;letter-spacing:-.02em;color:var(--navy)}
+.rp-head span{display:block;margin-top:3px;font-size:14px;color:var(--mu)}
+.rp-ctl{display:flex;gap:8px}
+.rp-btn{border:1px solid #d8e3f2;background:#f5f9ff;color:var(--navy);font-weight:700;font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.rp-btn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.rp-chips{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 20px}
+.rp-chip{border:1px solid #dbe5f3;background:#fff;color:#33435c;font-weight:600;font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.rp-chip:hover{border-color:var(--blue)}
+.rp-chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.rp-body{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:22px;align-items:stretch}
+@media (max-width:900px){.rp-body{grid-template-columns:1fr}}
+.rp-cap{font-size:13px;font-weight:700;color:var(--mu);margin-bottom:10px}
+.rp-side,.rp-main{background:linear-gradient(180deg,#f7fafe,#f1f6fd);border:1px solid var(--line);border-radius:18px;padding:16px;min-height:360px;display:flex;flex-direction:column}
+.rp-chat{display:flex;flex-direction:column;gap:10px}
+.rp-bub{max-width:92%;padding:11px 14px;border-radius:16px;font-size:14px;line-height:1.45;animation:rpIn .35s ease both}
+.rp-bub.me{align-self:flex-end;background:var(--navy);color:#fff;border-bottom-right-radius:5px}
+.rp-bub.bd{align-self:flex-start;background:#fff;border:1px solid #dbe5f3;color:var(--ink);border-bottom-left-radius:5px}
+.rp-bn{display:block;font-size:12px;font-weight:700;color:var(--blue);margin-bottom:3px}
+.rp-wait{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mu);margin-top:4px}
+.rp-feed{display:flex;flex-direction:column;gap:12px;max-height:520px;overflow-y:auto;padding-right:4px;scroll-behavior:smooth}
+.rp-msg{display:flex;gap:11px;align-items:flex-start;animation:rpIn .4s ease both}
+.rp-msg .ag-av{flex:none}
+.rp-me{display:grid;place-items:center;border-radius:50%;background:#e4ecf8;color:var(--navy);font-size:11px;font-weight:700}
+.rp-mb{background:#fff;border:1px solid #e1e9f5;border-radius:14px;padding:9px 13px;min-width:0;flex:1;max-width:640px}
+.rp-msg.a .rp-mb{border-left:3px solid #7cc4f5}
+.rp-msg.req .rp-mb{border-left:3px solid var(--navy)}
+.rp-msg.warn .rp-mb{border-left:3px solid #f5a524}
+.rp-mh{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mu)}
+.rp-mh b{color:var(--navy);font-size:13px}
+.rp-mh em{font-style:normal;font-weight:600;color:#33435c}
+.rp-tag{font-style:normal;font-size:11px;font-weight:700;background:#e8f1ff;color:#1d5fd1;border-radius:6px;padding:1px 7px;margin-left:4px}
+.rp-mt{margin-top:3px;font-size:14px;line-height:1.45;color:var(--ink)}
+.rp-msg.q .rp-mt{color:#4a5b75}
+.typing i,.dots i,.rp-bub.typing i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#9db3d1;margin-right:4px;animation:rpDot 1s infinite ease-in-out}
+.typing i:nth-child(2),.dots i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3),.dots i:nth-child(3){animation-delay:.3s}
+.rp-bub.typing{background:var(--navy)}.rp-bub.typing i{background:#cfe0ff}
+@keyframes rpIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes rpDot{0%,80%,100%{opacity:.3}40%{opacity:1}}

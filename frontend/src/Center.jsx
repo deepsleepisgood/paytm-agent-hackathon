@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { I, AIMark } from './icons.jsx'
 import { BuddyMark } from './brand.jsx'
+import { SCENARIOS, runScenario } from './engine.js'
 
 const AGENTS = [
   { key: 'intelligence', name: 'Intelligence', ic: '1', does: 'Reads the data' },
@@ -436,6 +437,103 @@ export function AgentStage({ run, reveal }) {
   return (
     <section className="col stage-agents">
       <AgentFlow run={r} reveal={reveal} done={done} escalated={escalated} totalMs={totalMs} compact />
+    </section>
+  )
+}
+
+// ---- Replays: the other problems Buddy solves, played as a live conversation between the agents (for the demo).
+const REPLAY_TITLE = { utr: 'UTR pending', dup: 'Duplicate payment', fake: 'Fake screenshot', cb: 'Chargeback proof', refund: 'Refund a customer', edi: 'Loan EDI failed', growth: 'Grow my business', soundbox: 'Soundbox issue', hold: 'Settlement hold', sbrent: 'Rent after return', noc: 'Loan NOC', bank: 'Bank update', shield_cb: 'Chargeback incoming', shield_edi: 'Cash-flow gap' }
+const ME = { id: 'me', me: true, name: 'Merchant', tone: 'blue' }
+const kidOf = (id) => [...MKIDS, ...TEAM].find((a) => a.id === id)
+const trim = (s, n = 150) => (s && s.length > n ? s.slice(0, n - 1) + '…' : s)
+
+function buildThread(sc, m) {
+  const r = runScenario(sc, m, { lang: 'en' })
+  const S = (k) => r.steps.find((s) => s.key === k) || {}
+  const ev = S('eval'), pick = (ev.options || []).find((o) => o.id === ev.selected)
+  const t = []
+  t.push({ from: ME, to: MPARENT, text: r.utterance, kind: 'ask' })
+  if (S('insight').insight) t.push({ from: MPARENT, to: kidOf('memory'), text: 'Have we seen this before for this merchant?', kind: 'q' }, { from: kidOf('memory'), to: MPARENT, text: trim(typeof S('insight').insight === 'string' ? S('insight').insight : (S('insight').insight.text || 'Found a similar past case'), 140), kind: 'a' })
+  if (pick) t.push({ from: MPARENT, to: kidOf('intent'), text: `Score the options for “${sc.chip}”`, kind: 'q' }, { from: kidOf('intent'), to: MPARENT, text: `Best option: ${pick.label} (score ${pick.score}). ${pick.why || ''}`, kind: 'a' })
+  const cs = S('consent').consent
+  if (cs) t.push({ from: MPARENT, to: kidOf('consent'), text: `May I share ${cs.scope.replace(/_/g, ' ')} with Paytm?`, kind: 'q' }, { from: kidOf('consent'), to: MPARENT, text: `Yes. Permission token signed for “${cs.purpose.replace(/_/g, ' ')}”, valid ${cs.ttl_min} min`, kind: 'a', tag: 'DPDP' })
+  t.push({ from: MPARENT, to: PAYTM, text: `Signed request: ${sc.intent.replace(/_/g, ' ').toLowerCase()}`, kind: 'req', tag: 'A2A' })
+  ;['intelligence', 'risk', 'resolution', 'ledger'].forEach((k) => {
+    const s = S(k); if (!s.say) return
+    t.push({ from: PAYTM, to: kidOf(k), text: { intelligence: 'Pull the facts behind this', risk: 'Is this safe and within policy?', resolution: 'Decide the fix', ledger: 'Record what happened' }[k], kind: 'q' }, { from: kidOf(k), to: PAYTM, text: trim(s.say), kind: 'a', warn: s.tone === 'warn' })
+  })
+  t.push({ from: PAYTM, to: MPARENT, text: 'Done. Sending the answer back', kind: 'a', tag: 'A2A' })
+  t.push({ from: MPARENT, to: ME, text: trim(r.reply, 220), kind: 'reply' })
+  return t
+}
+
+export function Replays({ m }) {
+  const list = SCENARIOS.filter((s) => !s.hidden && s.id !== 'settle' && s.chip && (!s.available || s.available(m)))
+  const [id, setId] = useState(list[0]?.id)
+  const [n, setN] = useState(0)
+  const [auto, setAuto] = useState(false)
+  const sc = list.find((s) => s.id === id) || list[0]
+  const thread = React.useMemo(() => (sc ? buildThread(sc, m) : []), [sc, m])
+  const endRef = useRef(null)
+  const playing = n < thread.length
+  const play = (nid) => { if (nid) setId(nid); setN(0) }
+  useEffect(() => { setN(0) }, [id])
+  useEffect(() => {
+    if (n >= thread.length) return
+    const msg = thread[n]
+    const t = setTimeout(() => setN((k) => k + 1), msg.kind === 'ask' ? 1100 : msg.kind === 'reply' ? 1000 : 1150)
+    return () => clearTimeout(t)
+  }, [n, thread])
+  useEffect(() => { const el = endRef.current; if (el) el.scrollTop = el.scrollHeight }, [n])
+  useEffect(() => {
+    if (!auto || playing) return
+    const t = setTimeout(() => { const i = list.findIndex((s) => s.id === id); const nx = list[(i + 1) % list.length]; if (i + 1 >= list.length) setAuto(false); else setId(nx.id) }, 2600)
+    return () => clearTimeout(t)
+  }, [auto, playing, id])
+  if (!sc) return null
+  const pending = thread[n]
+  const Who = ({ a, size = 34 }) => <span className={`t-${a.tone || 'blue'}`}>{a.me ? <span className="rp-me" style={{ width: size, height: size }}>You</span> : <Avatar n={a} size={size} />}</span>
+  const shown = thread.slice(0, n)
+  return (
+    <section className="rp">
+      <div className="rp-head">
+        <div><b>More problems Buddy solves</b><span>Pick one and watch the agents work it out together</span></div>
+        <div className="rp-ctl">
+          <button className="rp-btn" onClick={() => play()}>↻ Replay</button>
+          <button className={`rp-btn ${auto ? 'on' : ''}`} onClick={() => { setAuto((a) => !a); if (!auto) { setId(list[0].id); setN(0) } }}>{auto ? '■ Stop' : '▶ Play all'}</button>
+        </div>
+      </div>
+      <div className="rp-chips">
+        {list.map((s) => <button key={s.id} className={`rp-chip ${s.id === sc.id ? 'on' : ''}`} onClick={() => { setAuto(false); play(s.id) }}>{REPLAY_TITLE[s.id] || s.chip}</button>)}
+      </div>
+      <div className="rp-body">
+        <div className="rp-side">
+          <div className="rp-cap">The merchant</div>
+          <div className="rp-chat">
+            {shown.some((x) => x.kind === 'ask') && <div className="rp-bub me">{thread[0].text}</div>}
+            {pending && pending.kind === 'ask' && <div className="rp-bub me typing"><i /><i /><i /></div>}
+            {shown.some((x) => x.kind === 'reply') ? <div className="rp-bub bd"><span className="rp-bn">Buddy</span>{thread[thread.length - 1].text}</div>
+              : n > 0 && <div className="rp-wait"><i className="live" /> Buddy is working with the agents…</div>}
+          </div>
+        </div>
+        <div className="rp-main">
+          <div className="rp-cap">The agents talking</div>
+          <div className="rp-feed" ref={endRef}>
+            {shown.filter((x) => x.kind !== 'ask' && x.kind !== 'reply').map((x, i) => (
+              <div key={sc.id + i} className={`rp-msg ${x.kind} ${x.warn ? 'warn' : ''}`}>
+                <Who a={x.from} />
+                <div className="rp-mb">
+                  <div className="rp-mh"><b>{x.from.short || x.from.name}</b><span>→</span><em>{x.to.me ? 'Merchant' : (x.to.short || x.to.name)}</em>{x.tag && <i className="rp-tag">{x.tag}</i>}</div>
+                  <div className="rp-mt">{x.text}</div>
+                </div>
+              </div>
+            ))}
+            {pending && pending.kind !== 'ask' && pending.kind !== 'reply' && (
+              <div className="rp-msg typing"><Who a={pending.from} /><div className="rp-mb"><div className="rp-mh"><b>{pending.from.short || pending.from.name}</b><span>→</span><em>{pending.to.me ? 'Merchant' : (pending.to.short || pending.to.name)}</em></div><div className="rp-mt dots"><i /><i /><i /></div></div></div>
+            )}
+          </div>
+        </div>
+      </div>
     </section>
   )
 }

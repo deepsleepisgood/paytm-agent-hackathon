@@ -7,7 +7,7 @@ import { SCENARIOS, runScenario, routeText, initLedger, applyEffects, liveOk, sa
 import Buddy from './Buddy.jsx'
 import { loadLang, saveLang, t as tr } from './i18n.js'
 import { buildAlerts } from './alerts.js'
-import Center, { AgentStage } from './Center.jsx'
+import Center, { AgentStage, Replays } from './Center.jsx'
 import Right from './Right.jsx'
 import { checkServices, getLedger, resetLive, getStrategyMemory, transcribe, getPaymentWatch, getFollowups } from './api.js'
 import { callLive, responseToRun, overlayLedger, overlayStrategy, overlaySupabase } from './live.js'
@@ -716,6 +716,7 @@ export default function App() {
           </div>
         </section>
         <AgentStage run={run} reveal={reveal} />
+        <div className="cc-replay"><Replays m={m} /></div>
         <Right m={m} L={ledger} mode={mode} />
         <Center run={run} reveal={reveal} busy={busy} onTry={onPreset} hideAgents />
       </main>
