@@ -149,7 +149,7 @@ function Home({ d, go, m, L, lang, onAlert, onUpload }) {
       <div className="topbar">
         <PaytmLogo size={22} />
         <div className="tb-r">
-          <button className="ai-badge lockup" onClick={() => go('buddy')} aria-label="Open Buddy"><img className="nav-logo" src="/brand/buddy-logo-light.png?v=3" alt="Buddy" height="17" /></button>
+          <button className="ai-badge lockup" onClick={() => go('buddy')} aria-label="Open Buddy"><span className="nav-logo-wrap"><img className="nav-logo" src="/brand/buddy-logo-light.png?v=3" alt="Buddy" height="17" /></span></button>
           <button className="dotwrap bell" aria-label="Notifications" onClick={() => { setNotifOpen((o) => !o); setSeen(sorted.length) }}><I.Bell size={22} />{unread && <em />}</button>
         </div>
       </div>
