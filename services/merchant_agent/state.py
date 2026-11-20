@@ -41,6 +41,8 @@ class MerchantState:
         self._loan_edi_status = "ACTIVE"  # last EDI status Paytm reported (EDI_PAUSED flips it)
         # payments.py: stuck UPI payments the buddy found and is watching (utr -> status, Paytm ticket)
         self.payment_watch: dict[str, dict[str, Any]] = {}
+        # conversation.py: the last few answered turns per MID, so follow-up questions keep their context
+        self.conversations: dict[str, list[dict[str, Any]]] = {}
         self.session_id = f"SESS_{uuid.uuid4().hex[:8].upper()}"  # one per demo run; /reset starts a new one
         self._seq = 0
 

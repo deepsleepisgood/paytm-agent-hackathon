@@ -84,7 +84,7 @@ class ConfirmEdiPauseRequest(BaseModel):
 class Classification(BaseModel):
     intent: RoutedIntent
     slots: Slots
-    source: Literal["llm", "utterance_bank", "keyword_fallback"]
+    source: Literal["llm", "utterance_bank", "keyword_fallback", "context"]
 
 
 class A2AEvent(BaseModel):
@@ -107,7 +107,7 @@ class MerchantResponse(BaseModel):
     transcript_source: Optional[Literal["live", "mock", "unavailable"]] = None
     consent_token: str
     intent: RoutedIntent
-    intent_source: Literal["llm", "utterance_bank", "keyword_fallback", "document", "proactive", "none"]
+    intent_source: Literal["llm", "utterance_bank", "keyword_fallback", "document", "proactive", "none", "context"]
     slots: Slots
     doc_extract: Optional[dict[str, Any]] = None
     # Buddy cognition (PLAN.md steps 1, 2, 5)
@@ -134,6 +134,8 @@ class MerchantResponse(BaseModel):
     a2a_events: list[A2AEvent]
     # payments.py: the buddy found the payment itself (no UTR) - what it found and what Paytm did about it
     payment_check: Optional[dict[str, Any]] = None
+    # conversation.py: how this turn used the earlier ones (follow_up_of = the question it continues)
+    conversation: Optional[dict[str, Any]] = None
 
 
 class EventsResponse(BaseModel):

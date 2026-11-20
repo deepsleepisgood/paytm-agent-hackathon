@@ -513,3 +513,87 @@ def test_payment_check_claims_nothing_when_paytm_is_unreachable(client):
     body = _q(client, "Customer ka paisa kat gaya par mere paas nahi aaya")
     assert body["payment_check"]["actions"] == []
     assert "kuch change nahi kiya" in body["reply_text"] and "ticket" not in body["reply_text"]
+
+
+def test_llm_reply_that_calls_a_payment_fake_is_dropped(client, monkeypatch):
+    _fake_llm(monkeypatch, "UTR_VERIFY", "UTR 632184920555 nahi mila, yeh screenshot fake ho sakta hai.")
+    body = _q(client, "UTR 632184920555 check karo")
+    assert body["reply_source"] == "template" and "fake" not in body["reply_text"].lower()
+
+
+# ----------------------------------------------------------------------------- follow-up questions (conversation.py)
+
+def test_follow_up_keeps_the_order_from_the_previous_question(client):
+    first = _q(client, "Order 9981 ka chargeback wala paisa kab milega?")
+    assert first["intent"] == "CHARGEBACK_RESOLVE" and first["slots"]["order_id"] == "9981"
+    body = _q(client, "Aur uska PoD kab tak bhejna hai?")
+    assert body["intent"] == "CHARGEBACK_RESOLVE" and body["slots"]["order_id"] == "9981"
+    assert body["conversation"]["follow_up_of"].startswith("Order 9981") and body["conversation"]["carried_slots"]
+
+
+def test_short_referential_question_continues_the_last_topic(client):
+    _q(client, "Customer ne galti se do baar payment kar diya")
+    body = _q(client, "uska kya hua?")
+    assert body["intent"] == "DUPLICATE_RECONCILE" and body["intent_source"] == "context"
+
+
+def test_without_history_a_referential_question_is_still_unclear(client):
+    assert _q(client, "uska kya hua?")["intent"] == "UNCLEAR"
+
+
+def test_fresh_question_on_the_same_topic_does_not_inherit_the_old_utr(client):
+    _q(client, "UTR 632184920111 ka payment aaya kya?")
+    body = _q(client, "Customer ka paisa kat gaya par mere paas nahi aaya")
+    assert body["slots"]["utr_number"] is None and body["payment_check"] is not None
+
+
+def test_classifier_and_reply_llm_see_the_conversation(client, monkeypatch):
+    import router as _router
+
+    seen = []
+
+    async def fake(system, user, response_format="json"):
+        seen.append((response_format, user))
+        return {"intent": "CHARGEBACK_RESOLVE", "slots": {"order_id": "9981"}} if response_format == "json" else None
+    monkeypatch.setattr(_router.upstream, "llm", fake)
+    _q(client, "Order 9981 ka chargeback wala paisa kab milega?")
+    seen.clear()
+    _q(client, "woh kab tak release hoga?")
+    cls_user = next(u for f, u in seen if f == "json")
+    reply_user = next(u for f, u in seen if f == "text")
+    assert "conversation_so_far" in cls_user and "Order 9981" in cls_user
+    assert "conversation_so_far" in reply_user
+
+
+def test_reset_forgets_the_conversation(client):
+    _q(client, "Customer ne galti se do baar payment kar diya")
+    client.post("/reset")
+    assert _q(client, "uska kya hua?")["intent"] == "UNCLEAR"
+
+
+def test_long_llm_answer_is_trimmed_to_its_first_sentences(client, monkeypatch):
+    long = ("Penalty nahi lagegi, Clix Capital ne bounce charge maaf kar diya hai. "
+            + "Aap UPI link se aaj bhar sakte hain ya 2 din ka pause le sakte hain, jo bhi aapke liye theek ho, " * 3)
+    _fake_llm(monkeypatch, "MANDATE_TROUBLESHOOT", long)
+    body = _q(client, "Mera loan EDI bounce ho gaya, penalty lagegi kya?")
+    assert body["reply_source"] == "llm" and body["reply_text"].startswith("Penalty nahi lagegi")
+
+
+def test_goods_advice_is_stripped_outside_payment_checks(client, monkeypatch):
+    _fake_llm(monkeypatch, "SETTLEMENT_RECONCILE",
+              "₹4,160 MDR, GST, refund, rental aur hold mein kate. Saman abhi hold par rakhiye kyunki payment nahi aaya.")
+    body = _q(client, "Kal ₹4,160 kahan kata?")
+    assert body["reply_source"] == "llm" and "aman" not in body["reply_text"]
+
+
+def test_fresh_question_does_not_take_an_old_utr_from_the_llm(client, monkeypatch):
+    import router as _router
+
+    async def fake(system, user, response_format="json"):  # the LLM copies the UTR from conversation_so_far
+        return {"intent": "UTR_VERIFY", "slots": {"utr_number": "632184920555"}} if response_format == "json" else None
+    monkeypatch.setattr(_router.upstream, "llm", fake)
+    _q(client, "Is UTR 632184920555 a real payment?", "en")
+    body = _q(client, "The customer's money was debited but I didn't get it", "en")
+    assert body["slots"]["utr_number"] is None and body["payment_check"] is not None
+    # a real follow-up may reuse it
+    assert _q(client, "what about that one?", "en")["slots"]["utr_number"] == "632184920555"

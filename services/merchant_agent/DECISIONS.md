@@ -520,6 +520,94 @@ The user approved changes in `frontend/` for this, so they're outside my usual f
 - Tests: Sarvam 77, Paytm 257, Merchant 125 (5 new), frontend build OK. Ports freed.
 - Gotcha: building the frontend from Git Bash with `VITE_*=/svc/...` gets rewritten to `C:/Program Files/Git/svc/...` (MSYS path conversion). Use `python run.py prod`, which builds through Python. The Dockerfile builds on Linux and is unaffected.
 
+## Phase 12: "Don't ask the merchant for a UTR, just find it and fix it" and the Hinglish tab (2026-11-20)
+
+The user's ask: "customer was debited but nothing reached me" and "the customer's screen keeps spinning" should be solved when the merchant asks. Before this, both cases needed a 12-digit UTR, and without one the buddy only asked for it.
+
+### What was built, with the reasons
+
+- **D102 — `payments.py`, the no-UTR payment check.** `UTR_VERIFY` without a UTR now goes here.
+  - It reads Paytm's own feed (8002 `GET /ledger/{mid}` → `transactions`, the last 24 h), with `data/seed/utr_ledger.csv` adding customer names.
+  - It acts through real A2A calls:
+    - **Stuck (PENDING):** checks the status with 8002 (`UTR_VERIFY`), raises an 8002 ticket (`ESCALATE_HUMAN`), and watches the payment. Asking again reuses the ticket instead of opening another.
+    - **Paid twice:** `DUPLICATE_RECONCILE`. 8002 refunds the second payment and marks it `refunded`.
+    - **Received:** checks with 8002, then says "saman de sakte hain, customer ko boliye dobara pay na karein".
+    - **Failed:** says nothing was taken from the customer and to pay again.
+  - **Spinning screen = the customer at the counter right now.** The check looks at the newest payment, or the one with the amount the merchant said, after any double payment. "Paisa kat gaya" looks at every stuck payment plus any double payment.
+  - **If 8002 is unreachable, nothing is claimed:** "Abhi Paytm se connect nahi ho pa raha, maine kuch change nahi kiya."
+- **D103 — the watch is real, not a promise.**
+  - A background task (`payments.watch_loop`, every `PAYMENT_WATCH_EVERY_S`=20 s) re-reads 8002 for watched payments.
+  - `GET /merchant/payment-watch` returns them, with a Hinglish or English `message` once a payment lands or goes back.
+  - In live mode the app polls it every 15 s and posts the message into the chat.
+  - Honest limit: 8002's seed never moves a PENDING payment, so in the demo the watch stays PENDING.
+- **D104 — routing.**
+  - Keyword rules and the classifier prompt send "kat gaya / debited … nahi aaya", "screen ghoom rahi / loading / stuck" and "payment atka" to UTR_VERIFY, with two few-shot examples.
+  - An amount is read only when it is said as money ("₹2,400", "2400 rupaye"). A bare number may be an order id.
+- **D105 — never "fake".**
+  - A not-found UTR is now "aapke Paytm account mein nahi mila, saman mat dijiye". A payment that is missing may still be on its way, and the merchant repeats our words to the customer.
+  - The reply LLM still said "screenshot fake ho sakta hai" live, so any LLM reply containing fake/fraud/nakli/farzi/scam is dropped and the template is used.
+  - The prompt also forbids claiming an action that paytm_response doesn't show. Live, it invented "ticket khol ke NPCI se check karwa rahe hain".
+- **D106 — the Hindi tab is Roman Hinglish (user's choice).**
+  - Every Hindi template, tip, clarification and error is written in Latin letters ("Mil gaya: Vikram ka ₹2,400…").
+  - The LLM language rule asks for WhatsApp-style Roman Hinglish. Any reply in Devanagari, on either tab, falls back to the template.
+  - Dates are "20 Nov" on both tabs.
+  - The frontend's i18n, the guided-demo replies and the toggle label ("Hinglish") were converted too.
+- **D107 — spoken in Devanagari.**
+  - Bulbul reads Hindi script natively, so `upstream.speak_form` sends Hinglish replies through Sarvam `POST /transliterate` (en-IN → hi-IN) just before TTS. Examples: "Mil gaya: Vikram ka" → "मिल गया: विक्रम का", and `Rs.` → `₹`.
+  - It takes about 1.3 s and is cached.
+  - 8001 has no transliterate endpoint, so 8003 calls Sarvam directly with the shared `SARVAM_API_KEY`.
+  - It is skipped in mock mode. On failure the Roman text is spoken. Tests point `SARVAM_API_BASE` at a dead port.
+- **D108 — English tab with no LLM and no 8002 text** now gets a short English line, never the Hinglish template. Found when the eval ran while the stack was down.
+
+### Verification
+- **Live, against 8002.** "Customer ka paisa kat gaya par mere paas nahi aaya":
+  - it found Vikram's ₹2,400 PhonePe payment PENDING;
+  - 8002 ticket **tkt_001** was created;
+  - Sunita's double payment for order 4489 was refunded (8002 `refunded: false → true`);
+  - asking again created no second ticket.
+- **Live, other questions.** "₹2,546 debited but I can't see it" found Kiran's payment and confirmed it was received. "₹999 ka payment aaya kya?" got "koi payment nahi dikha, saman mat dijiye".
+- **`eval_live.py`** (now 26 cases: 3 new payment checks, Hinglish expected on the Hindi tab):
+  - **26/26** on intent, fact and language;
+  - average 4.8 s, max 7.1 s (+0.8 s for transliteration);
+  - all 15 transliterations and every TTS call live.
+- **Browser:**
+  - the Hinglish UI renders and the toggle fits;
+  - a typed "paisa kat gaya" shows the scan → STUCK + PAID_TWICE trace, 3 A2A round trips in the log, the ₹2,400 row "PENDING ✓ checked", and "Actions taken: Auto-refund #4489 ₹1,180 · tkt_001";
+  - the only console error is the favicon 404, which was there before.
+- **Tests:** merchant 125 + 9 new pass; 15 old assertions on Hindi-script wording were moved to the Roman wording. Frontend build OK. Ports freed.
+
+## Phase 13: Follow-up questions keep their context (2026-11-20)
+
+Before this, every question was classified and answered on its own. "Uske liye kya bhejna padega?" after a chargeback question had nothing to refer to.
+
+### What was built, with the reasons
+
+- **D109 — `conversation.py`, short-term memory per MID.**
+  - Each answered turn is kept: the question, intent, slots, reply, and the facts later questions point at (order ids, UTRs, ticket ids, the payment found).
+  - That includes uploads, Paytm alerts and the "haan" sign-offs, recorded as `[Paytm alert: …]` and `[tapped yes: …]`.
+  - Limits: the last 6 turns are kept and 3 are shown to the LLMs. Memory is forgotten after `CONVERSATION_IDLE_S` (15 min) and on `/reset`.
+  - It stays in 8003. 8002 still gets structured slots only.
+- **D110 — the router sees the conversation.** The classifier gets `{"conversation_so_far", "new_message"}` with a FOLLOW-UPS rule: classify the new message, resolve "uska / woh / kab tak" from earlier turns, and treat a question already answered as INFO_QUERY.
+  - A short referential message that the LLM (or the keyword fallback) can't place continues the last business intent (`intent_source: "context"`). Without any history it is still UNCLEAR.
+- **D111 — carrying context only for real follow-ups.**
+  - Slots are carried, and an id the LLM takes from earlier turns is accepted, only when the message reads as a follow-up.
+  - Live, the eval's "money was debited but I didn't get it" re-checked the previous question's UTR instead of finding the stuck payment. English "it/its" were also dropped from the follow-up markers ("get it").
+- **D112 — the reply and info LLMs see the conversation.** Numbers from earlier turns count as grounded: "kab tak?" → "19 Nov tak", "ticket number?" → "tkt_001".
+  - Each response carries `conversation: {turns_remembered, follow_up_of, carried_slots, intent_from_context}`, and the trace shows "follow-up of “…”".
+- **D113 — two reply fixes found in the live conversations.**
+  - An LLM answer over 40 words is cut to its leading whole sentences rather than replaced by Paytm's 90-word template. "Will there be a penalty?" now gets "No penalty… bounce charge is ₹0".
+  - Advice about goods (saman, hand over) is stripped from anything that isn't a UTR_VERIFY answer. Settlement answers had gained "Saman abhi hold par rakhiye".
+
+### Verification
+- **Live conversations of 3 turns each:**
+  - chargeback → "uske liye kya bhejna padega?" (order 9981 kept) → "kitne ghante?" (48);
+  - "paisa kat gaya" → "kab tak wapas milega usko?" (19 Nov, Vikram) → "ticket number?" (tkt_001);
+  - "₹4,160 kahan kata?" → "usme GST?" (₹261) → "refund kis order ka?" (4412);
+  - EDI bounced → "why?" → "penalty?" (none, ₹0);
+  - UTR check → "kitne ka tha?" (₹1,250) → cricket (still a rephrase).
+- **`eval_live.py`** (one continuous session, so memory is on): **26/26** on all three checks, average 4.9 s.
+- **Tests:** test_buddy 70 (8 new); the full merchant suite before the last two fixes was 138 passed. Frontend build OK. Ports freed.
+
 ---
 
 ## Open items for integration (6:30 PM)

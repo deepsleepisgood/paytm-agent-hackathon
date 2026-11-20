@@ -45,6 +45,13 @@ function evalFrom(ie) {
   return { options, selected: ie.options.find((o) => o.selected)?.id || ie.selected_option_id || ie.selected }
 }
 
+// conversation memory (8003 conversation.py): this question continued an earlier one
+const followUp = (r) => {
+  const c = r.conversation || {}
+  if (!c.follow_up_of) return ''
+  return ` · follow-up of “${String(c.follow_up_of).slice(0, 60)}”${c.carried_slots ? ' (same order / UTR)' : ''}`
+}
+
 export function responseToRun(sc, m, r, utterance, elapsed) {
   // Not understood (UNCLEAR) or answered from the merchant's own books (INFO_QUERY): nothing went to Paytm.
   if (r.intent === 'UNCLEAR' || r.intent === 'INFO_QUERY') {
@@ -53,7 +60,7 @@ export function responseToRun(sc, m, r, utterance, elapsed) {
       events: r.a2a_events || [], audio: r.audio_base64, verified: null, escalated: false,
       sources: { paytm: 'none', intent: r.intent_source, reply: r.reply_source },
       steps: [
-        { key: 'input', title: 'Input understood', say: `intent=${r.intent}`, ms: 0 },
+        { key: 'input', title: 'Input understood', say: `intent=${r.intent}${followUp(r)}`, ms: 0 },
         { key: 'eval', title: 'Intent routing', live: true, route: { intent: r.intent, source: r.intent_source, slots: {}, transcript: r.transcript }, ms: 0 },
         { key: 'reply', title: 'Reply to merchant', reply: r.reply_text, ms: 0, effects: [] },
       ],
@@ -106,7 +113,7 @@ export function responseToRun(sc, m, r, utterance, elapsed) {
   }
   const alert = pro?.alert?.data
   const steps = [
-    { key: 'input', title: 'Input understood', say: `intent=${r.intent}`, ms: 0 },
+    { key: 'input', title: 'Input understood', say: `intent=${r.intent}${followUp(r)}`, ms: 0 },
     { key: 'consent', title: 'DPDP consent', consent: { token: r.consent_token, purpose: String(pro?.scenario || r.intent).toLowerCase(), scope: 'a2a:dispatch', ttl_min: 15, issued: new Date().toISOString().slice(11, 19) + 'Z', mid: r.mid }, ms: 0 },
     ...(hi ? [{ key: 'insight', title: 'What the AI knew', insight: { summary: hi.summary || hi.tip_hi, evidence: hi.evidence || [] }, ms: 0 }] : []),
     ev ? { key: 'eval', title: 'Intervention evaluation', options: ev.options, selected: ev.selected, ms: 0 }
