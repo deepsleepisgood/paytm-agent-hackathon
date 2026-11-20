@@ -1793,3 +1793,6 @@ button,label,.az-eyebrow{text-transform:none!important}
 .rm-n.work .rb-eye{animation:rbScan .5s ease-in-out infinite}
 .rm-n.work .rb-mouth rect{animation-duration:.35s}
 .rm-n.done .rb-eye,.rm-n.idle .rb-eye{animation:rbBlink 4.6s infinite}
+
+.cc-grid{grid-template-areas:"phone stage" "replay replay"!important;grid-template-rows:minmax(calc(100vh - 56px),auto) auto!important;padding-bottom:40px}
+@media (max-width:1060px){.cc-grid{grid-template-areas:"phone" "stage" "replay"!important;grid-template-rows:none!important}}

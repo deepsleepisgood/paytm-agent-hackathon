@@ -717,8 +717,6 @@ export default function App() {
         </section>
         <AgentStage run={run} reveal={reveal} />
         <div className="cc-replay"><Replays m={m} /></div>
-        <Right m={m} L={ledger} mode={mode} />
-        <Center run={run} reveal={reveal} busy={busy} onTry={onPreset} hideAgents />
       </main>
     </div>
   )
