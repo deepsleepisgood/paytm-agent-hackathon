@@ -479,7 +479,7 @@ export function Replays({ m }) {
   useEffect(() => {
     if (!run || !T) return
     if (n >= T.st.length) { setRun(false); return }
-    const t = setTimeout(() => setN((k) => k + 1), n === 0 ? 500 : 1000)
+    const t = setTimeout(() => setN((k) => k + 1), n === 0 ? 250 : 480)
     return () => clearTimeout(t)
   }, [run, n, T])
   if (!sc || !T) return null
@@ -495,7 +495,7 @@ export function Replays({ m }) {
     if (!chain || !T || n < T.st.length) return
     const i = list.findIndex((s) => s.id === id)
     if (i + 1 >= list.length) { setChain(false); return }
-    const t = setTimeout(() => setId(list[i + 1].id), 1800)
+    const t = setTimeout(() => setId(list[i + 1].id), 900)
     return () => clearTimeout(t)
   }, [chain, n, id])
   const start = () => { setChain(true); setN(0); setRun(true); if (id !== list[0].id) setId(list[0].id) }
