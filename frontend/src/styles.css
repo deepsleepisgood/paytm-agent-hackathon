@@ -1456,3 +1456,14 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .af .mn .pt-av b{color:#012b72;font-size:inherit}.af .mn .pt-av i{color:#00baf2}
 .pt-av.logo{background:#fff;padding:0;overflow:hidden}
 .pt-av.logo img{width:78%;height:78%;object-fit:contain;display:block;mix-blend-mode:normal}
+
+/* ===== type scale for answers: comfortable, not shouty ===== */
+.a-card .a-head{letter-spacing:-.018em;font-weight:700}
+.a-card .a-head.hs{font-size:26px;line-height:1.2}
+.a-card .a-head.hm{font-size:22px;line-height:1.26}
+.a-card .a-head.hl{font-size:19px;line-height:1.34;font-weight:650;letter-spacing:-.01em}
+.a-chip-t{font-size:12px;letter-spacing:.05em}
+.a-hero b{font-size:30px}.a-hero.id b{font-size:20px}.a-hero span{font-size:14px}
+.a-card .facts div{font-size:15px}
+.a-next p{font-size:14.5px;line-height:1.5}
+.a-q{font-size:13px;line-height:1.4}

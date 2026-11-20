@@ -55,6 +55,10 @@ function AnswerIcon({ kind }) {
   )
 }
 
+// Type scale: short headlines can be bold and large, long sentences step down so they stay easy to read.
+const headSize = (h) => { const n = h.replace(/[.:]\s*$/, '').length; return n <= 30 ? 'hs' : n <= 62 ? 'hm' : 'hl' }
+const repeatsInHeadline = (h, val) => { const d = String(val).replace(/\D/g, ''); return d.length >= 6 && h.replace(/\D/g, '').includes(d) }
+
 // Counts a money value up from zero once, so the number feels earned.
 function CountUp({ value }) {
   const m = String(value).match(/^(.*?)([\d,]+(?:\.\d+)?)(.*)$/)
@@ -298,8 +302,8 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
                 </button>
               </div>
               {info.context && <p className="a-ctx">{info.context}</p>}
-              <h3 className="a-head">{info.headline.replace(/[.:]\s*$/, '')}</h3>
-              {info.facts.length === 1 && (
+              <h3 className={`a-head ${headSize(info.headline)}`}>{info.headline.replace(/[.:]\s*$/, '')}</h3>
+              {info.facts.length === 1 && !repeatsInHeadline(info.headline, info.facts[0].v) && (
                 <div className={`a-hero ${/save|releas|credit|receiv|back|refund/i.test(info.facts[0].k) ? 'pos' : ''} ${/₹/.test(info.facts[0].v) ? '' : 'id'}`}>
                   <span>{info.facts[0].k}</span><b>{/₹/.test(info.facts[0].v) ? <CountUp value={info.facts[0].v} /> : info.facts[0].v}</b>
                 </div>
