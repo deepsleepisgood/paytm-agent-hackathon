@@ -232,6 +232,24 @@ def _safety(intent: str) -> str:
     return " " + (en if _en() else hi) if (en if _en() else hi) else ""
 
 
+def voice_safety(intent: str) -> str:
+    return _safety(intent)
+
+
+def voice_medium(intent: str) -> str:
+    return ("Paytm isn't responding, so nothing has changed yet. I'll do it automatically once Paytm is back."
+            if _en() else "Paytm abhi jawab nahi de raha, maine kuch change nahi kiya. Paytm wapas aate hi main khud kar "
+            "dunga.") + _safety(intent)
+
+
+def voice_severe(sla_min: int, automated: bool, intent: str) -> str:
+    sla = _sla_words(sla_min)
+    line = (f"A Paytm specialist will call you within {sla}." if _en() else f"Paytm specialist {sla} mein call karenge.")
+    if automated:
+        return line
+    return (("Paytm isn't responding. " if _en() else "Paytm abhi jawab nahi de raha. ") + line + _safety(intent))
+
+
 def low_text(original: str) -> str:
     return (("I couldn't confirm this live with Paytm, so this is from your own books: " if _en() else
              "Paytm se abhi live confirm nahi ho paya, yeh aapke khate ke hisaab se hai: ") + original)
@@ -496,6 +514,7 @@ async def apply(result: dict[str, Any], merchant_text: Optional[str]) -> dict[st
                            "paytm_ticket_id": None, "sla_min": None}
     original = result.get("reply_text") or ""
     reply = original
+    result["_answer"] = original   # voice.py speaks a short form of the answer itself, not the added lines
 
     if not enabled():
         tri["fallback"] = "DISABLED"
@@ -509,14 +528,16 @@ async def apply(result: dict[str, Any], merchant_text: Optional[str]) -> dict[st
         # ESCALATE_HUMAN already tells the merchant a person will call; don't say it twice.
         if not (intent == "ESCALATE_HUMAN" and ok):
             reply = severe_text(intent, h["id"], h["sla_min"], ok, original)
+            tri["voice_line" if ok else "voice_replace"] = voice_severe(h["sla_min"], ok, intent)
     elif not ok and sev == MEDIUM and not REPLAYING.get():
         r = queue_retry(result, rating, merchant_text)
-        tri.update(fallback="AUTO_RETRY", retry_id=r["id"])
+        tri.update(fallback="AUTO_RETRY", retry_id=r["id"], voice_replace=voice_medium(intent))
         reply = medium_text(intent, r["id"])
     elif not ok and sev == LOW:
         tri["fallback"] = "AUTO_MESSAGE"
         if intent not in ("UNCLEAR", "INFO_QUERY"):
             reply = low_text(original)
+            tri["voice_prefix"] = "From your books:" if _en() else "Khate ke hisaab se:"
 
     STATE.log("TRIAGE", pipeline.ACTOR_MERCHANT,
               f"Severity {sev} · " + ("handled automatically" if tri["fallback"] == "NONE" else f"fallback {tri['fallback']}"),

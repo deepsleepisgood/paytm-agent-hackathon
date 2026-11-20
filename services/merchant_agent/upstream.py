@@ -13,6 +13,7 @@ The mock Paytm answers and mock document fields are built from the team dataset
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -196,28 +197,90 @@ _DEVANAGARI = re.compile("[ऀ-ॿ]")
 _translit_cache: dict[str, str] = {}
 
 
-async def speak_form(text: str) -> str:
-    """Roman Hinglish -> Devanagari for the voice only ("Aapka payment aa gaya" -> "आपका पेमेंट आ गया"), via Sarvam's
-    transliterate API (~1.3 s; 8001 has no endpoint for it). Text already in Devanagari, no key, or any failure:
-    the text is returned unchanged and Bulbul reads it as it is."""
-    key = os.getenv("SARVAM_API_KEY", "").strip()
-    if not text or not key or _DEVANAGARI.search(text) or os.getenv("SARVAM_MODE", "auto").lower() == "mock":
-        return text
+# Words our Hinglish replies use that an Indian speaker says in English. Kept in Latin script so Bulbul says them the
+# English way ("settlement", not "सेटलमेंट"). Curated, not a dictionary: many Roman Hindi words are also English words
+# ("do baar" = twice, "main" = I, "mat" = don't, "din" = day, "band" = closed) and must stay Hindi.
+ENGLISH_WORDS = set("""
+account accounts active inactive alert alerts amount angry app approve approved auto auto-reverse average balance bank
+battery bill bounce bounced broken budget buffer business button buyer call callback cancel capital case cash change
+charge charges chargeback check claim clear close closure complete confirm connect consent contact credit customer
+cycle data dead debit default delivery deduction details device digit discount dispute duplicate eligibility emi
+engineer fail failed fake fee fees festival file firmware foreclosure freeze gross growth help hold invoice inactive
+interest lender limit link live loan log logged mandate marketing message minute miss model net network notification
+number offer online order packet pause pay payment payout penalty pending penny-drop phone pickup plan please
+pre-approved process profile proof queue quote rate reach ready received recent record refund release released
+reminder rent rental reorder repeat replacement report request return risk safe sale screen screenshot secure seller
+server service settle settled settlement share shiprocket short sign-off signal signed sorry soundbox specialist
+start statement status stock success successful suggestion supplier support surrender system tally tap target team
+tenure ticket token total transaction transfer type unclear update updated upload urgent verify verified watch
+weekend whatsapp working worst paytm phonepe gpay google clix ondc
+""".split())
+_KEEP_TOKEN = re.compile(r"[\d₹#%+/:–—@]")             # numbers, amounts, T+1, Fri–Sun, 2.3x: leave as written
+_CORE = re.compile(r"^[^\w₹#]+|[^\w%]+$")
+
+
+def _is_english(token: str) -> bool:
+    core = _CORE.sub("", token)
+    if not core or _KEEP_TOKEN.search(core):
+        return True
+    if sum(c.isupper() for c in core) >= 2:              # UTR, EDI, GST, PoD, PhonePe, GPay
+        return True
+    low = core.lower()
+    return low in ENGLISH_WORDS or (low.endswith("s") and low[:-1] in ENGLISH_WORDS)
+
+
+async def _translit(text: str, key: str) -> str:
     if text in _translit_cache:
         return _translit_cache[text]
+    r = await client().post(f"{SARVAM_API_BASE}/transliterate", headers={"api-subscription-key": key},
+                            json={"input": text[:1000], "source_language_code": "en-IN",
+                                  "target_language_code": "hi-IN"}, timeout=TRANSLIT_TIMEOUT_S)
+    r.raise_for_status()
+    out = str((r.json() or {}).get("transliterated_text") or "").strip()
+    if not out:
+        raise ValueError("empty transliteration")
+    # Rupee amounts come back as "Rs. 2,400"; Bulbul says "₹2,400" as rupees, so keep the symbol.
+    out = re.sub(r"\bRs\.\s*", "₹", out)
+    if len(_translit_cache) > 512:
+        _translit_cache.clear()
+    _translit_cache[text] = out
+    return out
+
+
+def mixed_segments(text: str) -> list[tuple[bool, str]]:
+    """Split a Roman Hinglish reply into runs of (is_hindi, text). Hindi runs go to Devanagari; English runs stay."""
+    runs: list[tuple[bool, str]] = []
+    for tok in text.split():
+        hindi = not _is_english(tok)
+        if runs and runs[-1][0] == hindi:
+            runs[-1] = (hindi, runs[-1][1] + " " + tok)
+        else:
+            runs.append((hindi, tok))
+    return runs
+
+
+async def speak_form(text: str) -> str:
+    """How a Hindi-tab reply is sent to Bulbul. Shown in Roman Hinglish, spoken as real Hinglish.
+
+    Sarvam's own guidance for Bulbul v3: write English words in English script and Hindi words in Devanagari
+    ("Sarvam AI में आपका स्वागत है", not "सरवम एआई में..."). So only the Hindi runs are transliterated:
+    "Aapka settlement kal aa jayega" -> "आपका settlement कल आ जायेगा".
+
+    VOICE_SCRIPT=mixed (default) | devanagari (everything transliterated, the old behaviour) | roman (send as typed).
+    No key, mock mode, text already in Devanagari, or any failure: the text goes out unchanged."""
+    mode = os.getenv("VOICE_SCRIPT", "mixed").strip().lower()
+    key = os.getenv("SARVAM_API_KEY", "").strip()
+    if (not text or mode == "roman" or not key or _DEVANAGARI.search(text)
+            or os.getenv("SARVAM_MODE", "auto").lower() == "mock"):
+        return text
     try:
-        r = await client().post(f"{SARVAM_API_BASE}/transliterate", headers={"api-subscription-key": key},
-                                json={"input": text[:1000], "source_language_code": "en-IN",
-                                      "target_language_code": "hi-IN"}, timeout=TRANSLIT_TIMEOUT_S)
-        r.raise_for_status()
-        out = str((r.json() or {}).get("transliterated_text") or "").strip()
-        if out:
-            # Rupee amounts come back as "Rs. 2,400"; Bulbul says "₹2,400" as rupees, so keep the symbol.
-            out = re.sub(r"\bRs\.\s*", "₹", out)
-            if len(_translit_cache) > 256:
-                _translit_cache.clear()
-            _translit_cache[text] = out
-            return out
+        if mode == "devanagari":
+            return await _translit(text, key)
+        runs = mixed_segments(text)
+        hindi = [seg for is_hi, seg in runs if is_hi]
+        uniq = list(dict.fromkeys(hindi))   # one call per distinct run, in parallel (~1.3 s, cached)
+        done = dict(zip(uniq, await asyncio.gather(*(_translit(seg, key) for seg in uniq))))
+        return " ".join(done[seg] if is_hi else seg for is_hi, seg in runs)
     except Exception as exc:  # noqa: BLE001
         log.warning("transliterate failed (%s): %s; speaking the Roman text", type(exc).__name__, exc)
     return text
