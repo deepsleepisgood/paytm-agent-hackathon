@@ -88,7 +88,7 @@ def word_parts(on="dark", sparkle=True, text="BUDDY"):
         d += f(x)
         x += w + 27
     end = x - 27 + 6
-    a, b = ("#2a6fd0", "#ffffff") if on == "dark" else ("#1740a8", "#3b82e8")
+    a, b = ("#2a6fd0", "#ffffff") if on == "dark" else ("#1f5fc4", "#4aa6ee")
     mid = '<stop offset=".45" stop-color="#9fd3f6"/>' if on == "dark" else ""
     star = ""
     if sparkle:

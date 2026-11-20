@@ -80,7 +80,7 @@ export function BuddyWordmark({ height = 24, on = 'dark', sparkle = true, text =
   const id = React.useId().replace(/:/g, '')
   const { d, end } = layout(text)
   const W = end + (sparkle ? 46 : 6)
-  const [a, b] = on === 'dark' ? ['#2a6fd0', '#ffffff'] : ['#1740a8', '#3b82e8']
+  const [a, b] = on === 'dark' ? ['#2a6fd0', '#ffffff'] : ['#1f5fc4', '#4aa6ee']
   return (
     <svg className={className} width={(height * W) / 68} height={height} viewBox={`-6 -6 ${W} 68`} role="img" aria-label={text} style={{ display: 'block', overflow: 'visible' }}>
       <defs><linearGradient id={`w${id}`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2={end} y2="0"><stop offset="0" stopColor={a} />{on === 'dark' && <stop offset=".45" stopColor="#9fd3f6" />}<stop offset="1" stopColor={b} /></linearGradient></defs>
