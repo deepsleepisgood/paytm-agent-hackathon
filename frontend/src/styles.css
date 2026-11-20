@@ -1801,3 +1801,8 @@ button,label,.az-eyebrow{text-transform:none!important}
 .cc-grid{grid-template-areas:"phone stage"!important;grid-template-rows:auto!important}
 .cc-replay{grid-area:stage;align-self:start}
 @media (max-width:1060px){.cc-grid{grid-template-areas:"phone" "stage"!important}}
+
+/* replay sits below the phone and live mesh, on its own row */
+.cc-grid{grid-template-areas:"phone stage" "replay replay"!important;grid-template-rows:auto auto!important;row-gap:48px}
+.cc-replay{grid-area:replay;align-self:start}
+@media (max-width:1060px){.cc-grid{grid-template-areas:"phone" "stage" "replay"!important;grid-template-rows:none!important}}

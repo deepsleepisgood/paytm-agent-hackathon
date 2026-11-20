@@ -715,7 +715,8 @@ export default function App() {
             <div className="home-ind" />
           </div>
         </section>
-        {run ? <AgentStage run={run} reveal={reveal} /> : <div className="cc-replay"><Replays m={m} /></div>}
+        <AgentStage run={run} reveal={reveal} />
+        <div className="cc-replay"><Replays m={m} /></div>
       </main>
     </div>
   )
