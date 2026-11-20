@@ -1661,3 +1661,8 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
   .col.center{position:static;max-height:none;overflow:visible}
 }
 @media (max-width:760px){.cc-grid{display:block;padding:0}}
+
+/* only the phone: no glow, halo or big shadow behind it */
+.phone,.phone.dark,.phone.scrolled{box-shadow:0 0 0 1px #3a3a3c!important;filter:none!important}
+.col.left{background:none!important;box-shadow:none!important;filter:none!important}
+.cc-grid{row-gap:32px}
