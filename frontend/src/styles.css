@@ -1628,3 +1628,13 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .cc-top .cc-title{border-left:1px solid rgba(255,255,255,.22)!important}
 .cc-top .cc-by{color:#b9cdf0!important}
 .cc-top{background:linear-gradient(120deg,#061636 0%,#0a2455 55%,#0f3277 100%)!important}
+
+/* top-bar logo: soft glass reflection (static top sheen, a slow light sweep, a faint mirror image below) */
+.cc-logo-wrap{position:relative;display:inline-block;line-height:0;flex:none}
+.cc-logo-wrap .cc-logo{-webkit-box-reflect:below -1px linear-gradient(transparent 58%,rgba(255,255,255,.22))}
+.cc-logo-wrap:before,.cc-logo-wrap:after{content:"";position:absolute;inset:0;pointer-events:none;
+  -webkit-mask:url(/brand/buddy-logo.png?v=3) center/contain no-repeat;mask:url(/brand/buddy-logo.png?v=3) center/contain no-repeat}
+.cc-logo-wrap:before{background:linear-gradient(180deg,rgba(255,255,255,.38) 0%,rgba(255,255,255,0) 52%)}
+.cc-logo-wrap:after{background:linear-gradient(105deg,transparent 32%,rgba(255,255,255,.85) 48%,rgba(170,215,255,.55) 53%,transparent 68%);background-size:320% 100%;background-position:160% 0;mix-blend-mode:screen;animation:logoSweep 7s ease-in-out 1.5s infinite}
+@keyframes logoSweep{0%,68%,100%{background-position:160% 0}86%{background-position:-60% 0}}
+@media (prefers-reduced-motion:reduce){.cc-logo-wrap:after{animation:none;opacity:0}}
