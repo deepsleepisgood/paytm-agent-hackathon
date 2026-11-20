@@ -254,14 +254,10 @@ async def check(*, request_id: str, mid: str, consent_token: str, merchant_text:
     STATE.log("PAYMENT_CHECK_DONE", pipeline.ACTOR_MERCHANT,
               "; ".join(a["what"] for a in actions) or "Checked payments: nothing to fix",
               {"findings": findings, "actions": actions}, request_id)
-    audio_b64, tts_source = await upstream.tts(reply, pipeline.tts_code())
-    STATE.log("VOICE_REPLY_READY", pipeline.ACTOR_MERCHANT, "Payment check reply ready",
-              {"reply_text": reply, "reply_source": "template", "tts": tts_source,
-               "language_code": pipeline.tts_code()}, request_id)
     main = findings[0] if findings else {}
     status = {"STUCK": "PENDING", "PAID_TWICE": "REFUND_INITIATED" if main.get("refunded") else "DUPLICATE_FOUND",
               "RECEIVED": "SUCCESS", "FAILED": "FAILED"}.get(main.get("kind"), "ALL_CLEAR")
-    return {
+    return await pipeline.finish({
         "request_id": request_id, "mid": mid, "transcript": transcript, "transcript_source": transcript_source,
         "consent_token": consent_token, "intent": "UTR_VERIFY", "intent_source": intent_source,
         "slots": (slots or Slots()).model_dump(), "doc_extract": None,
@@ -269,12 +265,12 @@ async def check(*, request_id: str, mid: str, consent_token: str, merchant_text:
         "paytm_response": {"status": status, "data": {"findings": findings}},
         "paytm_source": "live" if findings and not offline else ("none" if not findings else "mock"),
         "paytm_agent_trace": [], "hindi_reply": reply, "reply_text": reply, "reply_source": "template",
-        "audio_base64": audio_b64, "audio_source": tts_source, "language_code": pipeline.tts_code(),
+        "audio_base64": None, "audio_source": "unavailable", "language_code": pipeline.tts_code(),
         "fraud_alert": None, "gst_itc_logged": None, "local_gst_itc_log": STATE.local_gst_itc_log,
         "proactive": None, "a2a_events": STATE.a2a_events,
         "payment_check": {"situation": sit, "amount": amount, "feed": feed_source, "scanned": len(txns),
                           "findings": findings, "actions": actions},
-    }
+    }, merchant_text, "Payment check reply ready")
 
 
 # ----------------------------------------------------------------------------- what the merchant hears

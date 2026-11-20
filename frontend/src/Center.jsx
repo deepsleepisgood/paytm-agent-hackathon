@@ -14,6 +14,12 @@ const STAGES = [
   { label: 'Paytm agents', keys: ['dispatch', 'intelligence', 'risk', 'resolution', 'ledger'] },
   { label: 'Reply', keys: ['reply'] },
 ]
+// triage.py: the three levels and what each fallback means, in words a judge can read.
+const SEV = { LOW: 'Low', MEDIUM: 'Medium', SEVERE: 'Severe' }
+const FALLBACK = {
+  NONE: 'handled automatically', AUTO_MESSAGE: 'automated message (Paytm not reachable)',
+  AUTO_RETRY: 'automated message + automatic retry', HUMAN_HANDOFF: 'human in the loop', DISABLED: 'fallback off',
+}
 const CAPTION = {
   input: 'Buddy understood the request',
   consent: 'Checking the merchant’s permission (DPDP)',
@@ -152,13 +158,25 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
       {shown('reply') && (
         <div className={`tcard in result ${get('reply').tone === 'bad' ? 'bad' : run.unclear || awaiting || escalated ? 'esc' : 'good'}`}>
           <div className="res-h">
-            <span className="res-b">{run.unclear ? 'Asked to rephrase (nothing sent to Paytm)' : run.info ? 'Answered from your books (read-only)' : get('reply').tone === 'bad' ? 'Fraud blocked' : awaiting ? 'Waiting for your sign-off' : escalated ? 'Handed to a human' : 'Resolved by AI'}</span>
+            <span className="res-b">{run.triage?.fallback === 'AUTO_RETRY' ? 'Queued — will retry automatically' : run.unclear ? 'Asked to rephrase (nothing sent to Paytm)' : run.info ? 'Answered from your books (read-only)' : get('reply').tone === 'bad' ? 'Fraud blocked' : awaiting ? 'Waiting for your sign-off' : escalated ? 'Handed to a human' : 'Resolved by AI'}</span>
             <span className="muted xs">{run.live ? `${(totalMs / 1000).toFixed(1)}s live round trip` : `${(totalMs / 1000).toFixed(1)}s of agent time`}</span>
           </div>
           <div className="sm">“{get('reply').reply}”</div>
           {run.live && run.sources && (
             <div className="srcs">
               <span className="chip-i">Paytm: {run.sources.paytm}</span><span className="chip-i">Intent: {run.sources.intent}</span><span className="chip-i">Reply: {run.sources.reply}</span>
+            </div>
+          )}
+          {run.live && run.triage && (
+            <div className={`sev sev-${String(run.triage.severity).toLowerCase()}`}>
+              <div><b>Severity: {SEV[run.triage.severity] || run.triage.severity}</b> · {FALLBACK[run.triage.fallback] || run.triage.fallback}
+                {run.triage.handoff_id && <> · case <code>{run.triage.handoff_id}</code></>}
+                {run.triage.paytm_ticket_id && <> · Paytm ticket <code>{run.triage.paytm_ticket_id}</code></>}
+                {run.triage.retry_id && <> · request <code>{run.triage.retry_id}</code></>}
+              </div>
+              {(run.triage.reasons || []).filter((x) => !x.code.startsWith('BASE_')).length > 0 && (
+                <div className="muted xs">Why: {run.triage.reasons.filter((x) => !x.code.startsWith('BASE_')).map((x) => x.why).join(' · ')}</div>
+              )}
             </div>
           )}
           <div className="muted xs">Check the right column — the ledger already changed.</div>

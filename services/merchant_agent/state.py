@@ -43,6 +43,14 @@ class MerchantState:
         self.payment_watch: dict[str, dict[str, Any]] = {}
         # conversation.py: the last few answered turns per MID, so follow-up questions keep their context
         self.conversations: dict[str, list[dict[str, Any]]] = {}
+        # triage.py: severity fallback bookkeeping (human cases, MEDIUM retries, messages pushed to the app)
+        self.handoffs: dict[str, dict[str, Any]] = {}
+        self.retry_queue: dict[str, dict[str, Any]] = {}
+        self._replays: dict[str, Any] = {}
+        self.followups: list[dict[str, Any]] = []
+        self.unclear_streak = 0
+        self.intent_counts: dict[str, int] = {}
+        self._handoff_seq = self._retry_seq = self._followup_seq = 0
         self.session_id = f"SESS_{uuid.uuid4().hex[:8].upper()}"  # one per demo run; /reset starts a new one
         self._seq = 0
 
