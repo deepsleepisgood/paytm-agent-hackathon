@@ -128,6 +128,25 @@ Settings: `TRIAGE_FALLBACK` (default on; `0` keeps the rating but turns the fall
 (5000), `TRIAGE_SEVERE_INR` (25000), `TRIAGE_DEADLINE_HOURS` (24), `FALLBACK_RETRY_EVERY_S` (15),
 `FALLBACK_MAX_RETRIES` (6), `HANDOFF_SLA_FRAUD_MIN` (30), `HANDOFF_SLA_MIN` (120).
 
+## What the voice says (`voice.py`)
+
+The screen shows the full answer (`reply_text`); the voice says a short form (`spoken_text`), so the merchant hears
+only what matters at the counter:
+1. the direct answer (a list of amounts becomes the total and the two biggest items) and what was done about it
+2. any yes/no question (consent moments are never dropped), any safety warning, anything the merchant must do
+3. one short line if a person or a retry is involved
+
+Not spoken: business tips, ITC/bookkeeping notes, ticket and case ids; 12-digit UTRs are read as their last four
+digits. Deterministic (no extra LLM call), and shorter speech is faster: Sarvam TTS takes 4-8 s for 30-35 words.
+`VOICE_MAX_WORDS` (24) caps the optional sentences. Across the 8 demo scenarios, 257 words on screen → 174 spoken.
+
+**Hinglish voice.** Following Sarvam's Bulbul v3 guidance (English words in English script, Hindi words in
+Devanagari), only the Hindi words are transliterated before TTS: "Aapka settlement kal aa jayega" is sent as
+"आपका settlement कल आ जायेगा", so settlement / refund / UTR / Paytm sound English and the rest sounds Hindi.
+The English words come from a curated list (`upstream.ENGLISH_WORDS`, plus acronyms, brands and numbers), not a
+dictionary, because many Roman Hindi words are also English ("do baar", "main", "mat", "din"). `VOICE_SCRIPT=mixed`
+(default) | `devanagari` (the old all-Hindi voice) | `roman` (send as typed), to compare by ear.
+
 ## Response shape (every `/merchant/*` action endpoint)
 ```jsonc
 {

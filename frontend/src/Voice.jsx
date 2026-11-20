@@ -131,18 +131,23 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
         return true
       } catch { return false }
     }
+    // The voice says the short spoken form (8003 voice.py); the screen keeps the full answer.
+    const said = msg.say || msg.text
     const browserSpeak = () => {
       if (!('speechSynthesis' in window)) { // no TTS available: simulate timing
         wobble(); let i = 0
         const kt = setInterval(() => { i += 1; setSpoken(i); if (i >= ws.length) { clearInterval(kt); done() } }, 320)
         return
       }
-      const hi = /[\u0900-\u097F]/.test(msg.text)
-      const u = new SpeechSynthesisUtterance(msg.text); u.lang = hi ? 'hi-IN' : 'en-IN'
+      const hi = /[\u0900-\u097F]/.test(said)
+      const u = new SpeechSynthesisUtterance(said); u.lang = hi ? 'hi-IN' : 'en-IN'
       const v = bestVoice(u.lang); if (v) u.voice = v
       u.rate = 0.96; u.pitch = 1.04 // a touch slower and warmer reads as calmer, less robotic
       const starts = []; let pos = 0; ws.forEach((w) => { starts.push(pos); pos += w.length + 1 })
-      u.onboundary = (e) => { let idx = 0; for (let k = 0; k < starts.length; k++) if (starts[k] <= e.charIndex) idx = k; setSpoken(idx + 1) }
+      u.onboundary = (e) => {
+        if (said !== msg.text) { setSpoken(Math.max(1, Math.round((e.charIndex / said.length) * ws.length))); return } // short spoken form: advance proportionally
+        let idx = 0; for (let k = 0; k < starts.length; k++) if (starts[k] <= e.charIndex) idx = k; setSpoken(idx + 1)
+      }
       u.onend = done; u.onerror = done
       wobble()
       window.speechSynthesis.speak(u)
@@ -150,7 +155,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
     // One consistent voice: Sarvam's natural Indian voice when the service is up, otherwise the best Indian voice this device has.
     if (msg.audio && playAudio(msg.audio)) return
     {
-      ttsSarvam(msg.text, /[\u0900-\u097F]/.test(msg.text) ? 'hi-IN' : 'en-IN').then((b64) => { if (seen.current !== chat.length) return; if (!(b64 && playAudio(b64))) browserSpeak() })
+      ttsSarvam(said, /[\u0900-\u097F]/.test(said) ? 'hi-IN' : 'en-IN').then((b64) => { if (seen.current !== chat.length) return; if (!(b64 && playAudio(b64))) browserSpeak() })
     }
   }, [chat.length])
   useEffect(() => () => { stopSpeaking(); cleanup() }, [])

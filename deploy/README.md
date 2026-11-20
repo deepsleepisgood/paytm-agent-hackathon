@@ -65,7 +65,8 @@ Nothing in any service folder was changed for deployment. Everything lives in `d
 ## 0. Before you start
 - Push the repo to GitHub, including `deploy/` and `.dockerignore`.
 - Make sure `git status` does **not** list `.env` (the root `.gitignore` ignores it).
-- Have the Sarvam key ready. It goes **only** on `sarvam-service`.
+- Have the Sarvam key ready. It goes on `sarvam-service` and on `merchant-agent`. The merchant agent uses it only
+  for Sarvam's transliterate API, which turns Roman Hinglish replies into Devanagari for the voice.
 
 ## 1. Railway: three services from one repo
 
@@ -84,7 +85,8 @@ Name them exactly as below, because the `${{…}}` references in step 1b depend 
 - **Region:** Southeast Asia (Singapore) is closest to Sarvam's API in India. 8003 → 8001 → Sarvam must finish
   within 8003's 6 s timeout.
 - **Healthcheck path:** `/health`.
-- **Replicas: 1.** 8003 and 8002 keep demo state in memory, so a second replica would split it.
+- **Replicas: 1.** 8003 and 8002 keep demo state in memory, so a second replica would split it. That state
+  includes 8003's conversation memory for follow-up questions and its watch on stuck payments.
 - **Networking → Generate Domain**, with target port = the `PORT` above.
 - Railway's `railway.json` "config as code" is deprecated (it only keeps working for older services until
   2026-12-01), so these settings are made in the dashboard instead.
@@ -98,6 +100,8 @@ PORT=8001
 SARVAM_API_KEY=<your Sarvam key>
 SARVAM_MODE=auto
 SARVAM_FALLBACK_TO_MOCK=true
+# Sarvam TTS needs 4-8 s per reply; with the 5 s default the app beeps instead of speaking
+SARVAM_LATENCY_BUDGET=12
 CORS_ORIGINS=http://localhost:3000
 ```
 
@@ -120,6 +124,9 @@ UPSTREAM_TIMEOUT_S=6
 DOC_EXTRACT_TIMEOUT_S=30
 UPSTREAM_CIRCUIT_COOLDOWN_S=10
 UTTERANCE_FAST_PATH=1
+REPLY_LLM=1
+# Hinglish replies are spoken from Devanagari (Sarvam transliterate). Without the key they are spoken as typed.
+SARVAM_API_KEY=<your Sarvam key>
 ```
 `RAILWAY_PUBLIC_DOMAIN` is a bare hostname, so the `https://` prefix is required. Do not set `DATASET_DIR`:
 the image keeps the repo layout, so 8003 finds `/app/data/seed` by itself.
@@ -178,7 +185,8 @@ The 8002 employee console is served by 8002 itself: `https://<paytm-agent>.up.ra
 - **Preview deployments** get a different `*.vercel.app` URL, and CORS blocks it unless you add that origin too.
   Demo from the production URL.
 - **State resets on every redeploy** of 8002 or 8003 (in memory by design). Don't push during the demo.
-- **Secrets:** the Sarvam key belongs only in Railway's `sarvam-service` variables and your local root `.env`.
+- **Secrets:** the Sarvam key belongs only in Railway's `sarvam-service` and `merchant-agent` variables and your
+  local root `.env`.
   `VITE_*` values are public: they end up in the browser bundle.
 - **Sarvam credits:** set `SARVAM_MODE=mock` on `sarvam-service` while rehearsing, then switch back to `auto`.
 - **Supabase free tier pauses after a week without traffic.** Open the dashboard and restore the project
