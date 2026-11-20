@@ -14,6 +14,12 @@ const STAGES = [
   { label: 'Paytm agents', keys: ['dispatch', 'intelligence', 'risk', 'resolution', 'ledger'] },
   { label: 'Reply', keys: ['reply'] },
 ]
+// triage.py: the three levels and what each fallback means, in words a judge can read.
+const SEV = { LOW: 'Low', MEDIUM: 'Medium', SEVERE: 'Severe' }
+const FALLBACK = {
+  NONE: 'handled automatically', AUTO_MESSAGE: 'automated message (Paytm not reachable)',
+  AUTO_RETRY: 'automated message + automatic retry', HUMAN_HANDOFF: 'human in the loop', DISABLED: 'fallback off',
+}
 const CAPTION = {
   input: 'Buddy understood the request',
   consent: 'Checking the merchant’s permission (DPDP)',
@@ -445,7 +451,7 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
 
   const fi = run ? flowInfo(run, reveal) : null
   const FLOW = fi ? fi.FLOW : []
-  const resBadge = run && shown('reply') ? (run.unclear ? 'Asked to rephrase' : run.info ? 'Answered from your books' : get('reply').tone === 'bad' ? 'Fraud blocked' : awaiting ? 'Needs your OK' : escalated ? 'Human handoff' : 'Resolved by AI') : ''
+  const resBadge = run && shown('reply') ? (run.triage?.fallback === 'AUTO_RETRY' ? 'Queued, will retry' : run.unclear ? 'Asked to rephrase' : run.info ? 'Answered from your books' : get('reply').tone === 'bad' ? 'Fraud blocked' : awaiting ? 'Needs your OK' : escalated ? 'Human handoff' : 'Resolved by AI') : ''
   const sections = run ? [
     { k: 'agents', show: true, title: 'Agent team', sub: done ? `${fi.P.usedCount} of 9 agents used · ${escalated ? '1 human handoff' : '0 humans in the loop'}` : fi.cur >= 0 ? `Working now: ${FLOW[fi.cur].name}` : 'Getting ready…', badge: `${fi.P.usedCount}/9` },
     { k: 'decision', show: shown('insight') || shown('eval'), title: 'What the AI knew and chose', sub: ev && shown('eval') ? (ev.options ? `Chose option ${ev.selected}: ${(ev.options.find((o) => o.id === ev.selected) || {}).label || ''}` : `Intent ${ev.route?.intent}`) : 'Recalling this merchant’s history…', badge: ev && ev.options && shown('eval') ? `Option ${ev.selected}` : '' },
@@ -500,6 +506,18 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
         {run.live && run.sources && (
           <div className="srcs">
             <span className="chip-i">Paytm: {run.sources.paytm}</span><span className="chip-i">Intent: {run.sources.intent}</span><span className="chip-i">Reply: {run.sources.reply}</span>
+          </div>
+        )}
+        {run.live && run.triage && (
+          <div className={`sev sev-${String(run.triage.severity).toLowerCase()}`}>
+            <div><b>Severity: {SEV[run.triage.severity] || run.triage.severity}</b> · {FALLBACK[run.triage.fallback] || run.triage.fallback}
+              {run.triage.handoff_id && <> · case <code>{run.triage.handoff_id}</code></>}
+              {run.triage.paytm_ticket_id && <> · Paytm ticket <code>{run.triage.paytm_ticket_id}</code></>}
+              {run.triage.retry_id && <> · request <code>{run.triage.retry_id}</code></>}
+            </div>
+            {(run.triage.reasons || []).filter((x) => !x.code.startsWith('BASE_')).length > 0 && (
+              <div className="muted xs">Why: {run.triage.reasons.filter((x) => !x.code.startsWith('BASE_')).map((x) => x.why).join(' · ')}</div>
+            )}
           </div>
         )}
         <div className="muted xs">Check the right column — the ledger already changed.</div>

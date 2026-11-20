@@ -75,7 +75,7 @@ export function responseToRun(sc, m, r, utterance, elapsed) {
   if (r.intent === 'UNCLEAR' || r.intent === 'INFO_QUERY') {
     return {
       sc: { ...sc, intent: r.intent }, utterance, live: true, elapsed, unclear: r.intent === 'UNCLEAR', info: r.intent === 'INFO_QUERY', reply: polishReply(r),
-      events: r.a2a_events || [], audio: r.audio_base64, verified: null, escalated: false,
+      events: r.a2a_events || [], audio: r.audio_base64, verified: null, escalated: r.triage?.fallback === 'HUMAN_HANDOFF', triage: r.triage,
       sources: { paytm: 'none', intent: r.intent_source, reply: r.reply_source },
       steps: [
         { key: 'input', title: 'Input understood', say: `intent=${r.intent}${followUp(r)}`, ms: 0 },
@@ -146,7 +146,7 @@ export function responseToRun(sc, m, r, utterance, elapsed) {
   return {
     sc: { ...sc, intent: r.intent || sc.intent }, // free text: show what the router decided, not the placeholder
     utterance, steps, reply: polishReply(r), live: true, elapsed,
-    events: r.a2a_events || [], audio: r.audio_base64, verified: r.verified_outcome, escalated: !!ticket,
+    events: r.a2a_events || [], audio: r.audio_base64, verified: r.verified_outcome, escalated: !!ticket || r.triage?.fallback === 'HUMAN_HANDOFF', triage: r.triage,
     sources: { paytm: r.paytm_source, intent: r.intent_source, reply: r.reply_source },
   }
 }

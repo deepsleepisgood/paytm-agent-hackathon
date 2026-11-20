@@ -742,6 +742,10 @@ async def run(
 
     raw_resp = resp
     resp = upstream.interpret(intent, resp, paytm_source)  # 8002's RESOLVED/ACTION_REQUIRED -> specific outcome
+    import triage  # local: triage imports this module
+    # Paytm didn't answer and the fallback is on: the mock answer may shape the wording, but nothing may be recorded
+    # as if Paytm had acted (no khata entry, EDI status, fraud alert or learned strategy). triage.py tells the merchant.
+    unconfirmed = paytm_source == "mock" and triage.enabled()
     if intent == "MANDATE_TROUBLESHOOT":
         _register_remedy_offers(resp, request_id, insight, evaluation)
 
@@ -770,7 +774,7 @@ async def run(
             )
 
     fraud_alert: Optional[dict[str, Any]] = None
-    if is_fraud(resp):
+    if is_fraud(resp) and not unconfirmed:
         data = resp.get("data") or {}
         fraud_alert = {
             "alert_id": f"FRAUD_{request_id}",
@@ -792,14 +796,16 @@ async def run(
         )
 
     edi_status = str((resp.get("data") or {}).get("loan_edi_status") or "")
-    if edi_status:
+    if edi_status and not unconfirmed:
         STATE.loan_edi_status = "ACTIVE" if edi_status.upper() == "ACTIVE" else edi_status
-    if (entry := khata.record(intent, resp, request_id)) is not None:
+    if not unconfirmed and (entry := khata.record(intent, resp, request_id)) is not None:
         STATE.log("KHATA_UPDATED", ACTOR_MERCHANT, f"Khata: {entry['kind']} {_inr(entry['amount'])} ({entry['reference']})",
                   entry, request_id)
 
     # 5. Verify the outcome and learn
-    outcome = advisor.verify_and_learn(intent, evaluation, resp, paytm_source, request_id)
+    outcome = advisor.verify_and_learn(intent, evaluation, resp, paytm_source, request_id) if not unconfirmed else {
+        "outcome": "NOT_VERIFIED", "paytm_status": "PAYTM_UNREACHABLE", "learned": False, "intent": intent,
+        "verified_by": "nobody: Paytm did not answer", "request_id": request_id, "ts": time.time()}
     STATE.log("OUTCOME_VERIFIED", ACTOR_MERCHANT,
               f"{outcome['outcome']}: {sel['action']} → {outcome['paytm_status']}"
               + (f" (strategy now {outcome['strategy_success_rate']:.0%})" if outcome["learned"] else ""),
@@ -808,17 +814,8 @@ async def run(
     reply_text, reply_source = await vernacular_reply(
         intent, resp, gst_entry, merchant_text, (doc_extract or {}).get("doc_type"), insight, evaluation, ctx
     )
-    audio_b64, tts_source = await upstream.tts(reply_text, tts_code())
-    tts_note = {"live": "", "mock": " (TTS mock audio)"}.get(tts_source, " (text only — TTS unavailable)")
-    STATE.log(
-        "VOICE_REPLY_READY",
-        ACTOR_MERCHANT,
-        "Hinglish voice reply ready" + tts_note,
-        {"reply_text": reply_text, "reply_source": reply_source, "tts": tts_source, "language_code": tts_code()},
-        request_id,
-    )
 
-    return {
+    result = {
         "request_id": request_id,
         "mid": mid,
         "transcript": transcript,
@@ -843,8 +840,8 @@ async def run(
         "hindi_reply": reply_text,
         "reply_text": reply_text,
         "reply_source": reply_source,
-        "audio_base64": audio_b64,
-        "audio_source": tts_source,
+        "audio_base64": None,
+        "audio_source": "unavailable",
         "language_code": tts_code(),
         "fraud_alert": fraud_alert,
         "gst_itc_logged": gst_entry,
@@ -852,6 +849,24 @@ async def run(
         "proactive": None,
         "a2a_events": STATE.a2a_events,
     }
+    return await finish(result, merchant_text, "Hinglish voice reply ready", tts_note=True)
+
+
+async def finish(result: dict[str, Any], merchant_text: Optional[str], ready: str, tts_note: bool = False
+                 ) -> dict[str, Any]:
+    """Last step of every answer: rate its severity and run the fallback (triage.py), then make the voice from the
+    final wording, so a changed reply never needs a second TTS call."""
+    import triage  # local: triage imports this module
+
+    await triage.apply(result, merchant_text)
+    reply = result["reply_text"]
+    audio_b64, tts_source = await upstream.tts(reply, tts_code())
+    result.update(audio_base64=audio_b64, audio_source=tts_source, language_code=tts_code())
+    note = {"live": "", "mock": " (TTS mock audio)"}.get(tts_source, " (text only — TTS unavailable)") if tts_note else ""
+    STATE.log("VOICE_REPLY_READY", ACTOR_MERCHANT, ready + note,
+              {"reply_text": reply, "reply_source": result.get("reply_source"), "tts": tts_source,
+               "language_code": tts_code()}, result.get("request_id"))
+    return result
 
 
 # ----------------------------------------------------------------------------- not understood
@@ -893,10 +908,7 @@ async def clarify(*, request_id: str, mid: str, consent_token: str, reason: str,
                "voice_off": "Voice recognition is off (Sarvam in mock mode): asked the merchant to type",
                }.get(reason, "Not a question the buddy can act on: asked the merchant to rephrase"),
               {"reason": reason, "merchant_text": merchant_text, "transcript_source": transcript_source}, request_id)
-    audio_b64, tts_source = await upstream.tts(reply, tts_code())
-    STATE.log("VOICE_REPLY_READY", ACTOR_MERCHANT, "Clarifying question ready",
-              {"reply_text": reply, "reply_source": "template", "tts": tts_source, "language_code": tts_code()}, request_id)
-    return {
+    return await finish({
         "request_id": request_id, "mid": mid, "transcript": transcript, "transcript_source": transcript_source,
         "consent_token": consent_token, "intent": "UNCLEAR", "intent_source": intent_source,
         "slots": Slots().model_dump(), "doc_extract": None,
@@ -904,10 +916,10 @@ async def clarify(*, request_id: str, mid: str, consent_token: str, reason: str,
         "pending_action": {"type": "REPHRASE", "reason": reason, "message": reply, "examples": examples},
         "paytm_response": {"status": "NOT_UNDERSTOOD", "reason": reason}, "paytm_source": "none",
         "paytm_agent_trace": [], "hindi_reply": reply, "reply_text": reply, "reply_source": "template",
-        "audio_base64": audio_b64, "audio_source": tts_source, "language_code": tts_code(),
+        "audio_base64": None, "audio_source": "unavailable", "language_code": tts_code(),
         "fraud_alert": None, "gst_itc_logged": None, "local_gst_itc_log": STATE.local_gst_itc_log,
         "proactive": None, "a2a_events": STATE.a2a_events,
-    }
+    }, merchant_text, "Clarifying question ready")
 
 
 # ----------------------------------------------------------------------------- questions about the merchant's books
@@ -945,17 +957,14 @@ async def answer_info(*, request_id: str, mid: str, consent_token: str, merchant
     reply = human_dates(reply.strip())
     STATE.log("INFO_ANSWERED", ACTOR_MERCHANT, "Answered from the merchant's own books (read-only, nothing sent to Paytm)",
               {"question": merchant_text, "facts_used": sorted(f)}, request_id)
-    audio_b64, tts_source = await upstream.tts(reply, tts_code())
-    STATE.log("VOICE_REPLY_READY", ACTOR_MERCHANT, "Answer ready",
-              {"reply_text": reply, "reply_source": "llm", "tts": tts_source, "language_code": tts_code()}, request_id)
-    return {
+    return await finish({
         "request_id": request_id, "mid": mid, "transcript": transcript, "transcript_source": transcript_source,
         "consent_token": consent_token, "intent": "INFO_QUERY", "intent_source": intent_source,
         "slots": Slots().model_dump(), "doc_extract": None,
         "historical_insight": {}, "intervention_evaluation": {}, "verified_outcome": {}, "pending_action": None,
         "paytm_response": {"status": "ANSWERED_FROM_BOOKS"}, "paytm_source": "none", "paytm_agent_trace": [],
         "hindi_reply": reply, "reply_text": reply, "reply_source": "llm",
-        "audio_base64": audio_b64, "audio_source": tts_source, "language_code": tts_code(),
+        "audio_base64": None, "audio_source": "unavailable", "language_code": tts_code(),
         "fraud_alert": None, "gst_itc_logged": None, "local_gst_itc_log": STATE.local_gst_itc_log,
         "proactive": None, "a2a_events": STATE.a2a_events,
-    }
+    }, merchant_text, "Answer ready")

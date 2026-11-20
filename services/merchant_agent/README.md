@@ -94,6 +94,40 @@ If a host refuses a connection, the service skips it for 10s and uses the fallba
 
 **Person 1 (8001) compatibility:** their responses carry `source: "sarvam" | "mock"`, and we pass that through as `*_source: "live" | "mock"`. Their **mock `/llm` is deliberately ignored**: it keyword-matches canned replies and can't read Paytm's JSON (e.g. it would say "upload your PoD" right after a PoD was accepted). Our own routing and templates are used instead. Their `/doc-extract` field `utr` is read as `utr_number`.
 
+## Severity triage and fallback (`triage.py`)
+
+Every answer is rated **LOW**, **MEDIUM** or **SEVERE**, and the rating decides what happens when the automated fix
+cannot finish (Paytm unreachable, question not understood). The rating, every rule that fired and the fallback taken
+are returned as `triage` on every `/merchant/*` response and shown on the result card in the app.
+
+| Level | Problems | Fallback when automation can't finish | Human? |
+|---|---|---|---|
+| **LOW**: information only | INFO_QUERY, settlement explanation, growth advice, fees/GST, loan closure quote, not understood | Automated message: answer from the merchant's own books, labelled "not confirmed live" | No |
+| **MEDIUM**: money delayed, recoverable | Payment check, paid twice, refund, chargeback, EDI bounce/pause, Soundbox, bank/KYC | Automated message ("nothing changed yet", request `RTY-…` queued) → automatic retry when Paytm answers → update in the chat. Still failing after `FALLBACK_MAX_RETRIES` → SEVERE | Only if retries fail |
+| **SEVERE**: money at risk / business blocked | Settlement hold, merchant asks for a person or a device stopped, **plus any case that trips a rule below** | **Always a person**: case `HND-…` → ticket in Paytm's employee console (8002 `/tickets`) with the reason, what was tried and a callback promise (30 min for fraud, 2 h otherwise). The buddy follows the ticket and tells the merchant when it is claimed and resolved | Yes, always |
+
+Rules that raise the level (each is listed in `triage.reasons`):
+- **SEVERE:** suspected fake payment (only on Paytm's live word); refund needing approval; Paytm escalated the case;
+  ≥ ₹25,000 at risk; chargeback evidence due in < 24 h; the merchant mentions fraud, police or legal action;
+  not understood 3 times in a row.
+- **One level up:** ≥ ₹5,000 at risk (to at least MEDIUM); the merchant sounds urgent or upset; the same problem
+  raised 3 times in a session.
+- **Down to LOW:** a payment check where Paytm confirmed the money arrived (or failed cleanly).
+
+While Paytm is unreachable nothing is recorded as done: no khata entry, EDI status, fraud alert or learned strategy
+comes from a mock answer.
+
+| Endpoint | |
+|---|---|
+| `GET /merchant/followups?lang=hi&after=N` | Messages the buddy sends on its own (retry went through, case handed over / claimed / resolved). The app polls it every 8 s. |
+| `GET /merchant/handoffs` | SEVERE cases and queued MEDIUM retries, plus which problem sits at which level |
+| `POST /merchant/handoffs/{id}/resolve?note=` | Close a case here when Paytm's console is unreachable |
+| `POST /merchant/fallback/tick` | Run the background worker now (it also runs every `FALLBACK_RETRY_EVERY_S`) |
+
+Settings: `TRIAGE_FALLBACK` (default on; `0` keeps the rating but turns the fallbacks off), `TRIAGE_MEDIUM_INR`
+(5000), `TRIAGE_SEVERE_INR` (25000), `TRIAGE_DEADLINE_HOURS` (24), `FALLBACK_RETRY_EVERY_S` (15),
+`FALLBACK_MAX_RETRIES` (6), `HANDOFF_SLA_FRAUD_MIN` (30), `HANDOFF_SLA_MIN` (120).
+
 ## Response shape (every `/merchant/*` action endpoint)
 ```jsonc
 {

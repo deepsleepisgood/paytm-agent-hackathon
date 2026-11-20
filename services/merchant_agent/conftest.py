@@ -19,6 +19,10 @@ os.environ["SARVAM_API_BASE"] = "http://127.0.0.1:9"  # transliterate-for-voice 
 os.environ["UPSTREAM_TIMEOUT_S"] = "1"
 os.environ["DOC_EXTRACT_TIMEOUT_S"] = "1"
 os.environ["DATASET_DIR"] = str(NO_DATASET)
+# Most suites here run with Paytm (8002) deliberately offline to pin the reply templates built from mock data.
+# triage.py would replace those replies with the honest "Paytm isn't responding" fallback, so its policies are
+# off by default in tests; test_triage.py switches them on.
+os.environ.setdefault("TRIAGE_FALLBACK", "0")
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

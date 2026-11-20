@@ -1489,3 +1489,9 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .mn b{font-size:11.5px}.mn.par b{font-size:13px}
 /* readable line lengths and rhythm for body copy */
 .az-top p,.a-next p,.nudge span,.az-t em,.r-t em{line-height:1.5}
+/* triage.py severity line on the result card */
+.sev{margin:8px 0 4px;padding:7px 10px;border-radius:8px;font-size:12.5px;border:1px solid}
+.sev code{font-size:11.5px}
+.sev-low{background:#eef7f1;border-color:#bfe3cc;color:#0d5c35}
+.sev-medium{background:#fff6e6;border-color:#f5d699;color:#7a4b00}
+.sev-severe{background:#fdecec;border-color:#f3b8b8;color:#8a1f1f}

@@ -8,7 +8,7 @@ import { loadLang, saveLang, t as tr } from './i18n.js'
 import { buildAlerts } from './alerts.js'
 import Center from './Center.jsx'
 import Right from './Right.jsx'
-import { checkServices, getLedger, resetLive, getStrategyMemory, transcribe, getPaymentWatch } from './api.js'
+import { checkServices, getLedger, resetLive, getStrategyMemory, transcribe, getPaymentWatch, getFollowups } from './api.js'
 import { callLive, responseToRun, overlayLedger, overlayStrategy, overlaySupabase } from './live.js'
 import { useLedgerRealtime } from './useLedgerRealtime.js'
 
@@ -486,6 +486,21 @@ export default function App() {
       }
     })
     const i = setInterval(poll, 15000)
+    return () => clearInterval(i)
+  }, [mode, lang])
+
+  // Live: severity fallback (triage.py on 8003). A queued request went through on retry, a severe case was handed to
+  // a Paytm specialist, or the specialist picked it up / closed it: the buddy says so in the chat on its own.
+  const lastFollowup = useRef(0)
+  useEffect(() => {
+    if (mode !== 'live') return
+    const poll = () => getFollowups(lang, lastFollowup.current).then((r) => {
+      for (const f of r?.followups || []) {
+        lastFollowup.current = Math.max(lastFollowup.current, f.n)
+        setChat((c) => [...c, { who: 'ai', text: f.text, tone: f.kind === 'AUTO_RETRY_DONE' || f.kind === 'HUMAN_RESOLVED' ? 'good' : undefined }])
+      }
+    })
+    const i = setInterval(poll, 8000)
     return () => clearInterval(i)
   }, [mode, lang])
 
