@@ -1,9 +1,9 @@
 // Hindi + English UI strings for the voice Assistant. Merchant picks a language once; the choice is remembered.
 export const LANGS = { hi: 'Hinglish', en: 'EN' }
 const KEY = 'paytm-ai-lang'
-// The deployed demo is English-only. Set to false to bring back the Hindi / English toggle.
-export const ENGLISH_ONLY = true
-export const loadLang = () => { if (ENGLISH_ONLY) return 'en'; try { const v = localStorage.getItem(KEY); return v in LANGS ? v : 'hi' } catch { return 'hi' } }
+// The demo runs in one language (Hinglish) with no toggle. Set to false to bring back the Hinglish / English toggle.
+export const ENGLISH_ONLY = true // single language, no toggle
+export const loadLang = () => { if (ENGLISH_ONLY) return 'hi'; try { const v = localStorage.getItem(KEY); return v in LANGS ? v : 'hi' } catch { return 'hi' } }
 export const saveLang = (l) => { try { localStorage.setItem(KEY, l) } catch { /* ignore */ } }
 
 export const STR = {
@@ -19,7 +19,7 @@ export const STR = {
     p_settle: 'Paisa kahan kata?', p_utr: 'UTR check karo', p_cb: 'Delivery proof bhejo', p_hold: 'Settlement hold', p_edi: 'Loan EDI fail', p_dup: 'Do baar paisa kata', p_growth: 'Business kaise badhayein',
     nTitleCb: (o, a) => `${o} ka ₹${a} ruka hua hai`, nTextCb: 'Delivery ka proof bhejiye, paisa 48 ghante mein chhoot jayega.', nTitleSt: 'Aaj ka hisaab dekhiye', nTextSt: 'Settlement mein kitna kata, ek button mein jaaniye.',
     cHold: 'Ho gaya', cWait: 'Aapki manzoori chahiye', cTeam: 'Team ko bheja', cFake: 'Account mein nahi mila', cPend: 'Pending',
-    attn: 'ध्यान दीजिए', attnSub: 'क्या हुआ और अब क्या करना है', clear: 'सब ठीक है', clearSub: 'अभी कोई ज़रूरी काम बाकी नहीं है', handled: 'हो गया', showAll: 'सभी देखें', showLess: 'कम दिखाएँ',
+    attn: 'Aapka dhyan chahiye', attnSub: 'Kya hua aur ab kya karna hai', clear: 'Sab theek hai', clearSub: 'Abhi koi zaroori kaam baaki nahi hai', handled: 'Ho gaya', showAll: 'Sab dekhiye', showLess: 'Kam dikhaiye',
   },
   en: {
     idle: 'Tap the mic and speak', listen: 'Listening…', think: 'Thinking…', speak: 'Speaking', more: 'Anything else?',

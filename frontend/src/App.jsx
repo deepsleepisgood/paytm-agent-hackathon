@@ -75,8 +75,8 @@ function Attention({ m, L, lang, onAlert, onUpload }) {
     <div className={`az-act ${big ? 'big' : ''}`}>
       <button className="az-btn" onClick={() => (x.photo ? file.current.click() : onAlert(x.run))}>{x.photo && <CamIcon />}{x.cta}</button>
       {x.photo
-        ? <button className="az-link" onClick={() => onAlert(x.run)}>{hi ? 'डेमो देखें' : 'See demo'}</button>
-        : <button className="az-link" onClick={() => setLater([...later, x.id])}>{hi ? 'बाद में' : 'Remind me later'}</button>}
+        ? <button className="az-link" onClick={() => onAlert(x.run)}>{hi ? 'Demo dekhiye' : 'See demo'}</button>
+        : <button className="az-link" onClick={() => setLater([...later, x.id])}>{hi ? 'Baad mein yaad dilayein' : 'Remind me later'}</button>}
     </div>
   )
 
@@ -84,7 +84,7 @@ function Attention({ m, L, lang, onAlert, onUpload }) {
     <section className="az">
       <div className="az-h">
         <h2>{open.length ? tr(lang, 'attn') : tr(lang, 'clear')}</h2>
-        <span>{open.length ? (hi ? `${open.length} चीज़ें` : `${open.length} item${open.length > 1 ? 's' : ''}`) : tr(lang, 'clearSub')}</span>
+        <span>{open.length ? (hi ? `${open.length} kaam` : `${open.length} item${open.length > 1 ? 's' : ''}`) : tr(lang, 'clearSub')}</span>
       </div>
 
       {top && (

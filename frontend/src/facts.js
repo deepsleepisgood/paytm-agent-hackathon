@@ -40,7 +40,7 @@ function breakdown(sentence, lang) {
   if (!colon && first.length >= 2) { // "₹4,160 mein MDR ₹1,450, GST …": the first amount is the total
     const i = chunks[0].indexOf(first[0]) + first[0].length
     intro = chunks[0].slice(0, i); chunks[0] = chunks[0].slice(i).replace(/^\s*(mein|में|is|was|are|of)\s+/i, '')
-    if (!/[A-Za-z\u0900-\u097F]/.test(intro.replace(first[0], ''))) intro = lang === 'en' ? `${first[0]} was deducted` : lang === 'hi' ? `${first[0]} कटे` : `${first[0]} kate`
+    if (!/[A-Za-z\u0900-\u097F]/.test(intro.replace(first[0], ''))) intro = lang === 'en' ? `${first[0]} was deducted` : lang === 'hi' ? `${first[0]} kate` : `${first[0]} kate`
   }
   const items = []
   for (const ch of chunks) {
@@ -92,7 +92,7 @@ export function summarize(run, reply, lang = 'hi') {
     facts.length = 0; facts.push(...bd.items)
     const amt = (bd.intro.match(AMT) || [])[0]
     const cut = amt && /differ|deduct|kate|कटे|cut|less/i.test(bd.intro)
-    headline = cut ? (isHinglish(parts[j]) ? `${amt} aapke payout se kate` : lang === 'en' ? `${amt} was cut from your payout` : lang === 'hi' ? `${amt} आपके पेमेंट से कटे` : `${amt} aapke payout se kate`) : bd.intro
+    headline = cut ? (isHinglish(parts[j]) ? `${amt} aapke payout se kate` : lang === 'en' ? `${amt} was cut from your payout` : lang === 'hi' ? `${amt} aapke payout se kate` : `${amt} aapke payout se kate`) : bd.intro
     rest = parts.filter((_, k) => k !== j && !(j > 0 && k === 0))
     if (bd.tail) rest = [bd.tail, ...rest]
     break
