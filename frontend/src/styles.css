@@ -1611,3 +1611,6 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 
 /* tab-bar Buddy icon: raised and centred in the middle of the bar, as before (no halo, no disc) */
 .tabs button.ctr .qr-fab,.tabs button.ctr.on .qr-fab{position:absolute!important;top:-20px!important;left:50%!important;transform:translateX(-50%)!important;width:50px!important;height:50px!important;min-width:50px!important;padding:0!important;display:flex!important;align-items:center;justify-content:center;filter:drop-shadow(0 4px 8px rgba(16,31,88,.3))!important}
+
+/* phone Home: the Buddy lockup replaces the pill badge */
+.ai-badge.lockup{background:none!important;border:0!important;box-shadow:none!important;padding:0 2px!important;height:auto;display:inline-flex;align-items:center}

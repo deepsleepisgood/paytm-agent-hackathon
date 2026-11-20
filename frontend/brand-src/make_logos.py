@@ -35,9 +35,10 @@ def svg(w, h, vb, body):
 
 
 def flat_inner(p="f"):
-    return (f'<defs><linearGradient id="{p}u" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b7bf2"/><stop offset="1" stop-color="#2559d2"/></linearGradient>'
-            f'<linearGradient id="{p}d" gradientUnits="userSpaceOnUse" x1="28" y1="40" x2="86" y2="102"><stop offset="0" stop-color="#2a56c8"/><stop offset="1" stop-color="#1b3c9b"/></linearGradient></defs>'
-            f'<path d="{B_STEM}" fill="url(#{p}d)"/><path d="{B_LO}" fill="url(#{p}d)"/><path d="{B_UP}" fill="url(#{p}u)"/><circle cx="99" cy="59" r="7" fill="#34d86f"/>')
+    return (f'<defs><linearGradient id="{p}u" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#21509f"/><stop offset="1" stop-color="#173b86"/></linearGradient>'
+            f'<linearGradient id="{p}s" gradientUnits="userSpaceOnUse" x1="0" y1="18" x2="0" y2="102"><stop offset="0" stop-color="#1d4799"/><stop offset=".48" stop-color="#1b4390"/><stop offset=".49" stop-color="#4f94de"/><stop offset="1" stop-color="#5ba3e8"/></linearGradient>'
+            f'<linearGradient id="{p}d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#86c8f6"/><stop offset="1" stop-color="#68b0ec"/></linearGradient></defs>'
+            f'<path d="{B_STEM}" fill="url(#{p}s)"/><path d="{B_LO}" fill="url(#{p}d)"/><path d="{B_UP}" fill="url(#{p}u)"/><circle cx="99" cy="59" r="7" fill="#3ae26b"/>')
 
 
 def mark_svg(white=False):
@@ -87,13 +88,14 @@ def word_parts(on="dark", sparkle=True, text="BUDDY"):
         d += f(x)
         x += w + 27
     end = x - 27 + 6
-    a, b = ("#2f6fe8", "#d6e8ff") if on == "dark" else ("#1740a8", "#3b82e8")
+    a, b = ("#2a6fd0", "#ffffff") if on == "dark" else ("#1740a8", "#3b82e8")
+    mid = '<stop offset=".45" stop-color="#9fd3f6"/>' if on == "dark" else ""
     star = ""
     if sparkle:
         star = (f'<path transform="translate({end + 24} 28)" d="M0 -15C2 -5 5 -2 15 0C5 2 2 5 0 15C-2 5 -5 2 -15 0C-5 -2 -2 -5 0 -15Z" '
                 f'fill="{"#8592a6" if on == "dark" else "#a3b0c4"}"/>')
-    body = (f'<defs><linearGradient id="wg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="{end}" y2="0"><stop offset="0" stop-color="{a}"/><stop offset="1" stop-color="{b}"/></linearGradient></defs>'
-            f'<path d="{d}" fill="none" stroke="url(#wg)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>{star}')
+    body = (f'<defs><linearGradient id="wg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="{end}" y2="0"><stop offset="0" stop-color="{a}"/>{mid}<stop offset="1" stop-color="{b}"/></linearGradient></defs>'
+            f'<path d="{d}" fill="none" stroke="url(#wg)" stroke-width="15" stroke-linecap="square" stroke-linejoin="miter"/>{star}')
     return body, end + (46 if sparkle else 6)
 
 

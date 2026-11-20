@@ -22,8 +22,9 @@ export function BuddyMark({ size = 48, state = 'static', variant = 'color', glow
         </linearGradient>
         <linearGradient id={`s${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" stopOpacity=".5" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></linearGradient>
         <linearGradient id={`h${id}`} x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#fff" stopOpacity=".45" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></linearGradient>
-        <linearGradient id={`fu${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#3b7bf2" /><stop offset="1" stopColor="#2559d2" /></linearGradient>
-        <linearGradient id={`fd${id}`} gradientUnits="userSpaceOnUse" x1="28" y1="40" x2="86" y2="102"><stop offset="0" stopColor="#2a56c8" /><stop offset="1" stopColor="#1b3c9b" /></linearGradient>
+        <linearGradient id={`fu${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#21509f" /><stop offset="1" stopColor="#173b86" /></linearGradient>
+        <linearGradient id={`fs${id}`} gradientUnits="userSpaceOnUse" x1="0" y1="18" x2="0" y2="102"><stop offset="0" stopColor="#1d4799" /><stop offset=".48" stopColor="#1b4390" /><stop offset=".49" stopColor="#4f94de" /><stop offset="1" stopColor="#5ba3e8" /></linearGradient>
+        <linearGradient id={`fd${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#86c8f6" /><stop offset="1" stopColor="#68b0ec" /></linearGradient>
         <radialGradient id={`d${id}`} cx=".35" cy=".3" r=".8"><stop offset="0" stopColor="#c6ffe0" /><stop offset=".5" stopColor="#34d399" /><stop offset="1" stopColor="#12935f" /></radialGradient>
         <clipPath id={`cu${id}`}><path d={B_UP} /></clipPath>
         <clipPath id={`cl${id}`}><path d={B_LO} /></clipPath>
@@ -31,7 +32,7 @@ export function BuddyMark({ size = 48, state = 'static', variant = 'color', glow
       </defs>
       {flat ? (
         <>
-          <path d={B_STEM} fill={`url(#fd${id})`} />
+          <path d={B_STEM} fill={`url(#fs${id})`} />
           <path d={B_LO} fill={`url(#fd${id})`} />
           <path d={B_UP} fill={`url(#fu${id})`} />
         </>
@@ -53,7 +54,7 @@ export function BuddyMark({ size = 48, state = 'static', variant = 'color', glow
       )}
       <g className="bd-dotg">
         <circle className="bd-rip" cx="99" cy="59" r="7" />
-        <circle className="bd-dot" cx="99" cy="59" r="7" fill={flat ? '#34d86f' : `url(#d${id})`} />
+        <circle className="bd-dot" cx="99" cy="59" r="7" fill={flat ? '#3ae26b' : `url(#d${id})`} />
         {!flat && <circle cx="96.8" cy="56.6" r="2" fill="#fff" fillOpacity=".7" />}
         <path className="bd-chk" d="M93 59l4.5 4.5 8-9" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
       </g>
@@ -79,11 +80,11 @@ export function BuddyWordmark({ height = 24, on = 'dark', sparkle = true, text =
   const id = React.useId().replace(/:/g, '')
   const { d, end } = layout(text)
   const W = end + (sparkle ? 46 : 6)
-  const [a, b] = on === 'dark' ? ['#2f6fe8', '#d6e8ff'] : ['#1740a8', '#3b82e8']
+  const [a, b] = on === 'dark' ? ['#2a6fd0', '#ffffff'] : ['#1740a8', '#3b82e8']
   return (
     <svg className={className} width={(height * W) / 68} height={height} viewBox={`-6 -6 ${W} 68`} role="img" aria-label={text} style={{ display: 'block', overflow: 'visible' }}>
-      <defs><linearGradient id={`w${id}`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2={end} y2="0"><stop offset="0" stopColor={a} /><stop offset="1" stopColor={b} /></linearGradient></defs>
-      <path d={d} fill="none" stroke={`url(#w${id})`} strokeWidth="13" strokeLinecap="round" strokeLinejoin="round" />
+      <defs><linearGradient id={`w${id}`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2={end} y2="0"><stop offset="0" stopColor={a} />{on === 'dark' && <stop offset=".45" stopColor="#9fd3f6" />}<stop offset="1" stopColor={b} /></linearGradient></defs>
+      <path d={d} fill="none" stroke={`url(#w${id})`} strokeWidth="15" strokeLinecap="square" strokeLinejoin="miter" />
       {sparkle && <path transform={`translate(${end + 24} 28)`} d="M0 -15C2 -5 5 -2 15 0C5 2 2 5 0 15C-2 5 -5 2 -15 0C-5 -2 -2 -5 0 -15Z" fill={on === 'dark' ? '#8592a6' : '#a3b0c4'} />}
     </svg>
   )
