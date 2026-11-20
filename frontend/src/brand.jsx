@@ -82,3 +82,33 @@ export function BuddyLockup({ size = 40, on = 'light', state = 'static', sparkle
     </span>
   )
 }
+
+// The app icon (dark glass squircle, white B, glowing dot) as a component: used for the main tab button.
+export function BuddyIcon({ size = 48, state = 'static', rx = 27, className = '' }) {
+  const id = React.useId().replace(/:/g, '')
+  return (
+    <svg className={`bd bd-${state} ${className}`} width={size} height={size} viewBox="0 0 120 120" role="img" aria-label="Buddy" style={{ display: 'block', overflow: 'visible' }}>
+      <defs>
+        <linearGradient id={`g${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#5a95e4" /><stop offset=".45" stopColor="#25469a" /><stop offset="1" stopColor="#101f58" /></linearGradient>
+        <linearGradient id={`r${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#fff" stopOpacity=".55" /><stop offset=".5" stopColor="#fff" stopOpacity=".08" /><stop offset="1" stopColor="#fff" stopOpacity=".2" /></linearGradient>
+        <linearGradient id={`h${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" stopOpacity=".22" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></linearGradient>
+        <linearGradient id={`w${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#d7e6fb" /></linearGradient>
+        <linearGradient id={`b${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#cfe8ff" /><stop offset="1" stopColor="#5fabf6" /></linearGradient>
+        <radialGradient id={`d${id}`} cx=".35" cy=".3" r=".8"><stop offset="0" stopColor="#b8ffc9" /><stop offset=".55" stopColor="#3de06f" /><stop offset="1" stopColor="#1fb454" /></radialGradient>
+        <clipPath id={`c${id}`}><rect width="120" height="120" rx={rx} /></clipPath>
+      </defs>
+      <rect width="120" height="120" rx={rx} fill={`url(#g${id})`} />
+      <g clipPath={`url(#c${id})`}><rect width="120" height="48" fill={`url(#h${id})`} /><path d="M64 0H120V70Z" fill="#fff" fillOpacity=".12" /></g>
+      <rect x=".7" y=".7" width="118.6" height="118.6" rx={rx - 0.7} fill="none" stroke={`url(#r${id})`} strokeWidth="1.4" />
+      <g transform="translate(60 60) scale(.88) translate(-65 -60)">
+        <path d={B_STEM} fill={`url(#w${id})`} /><path d={B_UP} fill={`url(#w${id})`} /><path d={B_LO} fill={`url(#b${id})`} />
+        <g className="bd-dotg">
+          <circle className="bd-rip" cx="99" cy="59" r="7" />
+          <circle className="bd-dot" cx="99" cy="59" r="7" fill={`url(#d${id})`} />
+          <circle cx="96.8" cy="56.6" r="2" fill="#fff" fillOpacity=".65" />
+          <path className="bd-chk" d="M93 59l4.5 4.5 8-9" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+      </g>
+    </svg>
+  )
+}

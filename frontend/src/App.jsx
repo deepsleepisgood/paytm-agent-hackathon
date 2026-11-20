@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { I, PaytmLogo, AIMark, MerchantLogo } from './icons.jsx'
-import { BuddyMark, BuddyLockup } from './brand.jsx'
+import { BuddyMark, BuddyLockup, BuddyIcon } from './brand.jsx'
 import { inr } from './data.js'
 import { MERCHANTS, DEFAULT_MERCHANT } from './merchants.js'
 import { SCENARIOS, runScenario, routeText, initLedger, applyEffects, liveOk, sayText, CONFIRM_LABEL } from './engine.js'
@@ -707,7 +707,7 @@ export default function App() {
             <nav className="tabs">
               {TABS.map((t) => (
                 <button key={t.id} aria-label={t.label} className={`${tab === t.id && !sub ? 'on' : ''} ${t.center ? 'ctr' : ''}`} onClick={() => go(t.id)}>
-                  {t.center ? <span className="qr-fab"><BuddyMark size={44} state={busy ? 'working' : 'static'} /></span> : <t.icon size={24} />}
+                  {t.center ? <span className="qr-fab"><BuddyIcon size={46} state={busy ? 'working' : 'static'} /></span> : <t.icon size={24} />}
                   {t.center ? <span className="ghostlbl">.</span> : <span>{t.label}</span>}
                 </button>
               ))}
