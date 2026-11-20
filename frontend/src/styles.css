@@ -1631,7 +1631,6 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 
 /* top-bar logo: soft glass reflection (static top sheen, a slow light sweep, a faint mirror image below) */
 .cc-logo-wrap{position:relative;display:inline-block;line-height:0;flex:none}
-.cc-logo-wrap .cc-logo{-webkit-box-reflect:below -1px linear-gradient(transparent 58%,rgba(255,255,255,.22))}
 .cc-logo-wrap:before,.cc-logo-wrap:after{content:"";position:absolute;inset:0;pointer-events:none;
   -webkit-mask:url(/brand/buddy-logo.png?v=3) center/contain no-repeat;mask:url(/brand/buddy-logo.png?v=3) center/contain no-repeat}
 .cc-logo-wrap:before{background:linear-gradient(180deg,rgba(255,255,255,.38) 0%,rgba(255,255,255,0) 52%)}
@@ -1641,14 +1640,11 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 
 /* phone nav logo: same glass reflection, tuned for a light bar */
 .nav-logo-wrap{position:relative;display:inline-block;line-height:0;flex:none}
-.nav-logo-wrap .nav-logo{-webkit-box-reflect:below -1px linear-gradient(transparent 55%,rgba(255,255,255,.34))}
 .nav-logo-wrap:before,.nav-logo-wrap:after{content:"";position:absolute;inset:0;pointer-events:none;
   -webkit-mask:url(/brand/buddy-logo-light.png?v=3) center/contain no-repeat;mask:url(/brand/buddy-logo-light.png?v=3) center/contain no-repeat}
 .nav-logo-wrap:before{background:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,0) 55%)}
 .nav-logo-wrap:after{background:linear-gradient(105deg,transparent 32%,rgba(255,255,255,.95) 48%,rgba(210,235,255,.7) 53%,transparent 68%);background-size:320% 100%;background-position:160% 0;animation:logoSweep 7s ease-in-out 2.5s infinite}
 @media (prefers-reduced-motion:reduce){.nav-logo-wrap:after{animation:none;opacity:0}}
 
-/* no mirror reflection: just a light shine on the logos */
-.cc-logo-wrap .cc-logo,.nav-logo-wrap .nav-logo{-webkit-box-reflect:none!important}
 .cc-logo-wrap:before{background:linear-gradient(180deg,rgba(255,255,255,.3) 0%,rgba(255,255,255,0) 48%)}
 .nav-logo-wrap:before{background:linear-gradient(180deg,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 50%)}
