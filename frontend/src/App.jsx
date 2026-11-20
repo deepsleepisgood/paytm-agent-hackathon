@@ -707,7 +707,7 @@ export default function App() {
             <nav className="tabs">
               {TABS.map((t) => (
                 <button key={t.id} aria-label={t.label} className={`${tab === t.id && !sub ? 'on' : ''} ${t.center ? 'ctr' : ''}`} onClick={() => go(t.id)}>
-                  {t.center ? <span className="qr-fab"><BuddyIcon size={46} state={busy ? 'working' : 'static'} /></span> : <t.icon size={24} />}
+                  {t.center ? <span className="qr-fab"><BuddyIcon size={36} clean rx={30} state={busy ? 'working' : 'static'} /></span> : <t.icon size={24} />}
                   {t.center ? <span className="ghostlbl">.</span> : <span>{t.label}</span>}
                 </button>
               ))}

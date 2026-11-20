@@ -84,7 +84,7 @@ export function BuddyLockup({ size = 40, on = 'light', state = 'static', sparkle
 }
 
 // The app icon (dark glass squircle, white B, glowing dot) as a component: used for the main tab button.
-export function BuddyIcon({ size = 48, state = 'static', rx = 27, className = '' }) {
+export function BuddyIcon({ size = 48, state = 'static', rx = 27, clean = false, className = '' }) {
   const id = React.useId().replace(/:/g, '')
   return (
     <svg className={`bd bd-${state} ${className}`} width={size} height={size} viewBox="0 0 120 120" role="img" aria-label="Buddy" style={{ display: 'block', overflow: 'visible' }}>
@@ -98,9 +98,9 @@ export function BuddyIcon({ size = 48, state = 'static', rx = 27, className = ''
         <clipPath id={`c${id}`}><rect width="120" height="120" rx={rx} /></clipPath>
       </defs>
       <rect width="120" height="120" rx={rx} fill={`url(#g${id})`} />
-      <g clipPath={`url(#c${id})`}><rect width="120" height="48" fill={`url(#h${id})`} /><path d="M64 0H120V70Z" fill="#fff" fillOpacity=".12" /></g>
-      <rect x=".7" y=".7" width="118.6" height="118.6" rx={rx - 0.7} fill="none" stroke={`url(#r${id})`} strokeWidth="1.4" />
-      <g transform="translate(60 60) scale(.88) translate(-65 -60)">
+      {!clean && <g clipPath={`url(#c${id})`}><rect width="120" height="48" fill={`url(#h${id})`} /><path d="M64 0H120V70Z" fill="#fff" fillOpacity=".12" /></g>}
+      {!clean && <rect x=".7" y=".7" width="118.6" height="118.6" rx={rx - 0.7} fill="none" stroke={`url(#r${id})`} strokeWidth="1.4" />}
+      <g transform={clean ? 'translate(60 60) scale(.8) translate(-61 -60)' : 'translate(60 60) scale(.88) translate(-65 -60)'}>
         <path d={B_STEM} fill={`url(#w${id})`} /><path d={B_UP} fill={`url(#w${id})`} /><path d={B_LO} fill={`url(#b${id})`} />
         <g className="bd-dotg">
           <circle className="bd-rip" cx="99" cy="59" r="7" />

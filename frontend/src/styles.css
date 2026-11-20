@@ -1585,3 +1585,6 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 /* tab-bar button: the app icon itself, lifted a little, no extra circle behind it */
 .tabs button.ctr .qr-fab{background:transparent!important;box-shadow:none!important;border:0!important;filter:drop-shadow(0 6px 12px rgba(16,31,88,.35))}
 .tabs button.ctr.on .qr-fab{filter:drop-shadow(0 6px 14px rgba(74,149,238,.55))}
+
+.tabs button.ctr .qr-fab{filter:drop-shadow(0 2px 5px rgba(16,31,88,.22))!important}
+.tabs button.ctr.on .qr-fab{filter:drop-shadow(0 2px 6px rgba(74,149,238,.4))!important}
