@@ -1603,3 +1603,7 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .bd-icon.is-busy{animation:iconPulse 1.6s ease-in-out infinite}
 @keyframes iconPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
 @media (prefers-reduced-motion:reduce){.bd-icon.is-busy{animation:none}}
+
+/* tab-bar Buddy icon: sits inside the bar, centred with the other icons */
+.tabs button.ctr .qr-fab{top:-5px!important;width:34px!important;height:34px!important;padding:0!important;display:flex!important;align-items:center;justify-content:center;filter:drop-shadow(0 2px 5px rgba(16,31,88,.28))!important}
+.tabs button.ctr.on .qr-fab{filter:drop-shadow(0 2px 7px rgba(74,149,238,.5))!important}
