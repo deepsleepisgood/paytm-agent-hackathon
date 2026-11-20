@@ -10,6 +10,8 @@ const B_LO = 'M44 62H69A20 20 0 0 1 69 102H44Z'
 export function BuddyMark({ size = 48, state = 'static', variant = 'color', glow = false, className = '', title = 'Buddy' }) {
   const id = React.useId().replace(/:/g, '')
   const white = variant === 'white'
+  // The exact B from the logo file, so it is identical everywhere it appears.
+  if (variant === 'logo') return <img className={`bd-b ${className}`} src="/brand/buddy-b.png?v=1" height={size} alt={title} style={{ display: 'block', height: size, width: 'auto' }} />
   const flat = !white
   return (
     <svg className={`bd bd-${state} ${glow ? 'bd-glow' : ''} ${className}`} width={size} height={size} viewBox="0 0 120 120" role="img" aria-label={title} style={{ display: 'block', overflow: 'visible' }}>

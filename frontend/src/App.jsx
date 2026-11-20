@@ -297,7 +297,7 @@ function Settlement({ d, back }) {
         <div className="row between line total"><b>Net bank credit</b><b className="green">{inr(s.net)}</b></div>
       </div>
       <div className="card info">
-        <BuddyMark size={26} />
+        <BuddyMark size={26} variant="logo" />
         <span>Total deductions {inr(s.variance)}. Fees and GST can be claimed as ITC; chargeback hold releases after proof of delivery.</span>
       </div>
     </div>
