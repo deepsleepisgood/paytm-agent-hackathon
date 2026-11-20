@@ -1687,3 +1687,9 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .col.stage-agents{align-self:start}
 .col.right,.col.center{margin-top:40px}
 @media (max-width:1060px){.cc-grid{grid-template-rows:none;row-gap:24px}.col.right,.col.center{margin-top:0}}
+
+/* no ALL-CAPS labels anywhere: sentence case, normal spacing */
+.az-eyebrow,.a-chip-t,.ios-cap,.sec,.hist-h,.mesh-band span,.tr-lab,.tr-side,.lg-h span,.cap-label,.eyebrow{text-transform:none!important;letter-spacing:0!important}
+*{text-transform:none}
+button,label,.az-eyebrow{text-transform:none!important}
+.sp-id,.sp-id *{text-transform:none!important;letter-spacing:0!important}
