@@ -293,6 +293,9 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
               <div className="a-top">
                 <span className={`a-badge ${info.kind}`}><AnswerIcon kind={info.kind} /></span>
                 <span className="a-chip-t">{info.chip}</span>
+                <button className="a-share" aria-label="Share this answer" onClick={shareAnswer}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V4M8 8l4-4 4 4" /><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12" /></svg>
+                </button>
               </div>
               {info.context && <p className="a-ctx">{info.context}</p>}
               <h3 className="a-head">{info.headline.replace(/[.:]\s*$/, '')}</h3>
@@ -305,10 +308,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
                 <div className="facts">{info.facts.map((f) => <div key={f.k}><span>{f.k}</span><b>{f.v}</b></div>)}</div>
               )}
               {info.detail && <div className="a-next"><i aria-hidden="true">→</i><p>{info.detail}</p></div>}
-            </div>
-            <div className="a-acts">
-              {nextAct && onGo && <button className="a-act main" onClick={() => onGo(nextAct.to)}>{nextAct.l}<span aria-hidden="true">›</span></button>}
-              <button className="a-act" onClick={shareAnswer}>Share</button>
+              {nextAct && onGo && <button className="a-link" onClick={() => onGo(nextAct.to)}><span>{nextAct.l}</span><i aria-hidden="true">›</i></button>}
             </div>
           </div>
         )}

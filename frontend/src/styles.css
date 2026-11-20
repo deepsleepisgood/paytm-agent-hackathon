@@ -1411,3 +1411,20 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .a-act.main{flex:1;display:flex;align-items:center;justify-content:space-between;background:#e6f0fc;color:#1b4f9c}
 .a-act.main span{font-size:20px;line-height:1}
 @media (prefers-reduced-motion:reduce){.a-draw,.a-ico .a-fill,.a-badge:after,.a-acts,.a-card .facts>div{animation:none!important;stroke-dashoffset:0;opacity:1;transform:none}.a-badge:after{display:none}}
+
+/* ===== calmer motion: only the big orb moves, one thing at a time ===== */
+.cc.busy .wv{animation:none!important}
+.orb-wrap:not(.listening):not(.speaking):not(.thinking) .vbars i{animation:none!important}
+.orb-wrap.thinking .vbars i{animation-duration:1.8s!important}
+/* hero amount: label and number on one centred line */
+.a-hero{align-items:center;padding:16px 18px}
+.a-hero span{font-size:14.5px;line-height:1}
+.a-hero b{line-height:1;font-size:34px}
+/* actions live inside the card: share = small icon, next step = quiet list row */
+.a-acts{display:none}
+.a-top{position:relative}
+.a-share{margin-left:auto;width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#6b7a90;background:#f3f6fb;transition:background .2s,color .2s}
+.a-share:hover{background:#e8eef8;color:#1b4f9c}.a-share:active{transform:scale(.94)}
+.a-link{display:flex;align-items:center;justify-content:space-between;width:calc(100% + 36px);margin:16px -18px -16px;padding:14px 18px;border-top:1px solid #edf2f9;font-size:15px;font-weight:600;color:#1b4f9c;text-align:left;background:transparent}
+.a-link i{font-style:normal;font-size:22px;line-height:1;color:#9fb0c9;transition:transform .2s}
+.a-link:hover i{transform:translateX(3px)}.a-link:active{background:#f6f9fd}
