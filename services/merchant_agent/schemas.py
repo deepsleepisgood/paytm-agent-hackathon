@@ -136,6 +136,8 @@ class MerchantResponse(BaseModel):
     payment_check: Optional[dict[str, Any]] = None
     # conversation.py: how this turn used the earlier ones (follow_up_of = the question it continues)
     conversation: Optional[dict[str, Any]] = None
+    # triage.py: LOW / MEDIUM / SEVERE, every rule that fired, and the fallback taken (retry, human case, ...)
+    triage: Optional[dict[str, Any]] = None
 
 
 class EventsResponse(BaseModel):

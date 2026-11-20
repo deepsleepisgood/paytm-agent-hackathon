@@ -23,6 +23,7 @@ import payments
 import pipeline
 import proactive
 import router
+import triage
 import upstream
 from schemas import (DEFAULT_MID, ConfirmDisputeRequest, ConfirmEdiPauseRequest, EventsResponse, MerchantResponse,
                      ProactiveRequest, QueryRequest)
@@ -45,8 +46,10 @@ CORS_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"] + [
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     watcher = asyncio.create_task(payments.watch_loop(DEFAULT_MID))  # re-checks stuck payments with Paytm
+    fallback = asyncio.create_task(triage.worker_loop())  # MEDIUM retries + SEVERE human cases (triage.py)
     yield
     watcher.cancel()
+    fallback.cancel()
     await upstream.aclose()
 
 
@@ -174,12 +177,21 @@ async def _route(cls: Any, text: str, mid: str, request_id: str, consent_token: 
     )
 
 
+def _retryable(resp: dict[str, Any], replay: Any) -> dict[str, Any]:
+    """If triage queued this request for an automatic retry (MEDIUM, Paytm unreachable), tell it how to re-run it:
+    the same endpoint with the same inputs and a fresh request id."""
+    triage.attach_replay(resp, replay)
+    return resp
+
+
 @app.post("/merchant/query", response_model=MerchantResponse)
 async def merchant_query(req: QueryRequest) -> dict[str, Any]:
     pipeline.set_lang(req.language)
     request_id = pipeline.new_request_id()
     consent_token = pipeline.require_consent(req.consent_granted, req.mid, request_id, channel="text")
-    return await _query(req.text, req.mid, request_id, consent_token, req.doc_context)
+    resp = await _query(req.text, req.mid, request_id, consent_token, req.doc_context)
+    return _retryable(resp, lambda: _query(req.text, req.mid, pipeline.new_request_id(), consent_token,
+                                           req.doc_context))
 
 
 @app.post("/merchant/query-audio", response_model=MerchantResponse)
@@ -210,7 +222,9 @@ async def merchant_query_audio(
         {"transcript": transcript, "source": src, "language_code": language_code},
         request_id,
     )
-    return await _query(transcript, mid, request_id, consent_token, None, transcript=transcript, transcript_source=src)
+    resp = await _query(transcript, mid, request_id, consent_token, None, transcript=transcript, transcript_source=src)
+    return _retryable(resp, lambda: _query(transcript, mid, pipeline.new_request_id(), consent_token, None,
+                                           transcript=transcript, transcript_source=src))
 
 
 @app.post("/merchant/transcribe")
@@ -279,13 +293,15 @@ async def merchant_upload_doc(
         extra = {"screenshot_fields": fields, "doc_confidence": extract.get("confidence")}
 
     pipeline.set_history(conversation.recent(mid))
-    body = await pipeline.run(
-        request_id=request_id, mid=mid, consent_token=consent_token, intent=intent,
-        intent_source="document", slots=slots, merchant_text=None, extra_payload=extra,
-        doc_extract={**extract, "_source": src},
-    )
-    return conversation.record(mid, "[uploaded proof of delivery]" if doc_type == "pod" else "[uploaded UPI screenshot]",
-                               body)
+
+    def run(rid: str) -> Any:
+        return pipeline.run(request_id=rid, mid=mid, consent_token=consent_token, intent=intent,
+                            intent_source="document", slots=slots, merchant_text=None, extra_payload=extra,
+                            doc_extract={**extract, "_source": src})
+
+    body = conversation.record(mid, "[uploaded proof of delivery]" if doc_type == "pod" else "[uploaded UPI screenshot]",
+                               await run(request_id))
+    return _retryable(body, lambda: run(pipeline.new_request_id()))
 
 
 @app.post("/merchant/proactive-shield", response_model=MerchantResponse)
@@ -293,21 +309,24 @@ async def merchant_proactive_shield(req: ProactiveRequest) -> dict[str, Any]:
     """CONTRACT.md V2: the frontend simulates Paytm's webhook; 8003 fetches the alert from 8002 and acts."""
     pipeline.set_lang(req.language)
     pipeline.set_history(conversation.recent(req.mid))
-    return conversation.record(req.mid, f"[Paytm alert: {req.scenario}]", await proactive.shield(req))
+    return _retryable(conversation.record(req.mid, f"[Paytm alert: {req.scenario}]", await proactive.shield(req)),
+                      lambda: proactive.shield(req))
 
 
 @app.post("/merchant/confirm-dispute", response_model=MerchantResponse)
 async def merchant_confirm_dispute(req: ConfirmDisputeRequest) -> dict[str, Any]:
     pipeline.set_lang(req.language)
     pipeline.set_history(conversation.recent(req.mid))
-    return conversation.record(req.mid, "[tapped yes: file the dispute]", await proactive.confirm_dispute(req))
+    return _retryable(conversation.record(req.mid, "[tapped yes: file the dispute]", await proactive.confirm_dispute(req)),
+                      lambda: proactive.confirm_dispute(req))
 
 
 @app.post("/merchant/confirm-edi-pause", response_model=MerchantResponse)
 async def merchant_confirm_edi_pause(req: ConfirmEdiPauseRequest) -> dict[str, Any]:
     pipeline.set_lang(req.language)
     pipeline.set_history(conversation.recent(req.mid))
-    return conversation.record(req.mid, "[tapped yes: pause the EDI]", await proactive.confirm_edi_pause(req))
+    return _retryable(conversation.record(req.mid, "[tapped yes: pause the EDI]", await proactive.confirm_edi_pause(req)),
+                      lambda: proactive.confirm_edi_pause(req))
 
 
 @app.get("/merchant/khata-export", response_model=None)
@@ -357,6 +376,44 @@ async def payment_watch(mid: str = DEFAULT_MID, lang: Literal["hi", "en"] = "hi"
     """Stuck payments the buddy is watching. Re-checked with Paytm now; `message` is set once one lands or goes back."""
     await payments.recheck(mid)
     return {"watching": [{**w, "message": payments.watch_message(w, lang == "en")} for w in STATE.payment_watch.values()]}
+
+
+@app.get("/merchant/followups")
+async def followups(lang: Literal["hi", "en"] = "hi", after: int = 0) -> dict[str, Any]:
+    """Messages the buddy sends on its own after a fallback: a queued request went through on retry, a case was
+    handed to a person, a Paytm specialist picked it up or resolved it. `after` = last seen numeric id."""
+    out = [{"id": f["id"], "n": int(f["id"].split("-")[1]), "ts": f["ts"], "kind": f["kind"], "severity": f["severity"],
+            "ref": f["ref"], "text": f["text_en"] if lang == "en" else f["text_hi"]} for f in STATE.followups]
+    return {"followups": [f for f in out if f["n"] > after]}
+
+
+@app.get("/merchant/handoffs")
+async def handoffs() -> dict[str, Any]:
+    """SEVERE cases handed to a person, and MEDIUM requests waiting for an automatic retry."""
+    hidden = {"consent_token", "result", "rating"}
+    return {"handoffs": [{k: v for k, v in h.items() if k not in hidden} for h in STATE.handoffs.values()],
+            "retries": [{k: v for k, v in r.items() if k not in hidden} for r in STATE.retry_queue.values()],
+            "levels": {lvl: [i for i, (b, _) in triage.BASE.items() if b == lvl]
+                       for lvl in (triage.LOW, triage.MEDIUM, triage.SEVERE)}}
+
+
+@app.post("/merchant/fallback/tick")
+async def fallback_tick() -> dict[str, Any]:
+    """Run the fallback worker now instead of waiting for its next pass (retry queued requests, sync and follow
+    human cases). Handy in a demo right after Paytm comes back."""
+    return await triage.tick()
+
+
+@app.post("/merchant/handoffs/{handoff_id}/resolve")
+async def resolve_handoff(handoff_id: str, note: str = Query("", max_length=300)) -> dict[str, Any]:
+    """For when Paytm's console is unreachable: an operator closes the case here, and the merchant is told."""
+    h = STATE.handoffs.get(handoff_id)
+    if h is None:
+        raise HTTPException(404, detail={"error": "NOT_FOUND", "message": f"No case {handoff_id}"})
+    h["status"], h["resolution_note"] = "RESOLVED", note or None
+    triage.followup("HUMAN_RESOLVED", triage.SEVERE, f"Case {handoff_id} band ho gaya." + (f" {note}" if note else ""),
+                    f"Case {handoff_id} is resolved." + (f" {note}" if note else ""), h.get("request_id"))
+    return {k: v for k, v in h.items() if k != "consent_token"}
 
 
 @app.post("/reset")
