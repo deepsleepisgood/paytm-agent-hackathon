@@ -65,7 +65,6 @@ function Attention({ m, L, lang, onAlert, onUpload }) {
   const hi = lang === 'hi'
   const items = buildAlerts(m, L, lang)
   const open = items.filter((x) => !x.done && !later.includes(x.id))
-  const done = items.filter((x) => x.done)
   const [top, ...rest] = open
 
   const Figures = ({ x }) => (
@@ -120,13 +119,16 @@ function Attention({ m, L, lang, onAlert, onUpload }) {
       )}
 
       <input ref={file} type="file" hidden accept="image/*,.pdf" onChange={(e) => { const f = e.target.files[0]; if (f) onUpload('pod', f); e.target.value = '' }} />
-      {done.length > 0 && <div className="az-done">{done.map((x) => <span key={x.id}>✓ {x.title}</span>)}</div>}
     </section>
   )
 }
 
 function Home({ d, go, m, L, lang, onAlert, onUpload }) {
   const [hide, setHide] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [seen, setSeen] = useState(0)
+  const sorted = buildAlerts(m, L, lang).filter((x) => x.done)
+  const unread = sorted.length > seen
   const paid = d.transactions.filter((t) => t.status !== 'REFUNDED')
   const refunds = d.transactions.filter((t) => t.status === 'REFUNDED')
   const sum = (l) => l.reduce((s, t) => s + t.amount, 0)
@@ -147,9 +149,18 @@ function Home({ d, go, m, L, lang, onAlert, onUpload }) {
         <PaytmLogo size={22} />
         <div className="tb-r">
           <button className="ai-badge" onClick={() => go('buddy')} aria-label="AI Teammate"><AIMark size={18} /><b>AI</b></button>
-          <span className="dotwrap"><I.Bell size={22} /><em /></span>
+          <button className="dotwrap bell" aria-label="Notifications" onClick={() => { setNotifOpen((o) => !o); setSeen(sorted.length) }}><I.Bell size={22} />{unread && <em />}</button>
         </div>
       </div>
+      {notifOpen && (
+        <div className="notif" role="dialog" aria-label="Notifications">
+          <div className="notif-h"><b>Notifications</b><button onClick={() => setNotifOpen(false)} aria-label="Close">×</button></div>
+          {sorted.length === 0 && <p className="notif-empty">Nothing new. We will tell you when something is sorted.</p>}
+          {sorted.map((x) => (
+            <div key={x.id} className="notif-r"><span className="notif-ic">✓</span><div><b>{x.sorted || x.title}</b><em>Sorted by your AI teammate</em></div></div>
+          ))}
+        </div>
+      )}
       <div className="greet">
         <MerchantLogo d={d} size={48} />
         <div><div className="m-name">{d.merchant}</div><div className="muted sm">Business Owner · {d.mid}</div></div>

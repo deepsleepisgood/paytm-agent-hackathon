@@ -17,6 +17,7 @@ export function buildAlerts(m, L, lang = 'hi') {
       cta: hi ? 'सबूत की फ़ोटो भेजें' : 'Send proof photo',
       stats: [{ k: hi ? 'रकम' : 'Amount', v: inr(cb.amount) }, { k: hi ? 'समय बाकी' : 'Time left', v: '48h' }, { k: hi ? 'ऑर्डर' : 'Order', v: cb.order }],
       done: L.chargeback?.status === 'RELEASED',
+      sorted: hi ? null : `${inr(cb.amount)} released for ${cb.order}. Proof accepted`,
     })
   }
   if (f.cash) {
@@ -30,6 +31,7 @@ export function buildAlerts(m, L, lang = 'hi') {
       cta: hi ? 'EDI रोकें' : 'Pause EDI',
       stats: [{ k: hi ? 'रिफंड' : 'Refund', v: inr(c.refund.amount) }, { k: hi ? 'बचेगा' : 'You keep', v: inr(c.projected) }, { k: hi ? 'देना है' : 'Due', v: inr(c.payable.amount) }],
       done: L.loan.status === 'PAUSED',
+      sorted: hi ? null : 'EDI paused for 2 days. Tomorrow’s payout is covered',
     })
   }
   if (f.edi) {
@@ -42,6 +44,7 @@ export function buildAlerts(m, L, lang = 'hi') {
       cta: hi ? 'ठीक करें' : 'Fix it',
       stats: [{ k: hi ? 'रकम' : 'Amount', v: inr(f.edi.amount) }, { k: hi ? 'वजह' : 'Reason', v: hi ? 'कम बैलेंस' : 'Low balance' }, { k: hi ? 'पेनल्टी' : 'Penalty', v: hi ? 'माफ़' : 'Waived' }],
       done: ['LINK_SENT', 'PAUSED', 'QUOTE'].includes(L.loan.status),
+      sorted: hi ? null : 'Loan EDI sorted. You will not be charged a penalty',
     })
   }
   if (f.soundbox && f.soundbox.battery < 50) {
@@ -53,6 +56,7 @@ export function buildAlerts(m, L, lang = 'hi') {
       cta: hi ? 'टिकट बनाएँ' : 'Raise ticket',
       stats: [{ k: hi ? 'बैटरी' : 'Battery', v: f.soundbox.battery + '%' }, { k: hi ? 'आवाज़ नहीं आई' : 'Missed', v: String(f.soundbox.missed) }, { k: hi ? 'किराया' : 'Rent', v: '₹149/mo' }],
       done: L.tickets.some((t) => /soundbox/i.test(t.reason || '')) || L.soundbox.status === 'PICKUP',
+      sorted: hi ? null : 'Soundbox ticket raised. We will fix it',
     })
   }
   return items
