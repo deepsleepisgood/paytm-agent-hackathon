@@ -122,12 +122,12 @@ h1{font-size:28px;margin:0 0 4px}p{color:#9fb6e8;margin:0 0 24px}.g{display:grid
 <h1>Buddy</h1><p>Glass B, green hand-over dot, spaced-caps wordmark.</p><div class="g">
 <div class="t"><img src="mark.svg" width="130"><span>Mark</span></div>
 <div class="t"><img src="mark-white.svg" width="130"><span>Mark on dark</span></div>
-<div class="t"><img src="icon.svg" width="130" style="border-radius:30px"><span>App icon</span></div>
+<div class="t"><img src="icon.png" width="130" style="border-radius:27%"><span>App icon</span></div>
 <div class="t l"><img src="mark.svg" width="130"><span>Mark on light</span></div>
 <div class="t w"><img src="lockup-dark.svg" height="80"><span>Lockup on dark</span></div>
 <div class="t l w"><img src="lockup.svg" height="80"><span>Lockup on light</span></div>
 <div class="t"><img src="wordmark-dark.svg" height="46"><span>Wordmark</span></div>
-<div class="t"><div style="display:flex;gap:14px;align-items:flex-end"><img src="favicon.svg" width="32"><img src="favicon.svg" width="24"><img src="favicon.svg" width="16"></div><span>Favicon sizes</span></div>
+<div class="t"><div style="display:flex;gap:14px;align-items:flex-end"><img src="favicon-64.png" width="32" style="border-radius:22%"><img src="favicon-64.png" width="24" style="border-radius:22%"><img src="favicon-64.png" width="16" style="border-radius:22%"></div><span>Favicon sizes</span></div>
 </div></main></body></html>"""
 
 
@@ -143,9 +143,6 @@ def main():
         (OUT / f).unlink(missing_ok=True)
     (OUT / "mark.svg").write_text(mark_svg(False))
     (OUT / "mark-white.svg").write_text(mark_svg(True))
-    (OUT / "icon.svg").write_text(icon_svg())
-    (OUT / "icon-square.svg").write_text(icon_svg(rx=0))
-    (OUT / "favicon.svg").write_text(icon_svg(rx=26))
     (OUT / "wordmark-dark.svg").write_text(wordmark_svg("dark"))
     (OUT / "wordmark-light.svg").write_text(wordmark_svg("light"))
     (OUT / "lockup.svg").write_text(lockup_svg("light"))
