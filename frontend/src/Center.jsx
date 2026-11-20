@@ -506,8 +506,10 @@ export function Replays({ m }) {
         <div><b>More problems Buddy solves</b><span>Press play and watch four common problems get solved, one after another</span></div>
         <button className="rp-play" onClick={() => (run || chain ? stop() : start())}>{run || chain ? '■ Stop' : finished ? '↻ Play again' : '▶ Play all 4'}</button>
       </div>
-      <div className="rp-chips">
-        {list.map((s) => <button key={s.id} className={`rp-chip ${s.id === sc.id ? 'on' : ''}`} onClick={() => { setChain(false); setId(s.id) }}>{REPLAY_TITLE[s.id] || s.chip}</button>)}
+      <div className="rm-title" key={sc.id}>
+        <span className="rm-step">Problem {list.findIndex((s) => s.id === sc.id) + 1} of {list.length}</span>
+        <h2>{REPLAY_TITLE[sc.id] || sc.chip}</h2>
+        <div className="rm-dots">{list.map((s) => <i key={s.id} className={s.id === sc.id ? 'on' : list.findIndex((x) => x.id === s.id) < list.findIndex((x) => x.id === sc.id) ? 'past' : ''} onClick={() => { setChain(false); setId(s.id) }} title={REPLAY_TITLE[s.id]} />)}</div>
       </div>
       <div className="rm-body">
         <div className="rm-q">

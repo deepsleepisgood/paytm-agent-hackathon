@@ -1771,3 +1771,16 @@ button,label,.az-eyebrow{text-transform:none!important}
 .rm-cap .mu{color:var(--mu);font-size:14px}
 
 .rm-cap.on{animation-duration:.15s}.rm-ask.on{animation-duration:.15s}.rm-reply{transition:opacity .15s,transform .15s}
+
+/* Replays v3: big problem heading, no gap */
+.rp-head span{display:block}
+.rm-title{margin:14px 0 18px;animation:rpIn .2s ease both}
+.rm-step{display:block;font-size:14px;font-weight:700;color:var(--blue)}
+.rm-title h2{margin:2px 0 8px;font-size:clamp(34px,4vw,52px);line-height:1.08;letter-spacing:-.03em;color:var(--navy)}
+.rm-dots{display:flex;gap:8px}
+.rm-dots i{width:34px;height:6px;border-radius:9px;background:#dbe5f3;cursor:pointer;transition:background .15s}
+.rm-dots i.past{background:#9fd8f6}.rm-dots i.on{background:var(--navy)}
+.rm-body{align-items:start}
+.rm-q{min-height:0;align-self:start;gap:12px}
+.rm-reply{margin-top:0}
+.rm-reply:not(.on){display:none}
