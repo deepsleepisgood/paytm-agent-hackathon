@@ -1432,3 +1432,25 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 /* ids (UTR, order numbers): shown exactly as given, smaller, never reformatted or clipped */
 .a-hero.id{flex-wrap:wrap;gap:6px 12px}
 .a-hero.id b{font-size:22px;letter-spacing:.02em;min-width:0;max-width:100%;overflow-wrap:anywhere;text-align:right;margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* ===== mesh on the dark neon panel: dark glass cards, neon lines (no white boxes) ===== */
+.af .mesh-band{background:rgba(255,255,255,.035);border:1px solid rgba(130,165,255,.16)}
+.af .mesh-band.p{background:rgba(70,150,255,.055);border-color:rgba(90,190,255,.2)}
+.af .mesh-band span{color:#8fa8de}
+.af .mesh-e .e{stroke:rgba(140,170,255,.22);stroke-dasharray:3 5}
+.af .mesh-e .e.done{stroke:#37d39a;stroke-opacity:.75;stroke-dasharray:none;stroke-width:1.8}
+.af .mesh-e .e.go{stroke:#5ad1ff;stroke-width:2.4;stroke-dasharray:6 6;filter:drop-shadow(0 0 5px rgba(90,209,255,.9))}
+.af .mn{background:rgba(16,24,62,.86);border:1.5px solid rgba(130,165,255,.28);box-shadow:0 6px 18px rgba(2,6,30,.45)}
+.af .mn b{color:#eef3ff}.af .mn em{color:#8ea3d1}
+.af .mn.par{border-color:rgba(150,185,255,.45)}
+.af .mn.done{border-color:rgba(55,211,154,.7);opacity:1;box-shadow:0 6px 18px rgba(2,6,30,.45),0 0 0 1px rgba(55,211,154,.18)}
+.af .mn.done em{color:#4fe0ae}
+.af .mn.wait{opacity:.92;filter:none;border-color:rgba(150,185,255,.5)}.af .mn.wait em{color:#a9bcec}
+.af .mn.work{border-color:#5ad1ff;animation:meshGlow 1.7s ease-in-out infinite}
+.af .mn.work em{color:#7fe0ff;font-weight:700}
+.af .mn.idle,.af .mn.standby{background:rgba(255,255,255,.025);border:1.5px dashed rgba(150,170,220,.2);box-shadow:none;filter:grayscale(1) brightness(.9);opacity:.5}
+.af .mn.standby{opacity:.32}
+.af .mn-tick{background:#1fb87f;box-shadow:0 0 0 3px rgba(16,24,62,.9)}
+@keyframes meshGlow{0%,100%{box-shadow:0 0 0 1px #5ad1ff,0 0 14px rgba(90,209,255,.35),0 6px 18px rgba(2,6,30,.5)}50%{box-shadow:0 0 0 1px #5ad1ff,0 0 30px rgba(90,209,255,.7),0 6px 18px rgba(2,6,30,.5)}}
+@media (prefers-reduced-motion:reduce){.af .mn.work{animation:none}}
+.af .mn .pt-av b{color:#012b72;font-size:inherit}.af .mn .pt-av i{color:#00baf2}
