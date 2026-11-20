@@ -1784,3 +1784,12 @@ button,label,.az-eyebrow{text-transform:none!important}
 .rm-q{min-height:0;align-self:start;gap:12px}
 .rm-reply{margin-top:0}
 .rm-reply:not(.on){display:none}
+
+/* Replay mesh keeps the same lively robot faces: bobbing, scanning eyes, pulse ring while working; blinking after */
+.rm-n .ag-av{position:relative}
+.rm-n.work .ag-av:before{content:'';position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--c1,#00baf2);animation:afPulse .7s ease-out infinite}
+.rm-n.done .ag-av{box-shadow:0 0 0 3px rgba(0,186,242,.18),0 6px 14px rgba(10,42,99,.16)}
+.rm-n.work .rb{animation:rbBob .5s ease-in-out infinite}
+.rm-n.work .rb-eye{animation:rbScan .5s ease-in-out infinite}
+.rm-n.work .rb-mouth rect{animation-duration:.35s}
+.rm-n.done .rb-eye,.rm-n.idle .rb-eye{animation:rbBlink 4.6s infinite}
