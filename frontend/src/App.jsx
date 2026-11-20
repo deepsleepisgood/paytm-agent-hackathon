@@ -545,7 +545,7 @@ export default function App() {
         setReveal(i + 1)
         if (s.effects) setLedger((L) => applyEffects(L, s.effects))
         if (s.key === 'reply') {
-          setChat((c) => [...c, { who: 'ai', text: s.reply, texts: s.replies, tone: s.tone, confirm: s.confirm && CONFIRM_LABEL[s.confirm.kind] ? { ...s.confirm, label: CONFIRM_LABEL[s.confirm.kind][lang] } : s.confirm, audio: r.audio }])
+          setChat((c) => [...c, { who: 'ai', text: s.reply, texts: s.replies, tone: s.tone, confirm: s.confirm && CONFIRM_LABEL[s.confirm.kind] ? { ...s.confirm, label: CONFIRM_LABEL[s.confirm.kind][lang] } : s.confirm, audio: r.audio, say: r.say }])
           setBusy(false)
           if (r.live) {
             getLedger(m.mid).then((led) => led && setLedger((L) => overlayLedger(L, led)))

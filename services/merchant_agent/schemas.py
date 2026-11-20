@@ -122,6 +122,9 @@ class MerchantResponse(BaseModel):
     # Voice reply. hindi_reply == reply_text (PLAN.md name; reply_text kept for CONTRACT.md clients)
     hindi_reply: str
     reply_text: str
+    # voice.py: what the voice actually says (the answer, any question / warning / action, one severity line);
+    # reply_text stays the full on-screen answer
+    spoken_text: Optional[str] = None
     reply_source: Literal["llm", "template"]
     audio_base64: Optional[str] = None
     audio_source: Literal["live", "mock", "unavailable"] = "unavailable"

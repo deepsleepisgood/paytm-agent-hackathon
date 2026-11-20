@@ -858,14 +858,23 @@ async def finish(result: dict[str, Any], merchant_text: Optional[str], ready: st
     final wording, so a changed reply never needs a second TTS call."""
     import triage  # local: triage imports this module
 
+    import voice
+
     await triage.apply(result, merchant_text)
     reply = result["reply_text"]
-    audio_b64, tts_source = await upstream.tts(reply, tts_code())
+    # The screen shows the full answer; the voice says only what matters now (voice.py). Shorter is also faster:
+    # Sarvam TTS takes 4-8 s for 30-35 words.
+    said = voice.for_result(result, lang()) or reply
+    result.pop("_answer", None)
+    result.pop("_voice", None)
+    result["spoken_text"] = said
+    audio_b64, tts_source = await upstream.tts(said, tts_code())
     result.update(audio_base64=audio_b64, audio_source=tts_source, language_code=tts_code())
     note = {"live": "", "mock": " (TTS mock audio)"}.get(tts_source, " (text only — TTS unavailable)") if tts_note else ""
     STATE.log("VOICE_REPLY_READY", ACTOR_MERCHANT, ready + note,
-              {"reply_text": reply, "reply_source": result.get("reply_source"), "tts": tts_source,
-               "language_code": tts_code()}, result.get("request_id"))
+              {"reply_text": reply, "spoken_text": said, "spoken_words": len(said.split()),
+               "reply_source": result.get("reply_source"), "tts": tts_source, "language_code": tts_code()},
+              result.get("request_id"))
     return result
 
 
@@ -888,6 +897,16 @@ CLARIFY_EN = {
     "voice_off": "Voice recognition is off right now, so I couldn't hear you. Please type your question or tap a button below.",
     "unclear": ("Sorry, I didn't quite get that. I can help with settlements, UTR or payment checks, chargebacks, refunds, "
                 "loan EDI, your Soundbox and KYC. What would you like to know?"),
+}
+
+
+CLARIFY_SPOKEN = {
+    "hi": {"stt": "Awaaz saaf nahi aayi, phir se boliye ya type kijiye.",
+           "voice_off": "Abhi main sun nahi pa raha, sawaal type kijiye.",
+           "unclear": "Samajh nahi paaya. Settlement, payment, refund ya loan, kis baare mein poochna hai?"},
+    "en": {"stt": "I couldn't hear that clearly. Please say it again or type it.",
+           "voice_off": "I can't hear right now. Please type your question.",
+           "unclear": "I didn't get that. Is it about a settlement, a payment, a refund or your loan?"},
 }
 
 
@@ -914,6 +933,7 @@ async def clarify(*, request_id: str, mid: str, consent_token: str, reason: str,
         "slots": Slots().model_dump(), "doc_extract": None,
         "historical_insight": {}, "intervention_evaluation": {}, "verified_outcome": {},
         "pending_action": {"type": "REPHRASE", "reason": reason, "message": reply, "examples": examples},
+        "_voice": CLARIFY_SPOKEN[lang()].get(reason, CLARIFY_SPOKEN[lang()]["unclear"]),
         "paytm_response": {"status": "NOT_UNDERSTOOD", "reason": reason}, "paytm_source": "none",
         "paytm_agent_trace": [], "hindi_reply": reply, "reply_text": reply, "reply_source": "template",
         "audio_base64": None, "audio_source": "unavailable", "language_code": tts_code(),

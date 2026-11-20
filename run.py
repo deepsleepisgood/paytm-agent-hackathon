@@ -22,6 +22,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import signal
 import socket
@@ -397,7 +398,7 @@ def cmd_smoke(args) -> int:
         check("fake screenshot: fraud alert raised", s == 200 and bool(b.get("fraud_alert")), str(b)[:300])
         s, b = call("POST", "/svc/merchant/merchant/proactive-shield", {"mid": MID, "scenario": "CASHFLOW_EDI_SWITCH", "consent_granted": True})
         offer = ((b or {}).get("proactive") or {}).get("edi_pause_offer") or {}
-        check("cashflow alert asks before acting", s == 200 and offer.get("offer_id") and "रोक दूँ" in b.get("reply_text", ""), str(b)[:300])
+        check("cashflow alert asks before acting", s == 200 and offer.get("offer_id") and re.search(r"रोक दूँ|rok doon\?", b.get("reply_text", ""), re.I), str(b)[:300])
         s, b = call("POST", "/svc/merchant/merchant/confirm-edi-pause",
                     {"mid": MID, "consent_granted": True, "offer_id": offer.get("offer_id"), "pause_days": 2})
         s2, led = call("GET", f"/svc/paytm/ledger/{MID}")
