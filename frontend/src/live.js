@@ -52,17 +52,35 @@ const followUp = (r) => {
   return ` · follow-up of “${String(c.follow_up_of).slice(0, 60)}”${c.carried_slots ? ' (same order / UTR)' : ''}`
 }
 
+// The backend has no English wording for some outcomes yet and answers "Paytm's answer: <status>. I couldn't word the full reply…".
+// Turn that into a clean sentence for the merchant until English templates exist on the server.
+const PLAIN = [
+  [/edi paused/i, 'Your EDI is paused for 2 days.'],
+  [/kyc update link sent/i, 'We have sent a secure link to add your new bank account. Your settlement moves once it is verified.'],
+  [/foreclosure quote ready/i, 'Your loan closure quote is ready. You will get the no-dues letter after you pay it.'],
+  [/no duplicate found/i, 'We found no duplicate payment on that order.'],
+  [/no bank hold/i, 'Your bank has not put any hold on your settlement.'],
+]
+function polishReply(r) {
+  const txt = r.reply_text || ''
+  if (!/couldn.t word the full reply/i.test(txt)) return txt
+  const hit = PLAIN.find(([re]) => re.test(txt))
+  if (hit) return hit[1]
+  const m = txt.match(/answer:\s*([^.]+)\./i)
+  return m ? m[1].trim().replace(/^./, (c) => c.toUpperCase()) + '.' : txt
+}
+
 export function responseToRun(sc, m, r, utterance, elapsed) {
   // Not understood (UNCLEAR) or answered from the merchant's own books (INFO_QUERY): nothing went to Paytm.
   if (r.intent === 'UNCLEAR' || r.intent === 'INFO_QUERY') {
     return {
-      sc: { ...sc, intent: r.intent }, utterance, live: true, elapsed, unclear: r.intent === 'UNCLEAR', info: r.intent === 'INFO_QUERY', reply: r.reply_text,
+      sc: { ...sc, intent: r.intent }, utterance, live: true, elapsed, unclear: r.intent === 'UNCLEAR', info: r.intent === 'INFO_QUERY', reply: polishReply(r),
       events: r.a2a_events || [], audio: r.audio_base64, verified: null, escalated: false,
       sources: { paytm: 'none', intent: r.intent_source, reply: r.reply_source },
       steps: [
         { key: 'input', title: 'Input understood', say: `intent=${r.intent}${followUp(r)}`, ms: 0 },
         { key: 'eval', title: 'Intent routing', live: true, route: { intent: r.intent, source: r.intent_source, slots: {}, transcript: r.transcript }, ms: 0 },
-        { key: 'reply', title: 'Reply to merchant', reply: r.reply_text, ms: 0, effects: [] },
+        { key: 'reply', title: 'Reply to merchant', reply: polishReply(r), ms: 0, effects: [] },
       ],
     }
   }
@@ -123,11 +141,11 @@ export function responseToRun(sc, m, r, utterance, elapsed) {
     agentStep('risk', 'Risk', fraud ? (r.fraud_alert?.message || 'UTR not found across payer apps → SUSPECTED FAKE') : 'DPDP consent token valid · no fraud flag', { tone: fraud ? 'bad' : undefined }),
     agentStep('resolution', 'Resolution', pcx ? ((pcx.actions || []).map((a) => a.what).join(' · ') || 'Nothing to fix') : ticket ? `Escalation ticket ${ticket.ticket_id || ticket.id || ''}` : `Intent ${r.intent} handled (${status})`, { tone: ticket ? 'warn' : undefined }),
     { ...agentStep('ledger', 'Ledger Ops', r.gst_itc_logged ? `GST ITC ${inr(r.gst_itc_logged.amount)} logged to merchant sheet` : 'Paytm ledger updated'), effects: eff },
-    { key: 'reply', title: 'Reply to merchant', reply: r.reply_text, tone: fraud ? 'bad' : undefined, confirm, ms: 0, effects: [] },
+    { key: 'reply', title: 'Reply to merchant', reply: polishReply(r), tone: fraud ? 'bad' : undefined, confirm, ms: 0, effects: [] },
   ]
   return {
     sc: { ...sc, intent: r.intent || sc.intent }, // free text: show what the router decided, not the placeholder
-    utterance, steps, reply: r.reply_text, live: true, elapsed,
+    utterance, steps, reply: polishReply(r), live: true, elapsed,
     events: r.a2a_events || [], audio: r.audio_base64, verified: r.verified_outcome, escalated: !!ticket,
     sources: { paytm: r.paytm_source, intent: r.intent_source, reply: r.reply_source },
   }
