@@ -261,7 +261,8 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
     const text = `${info.headline.replace(/[.:]\s*$/, '')}\n${info.facts.map((f) => `${f.k}: ${f.v}`).join('\n')}\n${info.detail || ''}\n- Paytm for Business`.replace(/\n{2,}/g, '\n')
     try { if (navigator.share) await navigator.share({ text }); else window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener') } catch { /* user closed the share sheet */ }
   }
-  const cls = `voice ${state} ${speak ? '' : 'muted'} ${reply ? 'has-reply' : ''}`
+  const introOn = state === 'idle' && !reply && !note && !!nudge
+  const cls = `voice ${introOn ? 'intro-on' : ''} ${state} ${speak ? '' : 'muted'} ${reply ? 'has-reply' : ''}`
   return (
     <div className={cls}>
       <div className="aurora" /><div className="aurora a2" />
