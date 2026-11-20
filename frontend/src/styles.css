@@ -1648,3 +1648,12 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 
 .cc-logo-wrap:before{background:linear-gradient(180deg,rgba(255,255,255,.3) 0%,rgba(255,255,255,0) 48%)}
 .nav-logo-wrap:before{background:linear-gradient(180deg,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 50%)}
+
+/* AI sparkle above the Y */
+.ai-spark{position:absolute;left:93%;top:-7px;width:10px;height:10px;transform:translateX(-50%);pointer-events:none;overflow:visible;animation:sparkTwinkle 3.4s ease-in-out infinite}
+.cc-logo-wrap .ai-spark{color:#e6f3ff;filter:drop-shadow(0 0 3px rgba(150,205,255,.9))}
+.nav-logo-wrap .ai-spark{width:8px;height:8px;top:-6px;color:#4aa6ee;filter:drop-shadow(0 0 2px rgba(74,166,238,.6))}
+@keyframes sparkTwinkle{0%,100%{opacity:.55;transform:translateX(-50%) scale(.8) rotate(0)}50%{opacity:1;transform:translateX(-50%) scale(1.15) rotate(18deg)}}
+@media (prefers-reduced-motion:reduce){.ai-spark{animation:none;opacity:.9}}
+.cc-top,.ai-badge.lockup{overflow:visible}
+.cc-logo-wrap .ai-spark{left:95%;top:-11px;width:9px;height:9px}
