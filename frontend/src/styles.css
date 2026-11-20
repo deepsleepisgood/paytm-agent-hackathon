@@ -1620,3 +1620,11 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 /* exact Buddy artwork, transparent background. A hairline dark edge keeps the pale letters readable on light bars. */
 .cc-top .cc-logo,.ai-badge.lockup .nav-logo{display:block;width:auto;filter:none}
 .cc-top .cc-logo{height:26px}.ai-badge.lockup .nav-logo{height:20px}
+
+/* top bar: the product navy (not black) so the exact white-ending shades of the logo read as part of the product */
+.cc-top{background:linear-gradient(120deg,#0a2a63 0%,#123b86 60%,#1a4fa8 100%)!important;border-bottom:0!important;box-shadow:0 2px 14px rgba(10,42,99,.25)}
+.cc-top .cc-logo{height:22px;filter:none}
+.ai-badge.lockup .nav-logo{height:17px;filter:none}
+.cc-top .cc-title{border-left:1px solid rgba(255,255,255,.22)!important}
+.cc-top .cc-by{color:#b9cdf0!important}
+.cc-top{background:linear-gradient(120deg,#061636 0%,#0a2455 55%,#0f3277 100%)!important}
