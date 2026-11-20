@@ -1,25 +1,25 @@
 // Hindi + English UI strings for the voice Assistant. Merchant picks a language once; the choice is remembered.
-export const LANGS = { hi: 'Hinglish', en: 'EN' }
+export const LANGS = { hi: 'हिंदी', en: 'EN' }
 const KEY = 'paytm-ai-lang'
-// The demo runs in one language (Hinglish) with no toggle. Set to false to bring back the Hinglish / English toggle.
-export const ENGLISH_ONLY = true // single language, no toggle
-export const loadLang = () => { if (ENGLISH_ONLY) return 'hi'; try { const v = localStorage.getItem(KEY); return v in LANGS ? v : 'hi' } catch { return 'hi' } }
+// Default is English. The Hindi / English toggle is shown unless this is true.
+export const ENGLISH_ONLY = false // Hindi / English toggle is on
+export const loadLang = () => { try { const v = localStorage.getItem(KEY); return v in LANGS ? v : 'en' } catch { return 'en' } } // English by default, remembers the choice
 export const saveLang = (l) => { try { localStorage.setItem(KEY, l) } catch { /* ignore */ } }
 
 export const STR = {
   hi: {
-    idle: 'Mic dabakar boliye', listen: 'Sun raha hoon…', think: 'Soch raha hoon…', speak: 'Bata raha hoon', more: 'Aur kuch poochna hai?',
-    ph: 'Boliye…', intro: 'Hindi ya English mein poochiye',
-    unclear: 'Awaaz samajh nahi aayi. Neeche se koi sawaal chun lijiye.', silent: 'Kuch sunai nahi diya. Mic dabakar phir se boliye.', nomic: 'Yahan mic nahi chal raha. Neeche se koi sawaal chun lijiye.',
-    needLive: 'Awaaz ke liye Live services chalaiye, ya neeche se koi sawaal chuniye.',
-    yesSay: 'ya boliye “haan”', nudgeLabel: 'Aaj ka zaroori kaam', nudgeCta: 'Proof ki photo bhejiye', nudgeDemo: 'Demo dekhiye',
-    up: 'Photo bhejiye', ask: 'Bolkar aur poochiye', stop: 'Bol chuka, bhejiye', menu: 'Saari madad', khata: 'Khata', askVoice: 'Bolkar poochiye', typePh: 'Ya yahan likhiye…', send: 'Bhejiye', cUnclear: 'Phir se poochiye', cBooks: 'Aapke khate se',
-    asH: 'Kya bhejna hai?', asPodT: 'Delivery ka proof', asPodS: 'Customer ko saman mil gaya — receipt ya photo', asShotT: 'UPI payment ka screenshot', asShotS: 'Customer ne payment dikhaya — asli hai ya nahi, check karein',
-    asNote: 'Camera se photo lijiye ya gallery se chuniye', cancel: 'Cancel', mute: 'Awaaz band karein', unmute: 'Awaaz chalu karein',
-    p_settle: 'Paisa kahan kata?', p_utr: 'UTR check karo', p_cb: 'Delivery proof bhejo', p_hold: 'Settlement hold', p_edi: 'Loan EDI fail', p_dup: 'Do baar paisa kata', p_growth: 'Business kaise badhayein',
-    nTitleCb: (o, a) => `${o} ka ₹${a} ruka hua hai`, nTextCb: 'Delivery ka proof bhejiye, paisa 48 ghante mein chhoot jayega.', nTitleSt: 'Aaj ka hisaab dekhiye', nTextSt: 'Settlement mein kitna kata, ek button mein jaaniye.',
-    cHold: 'Ho gaya', cWait: 'Aapki manzoori chahiye', cTeam: 'Team ko bheja', cFake: 'Account mein nahi mila', cPend: 'Pending',
-    attn: 'Aapka dhyan chahiye', attnSub: 'Kya hua aur ab kya karna hai', clear: 'Sab theek hai', clearSub: 'Abhi koi zaroori kaam baaki nahi hai', handled: 'Ho gaya', showAll: 'Sab dekhiye', showLess: 'Kam dikhaiye',
+    idle: 'माइक दबाकर बोलिए', listen: 'सुन रहा हूँ…', think: 'सोच रहा हूँ…', speak: 'बता रहा हूँ', more: 'और कुछ पूछना है?',
+    ph: 'बोलिए…', intro: 'हिंदी या English में पूछिए',
+    unclear: 'आवाज़ समझ नहीं आई। नीचे से कोई सवाल चुन लीजिए।', silent: 'कुछ सुनाई नहीं दिया। माइक दबाकर फिर से बोलिए।', nomic: 'यहाँ माइक नहीं चल रहा। नीचे से कोई सवाल चुन लीजिए।',
+    needLive: 'आवाज़ के लिए Live services चलाइए, या नीचे से कोई सवाल चुनिए।',
+    yesSay: 'या बोलिए “हाँ”', nudgeLabel: 'आज का ज़रूरी काम', nudgeCta: 'सबूत की फ़ोटो भेजें', nudgeDemo: 'डेमो देखें',
+    up: 'फ़ोटो भेजें', ask: 'बोलकर और पूछिए', stop: 'बोल चुका, भेजिए', menu: 'सारी मदद', khata: 'खाता', askVoice: 'बोलकर पूछें', typePh: 'या यहाँ लिखिए…', send: 'भेजें', cUnclear: 'फिर से पूछिए', cBooks: 'आपके खाते से',
+    asH: 'क्या भेजना है?', asPodT: 'डिलीवरी का सबूत', asPodS: 'ग्राहक को सामान मिल गया — रसीद या फ़ोटो', asShotT: 'UPI पेमेंट का स्क्रीनशॉट', asShotS: 'ग्राहक ने पेमेंट दिखाया — असली है या नकली जाँचें',
+    asNote: 'कैमरा से फ़ोटो लें या गैलरी से चुनें', cancel: 'रद्द करें', mute: 'आवाज़ बंद करें', unmute: 'आवाज़ चालू करें',
+    p_settle: 'पैसा कहाँ कटा?', p_utr: 'UTR जाँचें', p_cb: 'डिलीवरी प्रूफ भेजें', p_hold: 'सेटलमेंट होल्ड', p_edi: 'लोन EDI फेल', p_dup: 'दो बार पैसा कटा', p_growth: 'धंधा कैसे बढ़ाएँ',
+    nTitleCb: (o, a) => `${o} का ₹${a} रुका हुआ है`, nTextCb: 'डिलीवरी का सबूत भेजिए, पैसा 48 घंटे में छूट जाएगा।', nTitleSt: 'आज का हिसाब देखें', nTextSt: 'सेटलमेंट में कितना कटा, एक बटन में जानिए।',
+    attn: 'ध्यान दीजिए', attnSub: 'क्या हुआ और अब क्या करना है', clear: 'सब ठीक है', clearSub: 'अभी कोई ज़रूरी काम बाकी नहीं है', handled: 'हो गया', showAll: 'सभी देखें', showLess: 'कम दिखाएँ',
+    cHold: 'हो गया', cWait: 'आपकी मंज़ूरी चाहिए', cTeam: 'टीम को भेजा', cFake: 'नकली लगता है', cPend: 'पेंडिंग',
   },
   en: {
     idle: 'Tap the mic and speak', listen: 'Listening…', think: 'Thinking…', speak: 'Speaking', more: 'Anything else?',
@@ -40,9 +40,9 @@ export const t = (lang, k, ...a) => { const v = STR[lang][k]; return typeof v ==
 
 export const FACT = {
   hi: {
-    gross: 'Kul sale', net_bank_credit: 'Bank mein aaya', variance: 'Kul katauti', utr: 'UTR', utr_number: 'UTR', amount: 'Amount', amount_inr: 'Amount', payer_app: 'Payment app', order_id: 'Order',
-    outstanding: 'Baaki loan', payable: 'Bharna hai', foreclosure_charge: 'Closure charge', noc_eta_days: 'NOC (din)', pickup_ticket: 'Ticket', ticket: 'Ticket', release_eta: 'Paisa kab milega',
-    edi_saved_inr: 'Bachat', order_amount_inr: 'Order amount', projected_net_payout: 'Kal ka payout', duplicates_found: 'Duplicate', pickup_within_hours: 'Pickup (ghante)', eta_hours: 'Samay (ghante)', current_account: 'Bank account', lender: 'Lender', settlement_date: 'Tareekh',
+    gross: 'कुल बिक्री', net_bank_credit: 'बैंक में आया', variance: 'कुल कटौती', utr: 'UTR', utr_number: 'UTR', amount: 'रकम', amount_inr: 'रकम', payer_app: 'पेमेंट ऐप', order_id: 'ऑर्डर',
+    outstanding: 'बाकी लोन', payable: 'भरना है', foreclosure_charge: 'क्लोज़र चार्ज', noc_eta_days: 'NOC (दिन)', pickup_ticket: 'टिकट', ticket: 'टिकट', release_eta: 'पैसा कब मिलेगा',
+    edi_saved_inr: 'बचत', order_amount_inr: 'ऑर्डर रकम', projected_net_payout: 'कल का payout', duplicates_found: 'डुप्लिकेट', pickup_within_hours: 'पिकअप (घंटे)', eta_hours: 'समय (घंटे)', current_account: 'बैंक खाता', lender: 'लोन देने वाला', settlement_date: 'तारीख',
   },
   en: {
     gross: 'Total sales', net_bank_credit: 'Credited to bank', variance: 'Total deductions', utr: 'UTR', utr_number: 'UTR', amount: 'Amount', amount_inr: 'Amount', payer_app: 'Payment app', order_id: 'Order',
