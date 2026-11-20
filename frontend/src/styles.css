@@ -1621,3 +1621,6 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .cc-top .cc-title{border-left:1px solid #2a323a!important}
 .cc-top .cc-by{color:#8b97a8!important}
 .cc-top .cc-logo{mix-blend-mode:lighten}
+
+/* phone top nav: the exact logo artwork on its own dark tile (the artwork is designed for dark) */
+.ai-badge.lockup .nav-logo{display:block;height:30px;width:auto;border-radius:9px;background:#101316}
