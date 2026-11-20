@@ -1588,3 +1588,7 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 
 .tabs button.ctr .qr-fab{filter:drop-shadow(0 2px 5px rgba(16,31,88,.22))!important}
 .tabs button.ctr.on .qr-fab{filter:drop-shadow(0 2px 6px rgba(74,149,238,.4))!important}
+
+/* tab-bar button: flat B on a clean white disc */
+.tabs button.ctr .qr-fab{background:#fff!important;border:1px solid #e3ecf7!important;box-shadow:0 3px 10px rgba(16,31,88,.16)!important;filter:none!important}
+.tabs button.ctr.on .qr-fab{box-shadow:0 3px 12px rgba(47,110,232,.35)!important}

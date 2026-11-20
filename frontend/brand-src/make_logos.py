@@ -34,8 +34,14 @@ def svg(w, h, vb, body):
     return f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="{vb}">{body}</svg>\n'
 
 
+def flat_inner(p="f"):
+    return (f'<defs><linearGradient id="{p}u" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b7bf2"/><stop offset="1" stop-color="#2559d2"/></linearGradient>'
+            f'<linearGradient id="{p}d" gradientUnits="userSpaceOnUse" x1="28" y1="40" x2="86" y2="102"><stop offset="0" stop-color="#2a56c8"/><stop offset="1" stop-color="#1b3c9b"/></linearGradient></defs>'
+            f'<path d="{B_STEM}" fill="url(#{p}d)"/><path d="{B_LO}" fill="url(#{p}d)"/><path d="{B_UP}" fill="url(#{p}u)"/><circle cx="99" cy="59" r="7" fill="#34d86f"/>')
+
+
 def mark_svg(white=False):
-    return svg(240, 240, "0 0 120 120", mark_inner(white))
+    return svg(240, 240, "0 0 120 120", mark_inner(True) if white else flat_inner())
 
 
 def icon_inner(p="i"):
@@ -79,15 +85,15 @@ def word_parts(on="dark", sparkle=True, text="BUDDY"):
     for ch in text:
         w, f = LETTERS[ch]
         d += f(x)
-        x += w + 24
-    end = x - 24 + 6
+        x += w + 27
+    end = x - 27 + 6
     a, b = ("#2f6fe8", "#d6e8ff") if on == "dark" else ("#1740a8", "#3b82e8")
     star = ""
     if sparkle:
         star = (f'<path transform="translate({end + 24} 28)" d="M0 -15C2 -5 5 -2 15 0C5 2 2 5 0 15C-2 5 -5 2 -15 0C-5 -2 -2 -5 0 -15Z" '
                 f'fill="{"#8592a6" if on == "dark" else "#a3b0c4"}"/>')
     body = (f'<defs><linearGradient id="wg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="{end}" y2="0"><stop offset="0" stop-color="{a}"/><stop offset="1" stop-color="{b}"/></linearGradient></defs>'
-            f'<path d="{d}" fill="none" stroke="url(#wg)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>{star}')
+            f'<path d="{d}" fill="none" stroke="url(#wg)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>{star}')
     return body, end + (46 if sparkle else 6)
 
 
@@ -99,7 +105,7 @@ def wordmark_svg(on="dark"):
 
 def lockup_svg(on="light"):
     body, w = word_parts("dark" if on == "dark" else "light")
-    mark = mark_inner(on == "dark", "k")
+    mark = mark_inner(True, "k") if on == "dark" else flat_inner("k")
     ws = 46 / 68  # wordmark is 46 tall next to a 100 tall mark
     total = 100 + 30 + w * ws + 8
     bg = f'<rect width="{total:.0f}" height="100" fill="#0f1f4d"/>' if on == "dark" else ""
