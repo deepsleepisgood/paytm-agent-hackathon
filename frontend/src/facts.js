@@ -24,7 +24,8 @@ const SIMPLE = [
   [/mdr|payment fee|processing|fee/i, 'Payment fees'],
 ]
 const simpleLabel = (l) => { for (const [re, out] of SIMPLE) if (re.test(l)) return out; return l.replace(/\s*(for|on)?\s*order\s*#?\d+/i, '').replace(/\s*\(#?\d+\)/, '').trim() }
-const needsYou = /\?|\b(send|share|upload|confirm|approve|tap|reply|provide|please|bhejiye|bhejo|batao|dijiye|कीजिए|भेजिए)\b/i
+const needsYou = /\?|\b(send|share|upload|confirm|approve|tap|reply|provide|please|bhejiye|bhejo|batao|bataiye|dijiye|kijiye|rakhiye|bhariye|mat|link|callback|कीजिए|भेजिए)\b/i
+const isHinglish = (s) => /\b(hai|hain|mein|aur|kiya|kijiye|bhejiye|dijiye|nahi|aapke|aapka|ka|ki|ko)\b/i.test(s)
 const tidy = (s) => s.replace(/\s+/g, ' ').replace(/^[\s,;:—-]+|[\s,;:—.-]+$/g, '').replace(/\s+(hai|है|hain)$/i, '')
 function breakdown(sentence, lang) {
   let main = sentence, tail = ''
@@ -83,18 +84,20 @@ export function summarize(run, reply, lang = 'hi') {
   let headline = parts[0] || reply.text
   let rest = parts.slice(1)
   let factsTitle = '', context = ''
+  let usedBreakdown = false
   for (let j = 0; j < parts.length; j++) {
     const bd = breakdown(parts[j], lang)
     if (!bd) continue
+    usedBreakdown = true
     facts.length = 0; facts.push(...bd.items)
     const amt = (bd.intro.match(AMT) || [])[0]
     const cut = amt && /differ|deduct|kate|कटे|cut|less/i.test(bd.intro)
-    headline = cut ? (lang === 'en' ? `${amt} was cut from your payout` : lang === 'hi' ? `${amt} आपके पेमेंट से कटे` : `${amt} aapke payout se kate`) : bd.intro
+    headline = cut ? (isHinglish(parts[j]) ? `${amt} aapke payout se kate` : lang === 'en' ? `${amt} was cut from your payout` : lang === 'hi' ? `${amt} आपके पेमेंट से कटे` : `${amt} aapke payout se kate`) : bd.intro
     rest = parts.filter((_, k) => k !== j && !(j > 0 && k === 0))
     if (bd.tail) rest = [bd.tail, ...rest]
     break
   }
   // Keep only what the merchant must act on (a question or a next step); drop extra information.
-  const detail = rest.filter((x) => needsYou.test(x)).slice(0, 2).join(' ').slice(0, 170)
+  const detail = (usedBreakdown ? rest.filter((x) => needsYou.test(x)) : rest).slice(0, 2).join(' ').slice(0, 190)
   return { kind, chip, headline, context, factsTitle, detail, facts }
 }

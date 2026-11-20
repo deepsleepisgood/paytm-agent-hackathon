@@ -12,6 +12,7 @@ because LLMs mangle long digit strings.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 from datetime import date, timedelta
@@ -115,7 +116,7 @@ KEYWORD_RULES: list[tuple[str, list[str]]] = [
         [
             r"(?<!\d)\d{12}(?!\d)", r"\butr\b", r"\bscreenshot\b", r"\bfake\b", r"\bnakli\b",
             # No UTR: customer debited but nothing reached the merchant, or the customer's payment screen is stuck
-            r"(?:paisa|paise|payment|amount|rupay\w*).{0,30}(?:kat\s*gay|kat\s*chuk|cut\s*gay|debit|deduct)",
+            r"(?:paisa|paise|payment|amount|money|rupay\w*).{0,30}(?:kat\s*gay|kat\s*chuk|cut\s*gay|debit|deduct)",
             r"(?:kat\s*gay|debit\w*).{0,40}(?:nahi\s*aa|nahi\s*mil|not\s*(?:received|come|reach))",
             r"screen.{0,30}(?:ghoom|ghum|rotat|spin|load|atak|atka|stuck|processing|pending|chakkar)",
             r"(?:ghoom|ghum|spinning|loading|processing).{0,25}(?:screen|raha|rahi|rhi|rha)",
@@ -388,20 +389,53 @@ def merge_slots(primary: Slots, secondary: Slots) -> Slots:
     return Slots(**{k: a[k] if a[k] is not None else b[k] for k in a})
 
 
-async def classify(text: str) -> Classification:
+FOLLOW_UP_RULE = """
+FOLLOW-UPS: the input may be JSON with "conversation_so_far" (earlier turns: what the merchant asked, the intent,
+the slots and what you answered) and "new_message". Classify ONLY new_message, but use the earlier turns to resolve
+what it refers to ("uska", "woh", "kab tak?", "aur refund?", "why?"): a follow-up about the same case keeps that
+intent, and reuses its order_id / utr_number / amount. A question answered by what you already said (e.g. "kab tak
+aayega?" after you gave the date) is INFO_QUERY. A follow-up is never UNCLEAR just because it is short."""
+
+
+def _continue(history: Optional[list[dict[str, Any]]], text: str, slots: Slots) -> Optional[Classification]:
+    """A short message pointing back ("uska kya hua?") that nothing else placed: continue the last business turn."""
+    import conversation
+
+    prev = next((t for t in reversed(history or []) if t.get("intent") not in (UNCLEAR, None)), None)
+    if not prev or not conversation.is_follow_up(text):
+        return None
+    return Classification(intent=prev["intent"], slots=slots, source="context")
+
+
+async def classify(text: str, history: Optional[list[dict[str, Any]]] = None) -> Classification:
+    """history: the last few turns (conversation.recent), so follow-up questions keep their context."""
     regex_slots = extract_slots(text)
     bank_intent, bank_score = utterance_match(text)
     if FAST_PATH and bank_intent and bank_score >= 1.0:
         return Classification(intent=bank_intent, slots=regex_slots, source="utterance_bank")
 
-    result = await upstream.llm(classifier_prompt(), text, response_format="json")
+    import conversation
+
+    # Ids the LLM returns must be in what the merchant said. For a follow-up ("uska status?") the earlier turns count
+    # too; a fresh question must not pick up an old UTR (live: "money debited but I didn't get it" re-checked the
+    # previous question's UTR instead of finding the stuck payment).
+    follow_up = bool(history) and conversation.is_follow_up(text)
+    seen = text + " " + (json.dumps(history, ensure_ascii=False, default=str) if follow_up else "")
+    prompt, user = classifier_prompt(), text
+    if history:
+        prompt += FOLLOW_UP_RULE
+        user = json.dumps({"conversation_so_far": [{k: t.get(k) for k in ("merchant", "intent", "slots", "buddy")}
+                                                   for t in history], "new_message": text},
+                          ensure_ascii=False, default=str)
+    result = await upstream.llm(prompt, user, response_format="json")
     if isinstance(result, dict):
         intent = str(result.get("intent", "")).strip().upper()
         if intent in (UNCLEAR, "OUT_OF_SCOPE", "UNKNOWN", "NONE"):
             # The LLM says this isn't an actionable business question. A preset/near-exact match still wins.
             if bank_intent and bank_score >= FUZZY_MIN:
                 return Classification(intent=bank_intent, slots=regex_slots, source="utterance_bank")
-            return Classification(intent=UNCLEAR, slots=regex_slots, source="llm")
+            return _continue(history, text, regex_slots) or Classification(intent=UNCLEAR, slots=regex_slots,
+                                                                           source="llm")
         if intent == INFO_QUERY:
             return Classification(intent=INFO_QUERY, slots=regex_slots, source="llm")
         if intent in INTENTS:
@@ -410,13 +444,17 @@ async def classify(text: str) -> Classification:
             # The LLM can invent a digit (live: 11 spoken digits came back as a 12-digit UTR, which then
             # looked fake). Keep its UTR / order id only if those digits are really in the merchant's words.
             llm_slots = llm_slots.model_copy(update={
-                "utr_number": llm_slots.utr_number if _seen_digits(llm_slots.utr_number, text) else None,
-                "order_id": llm_slots.order_id if _seen_digits(llm_slots.order_id, text) else None,
+                "utr_number": llm_slots.utr_number if _seen_digits(llm_slots.utr_number, seen) else None,
+                "order_id": llm_slots.order_id if _seen_digits(llm_slots.order_id, seen) else None,
             })
             # Regex wins: it is exact for UTRs/order ids; LLM fills what regex missed.
             return Classification(intent=intent, slots=merge_slots(regex_slots, llm_slots), source="llm")
 
     if bank_intent and bank_score >= FUZZY_MIN:
         return Classification(intent=bank_intent, slots=regex_slots, source="utterance_bank")
-    # No LLM: keywords only. No match means we don't know, so ask instead of guessing.
-    return Classification(intent=keyword_intent(text) or UNCLEAR, slots=regex_slots, source="keyword_fallback")
+    # No LLM: keywords only. No match means we don't know (unless it continues the last question), so ask.
+    kw = keyword_intent(text)
+    if kw:
+        return Classification(intent=kw, slots=regex_slots, source="keyword_fallback")
+    return _continue(history, text, regex_slots) or Classification(intent=UNCLEAR, slots=regex_slots,
+                                                                   source="keyword_fallback")

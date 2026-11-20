@@ -41,6 +41,23 @@ def lang() -> str:
     return _REPLY_LANG.get()
 
 
+# The last few turns of this merchant's conversation (conversation.recent), set per request by the endpoint, so the
+# reply and info LLMs understand follow-ups ("uska", "kab tak?") and earlier answers count as grounded facts.
+_HISTORY: contextvars.ContextVar[list] = contextvars.ContextVar("history", default=[])
+
+
+def set_history(turns: Optional[list]) -> None:
+    _HISTORY.set(list(turns or []))
+
+
+def history() -> list:
+    return _HISTORY.get()
+
+
+def _history_json() -> str:
+    return json.dumps(history(), ensure_ascii=False, default=str) if history() else ""
+
+
 def tts_code() -> str:
     return "en-IN" if lang() == "en" else "hi-IN"
 
@@ -171,9 +188,14 @@ REPLY_SYSTEM_PROMPT = """You are the warm AI business buddy of {merchant_name}, 
 You get JSON with the merchant's exact question, Paytm's multi-agent answer (paytm_response) and your diagnosis.
 ANSWER THE MERCHANT'S QUESTION directly in 1-2 short sentences (at most 30 words): what Paytm found or did that
 answers it, plus the one next step if paytm_response has one (action_required). {language_rule}
-Rules: use ONLY numbers present in the JSON (rupees like ₹4,160). Do not invent advice or facts. Tell the merchant to
-hold goods ONLY if status is NOT_FOUND_SUSPECTED_FAKE or PENDING. No business tip (one is added separately), no
-greetings, no markdown."""
+Rules: use ONLY numbers present in the JSON (rupees like ₹4,160). Do not invent advice or facts.
+NEVER claim an action (ticket, refund, link, call, check with NPCI) unless paytm_response shows it was done.
+Never call a payment or screenshot fake or fraud: say it is not in the merchant's account. When intent is UTR_VERIFY
+(and only then) say whether to hand over the goods (received) or hold them (not found / PENDING); for every other
+intent never mention goods / saman.
+If conversation_so_far is present, the question may be a follow-up: use it to understand what "uska", "woh", "it"
+refer to, and do not repeat what you already said there. No business tip (one is added separately), no greetings,
+no markdown."""
 
 MAX_REPLY_WORDS = 35
 
@@ -417,6 +439,7 @@ async def vernacular_reply(
     user_prompt = json.dumps(
         {
             "merchant_question": merchant_text,
+            **({"conversation_so_far": history()} if history() else {}),
             "intent": intent,
             "paytm_response": {k: v for k, v in resp.items() if k != "agent_trace"},
             "historical_insight": {k: insight.get(k) for k in ("classification", "summary", "tip_hi")},
@@ -450,22 +473,48 @@ async def vernacular_reply(
             return en, "template"
     # The LLM answers the question; the verified tip is appended verbatim. (Live, it once rewrote the Soundbox tip
     # "payment notification चालू रखिए" into "PoD लेकर रखें", so it no longer writes tips.)
+    if isinstance(reply, str) and len(reply.split()) > 40:
+        # Live: 49-53 word answers to "will there be a penalty?" were thrown away for an even longer template.
+        # The answer comes first, so keep the leading sentences that fit.
+        reply = _first_sentences(reply, 40) or reply
     if isinstance(reply, str) and len(reply.strip()) > 10 and len(reply.split()) <= 40:
         bad = ungrounded_numbers(reply, " ".join([user_prompt, template, merchant_text or ""]))
-        if not bad and not _DEVANAGARI.search(reply):  # both tabs are Latin script (Hinglish / English)
+        # Live, despite the prompt: "screenshot fake ho sakta hai". A missing UTR is "not in your account", never an
+        # accusation the merchant then repeats to a customer whose payment may still be on its way.
+        if intent != "UTR_VERIFY":
+            # Live: settlement answers gained "Saman abhi hold par rakhiye…" (goods advice belongs to payment checks).
+            reply = " ".join(s for s in re.split(r"(?<=[.!?।])\s+", reply.strip()) if not _GOODS.search(s)) or reply
+        accuses = _ACCUSES.search(reply)
+        if not bad and not accuses and not _DEVANAGARI.search(reply):  # both tabs are Latin script
             return compose(human_dates(reply.strip()), tip, max_words=48), "llm"
         # Live: the LLM said "₹4,160 का UTR" when no amount existed. Money talk must come from the facts.
-        log.warning("LLM reply dropped (ungrounded numbers %s / wrong language)", bad)
+        log.warning("LLM reply dropped (ungrounded numbers %s / accusation / wrong language)", bad)
     elif REPLY_LLM and not awaiting:
         log.warning("LLM reply unusable (%s): using the template",
                     "no answer / timed out" if not isinstance(reply, str) else f"{len(reply.split())} words")
     if english:  # no Hindi template in English mode: Paytm's own English answer, if it gave one
         if isinstance(resp.get("template_text"), str) and resp["template_text"].strip():
             return resp["template_text"].strip(), "template"
+        # Neither the LLM nor Paytm's English text: never answer the English tab in Hinglish.
+        status = str(resp.get("status") or "").replace("_", " ").lower()
+        return (f"Paytm's answer: {status}. I couldn't word the full reply just now; please ask again in a minute."
+                if status else "I couldn't get an answer just now; please ask again in a minute."), "template"
     return template, "template"
 
 
 _DEVANAGARI = re.compile("[\u0900-\u097F]")
+def _first_sentences(text: str, max_words: int) -> str:
+    """The leading whole sentences of `text` that fit in max_words ('' if even the first doesn't)."""
+    out: list[str] = []
+    for s in re.split(r"(?<=[.!?।])\s+", text.strip()):
+        if len(" ".join(out + [s]).split()) > max_words:
+            break
+        out.append(s)
+    return " ".join(out)
+
+
+_GOODS = re.compile(r"\bsaa?man\b|\bgoods\b|hand\s*over", re.I)
+_ACCUSES = re.compile(r"\bfake\b|\bfraud\w*|\bnakli\b|\bfarzi\b|\bscam\b", re.I)
 _ISO_DATE = re.compile(r"\b(20\d\d)-(\d\d)-(\d\d)\b")
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]  # Hinglish uses these too
 
@@ -866,7 +915,9 @@ async def clarify(*, request_id: str, mid: str, consent_token: str, reason: str,
 INFO_SYSTEM_PROMPT = """You are the AI business buddy of {merchant_name}, a small Paytm merchant in India.
 Answer the merchant's question using ONLY the facts JSON (their own books; "today" is facts.today).
 Give the direct answer first, in 1-2 short sentences (at most 35 words). {language_rule}
-If the facts do not contain the answer, say you don't have that information and that you can check settlements,
+If conversation_so_far is present, the question may be a follow-up ("kab tak?", "uska kya hua?"): answer it about the
+thing discussed there, using the facts and what was already said in those turns.
+Only if neither the facts nor the conversation contain ANY of the answer, say you don't have that information and that you can check settlements,
 payments, chargebacks, refunds, the loan EDI or the Soundbox. Use ONLY numbers that appear in the facts
 (rupees like ₹22,189; dates like 20 Nov). No greetings, no markdown."""
 
@@ -881,9 +932,10 @@ async def answer_info(*, request_id: str, mid: str, consent_token: str, merchant
     facts_json = json.dumps(f, ensure_ascii=False, default=str)
     reply = await upstream.llm(
         INFO_SYSTEM_PROMPT.format(merchant_name=dl.DATA.merchant["name"], language_rule=LANGUAGE_RULE[lang()]),
-        json.dumps({"question": merchant_text, "facts": f}, ensure_ascii=False, default=str), response_format="text")
+        json.dumps({"question": merchant_text, **({"conversation_so_far": history()} if history() else {}), "facts": f},
+                   ensure_ascii=False, default=str), response_format="text")
     ok = (isinstance(reply, str) and len(reply.strip()) > 5 and len(reply.split()) <= 55
-          and not ungrounded_numbers(reply, facts_json + " " + (merchant_text or ""))
+          and not ungrounded_numbers(reply, facts_json + " " + (merchant_text or "") + " " + _history_json())
           and not _DEVANAGARI.search(reply))
     if not ok:
         log.warning("INFO answer unusable (LLM down, ungrounded numbers or wrong language): asking to rephrase")

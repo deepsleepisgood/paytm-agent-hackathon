@@ -18,7 +18,7 @@ import time
 import urllib.request
 
 DEV = re.compile("[ऀ-ॿ]")
-HINGLISH = re.compile(r"(hai|hain|nahi|kar|ka|ki|ke|mein|aap\w*|diya|gaya|hoga|kijiye|dijiye|tak|se)", re.I)
+HINGLISH = re.compile(r"\b(hai|hain|nahi|kar|ka|ki|ke|mein|aap\w*|diya|gaya|hoga|kijiye|dijiye|tak|se)\b", re.I)
 INFO_OR_FEE = ("INFO_QUERY", "FEE_GST_LOAN")
 CASES = [
     # (language, question, acceptable intents, answer must contain any of)

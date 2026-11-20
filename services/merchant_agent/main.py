@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
 import advisor
+import conversation
 import dataset_loader as dl
 import facts
 import khata
@@ -96,7 +97,39 @@ async def presets() -> dict[str, Any]:
 
 async def _query(text: str, mid: str, request_id: str, consent_token: str, doc_context: dict[str, Any] | None,
                  transcript: str | None = None, transcript_source: str | None = None) -> dict[str, Any]:
-    cls = await router.classify(text)
+    body = await _answer(text, mid, request_id, consent_token, doc_context, transcript, transcript_source)
+    return conversation.record(mid, text, body)
+
+
+async def _answer(text: str, mid: str, request_id: str, consent_token: str, doc_context: dict[str, Any] | None,
+                  transcript: str | None = None, transcript_source: str | None = None) -> dict[str, Any]:
+    history = conversation.recent(mid)
+    pipeline.set_history(history)
+    cls = await router.classify(text, history)
+    carried = False
+    # Only for a follow-up: a fresh question on the same topic ("paisa kat gaya" after an earlier UTR check) must not
+    # inherit the old UTR, or it would re-check that payment instead of finding the new one.
+    if cls.intent not in ("UNCLEAR", "INFO_QUERY") and (cls.source == "context" or conversation.is_follow_up(text)):
+        # A follow-up about the same case ("aur uska PoD kab tak?") reuses the order id / UTR / amount said before.
+        slots, carried = conversation.carry_slots(mid, cls.intent, cls.slots)
+        cls = cls.model_copy(update={"slots": slots})
+    prev = conversation.last_business_turn(mid)
+    follow = prev if prev and (cls.source == "context" or carried or (
+        cls.intent == prev["intent"] and conversation.is_follow_up(text))) else None
+    meta = {"turns_remembered": len(history), "follow_up_of": follow["merchant"] if follow else None,
+            "carried_slots": carried, "intent_from_context": cls.source == "context"}
+    if follow:
+        STATE.log("FOLLOW_UP_UNDERSTOOD", pipeline.ACTOR_MERCHANT,
+                  f"Follow-up of “{follow['merchant'][:60]}” → {cls.intent}"
+                  + (" (order id / UTR / amount carried over)" if carried else ""),
+                  {**meta, "slots": cls.slots.model_dump()}, request_id)
+    body = await _route(cls, text, mid, request_id, consent_token, doc_context, transcript, transcript_source)
+    body["conversation"] = meta
+    return body
+
+
+async def _route(cls: Any, text: str, mid: str, request_id: str, consent_token: str, doc_context: dict[str, Any] | None,
+                 transcript: str | None, transcript_source: str | None) -> dict[str, Any]:
     if cls.intent == "UNCLEAR" and not doc_context:
         STATE.log("INTENT_CLASSIFIED", pipeline.ACTOR_MERCHANT, f"Intent: UNCLEAR ({cls.source})",
                   {"intent": cls.intent, "source": cls.source}, request_id)
@@ -245,30 +278,36 @@ async def merchant_upload_doc(
         intent = "UTR_VERIFY"
         extra = {"screenshot_fields": fields, "doc_confidence": extract.get("confidence")}
 
-    return await pipeline.run(
+    pipeline.set_history(conversation.recent(mid))
+    body = await pipeline.run(
         request_id=request_id, mid=mid, consent_token=consent_token, intent=intent,
         intent_source="document", slots=slots, merchant_text=None, extra_payload=extra,
         doc_extract={**extract, "_source": src},
     )
+    return conversation.record(mid, "[uploaded proof of delivery]" if doc_type == "pod" else "[uploaded UPI screenshot]",
+                               body)
 
 
 @app.post("/merchant/proactive-shield", response_model=MerchantResponse)
 async def merchant_proactive_shield(req: ProactiveRequest) -> dict[str, Any]:
     """CONTRACT.md V2: the frontend simulates Paytm's webhook; 8003 fetches the alert from 8002 and acts."""
     pipeline.set_lang(req.language)
-    return await proactive.shield(req)
+    pipeline.set_history(conversation.recent(req.mid))
+    return conversation.record(req.mid, f"[Paytm alert: {req.scenario}]", await proactive.shield(req))
 
 
 @app.post("/merchant/confirm-dispute", response_model=MerchantResponse)
 async def merchant_confirm_dispute(req: ConfirmDisputeRequest) -> dict[str, Any]:
     pipeline.set_lang(req.language)
-    return await proactive.confirm_dispute(req)
+    pipeline.set_history(conversation.recent(req.mid))
+    return conversation.record(req.mid, "[tapped yes: file the dispute]", await proactive.confirm_dispute(req))
 
 
 @app.post("/merchant/confirm-edi-pause", response_model=MerchantResponse)
 async def merchant_confirm_edi_pause(req: ConfirmEdiPauseRequest) -> dict[str, Any]:
     pipeline.set_lang(req.language)
-    return await proactive.confirm_edi_pause(req)
+    pipeline.set_history(conversation.recent(req.mid))
+    return conversation.record(req.mid, "[tapped yes: pause the EDI]", await proactive.confirm_edi_pause(req))
 
 
 @app.get("/merchant/khata-export", response_model=None)
