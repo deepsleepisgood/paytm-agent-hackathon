@@ -59,11 +59,11 @@ def mark_svg(kind, variant="color", size=120):
         body = mark(kind, "#ffffff", "#ffffff")
     return f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 120 120"><defs>{defs}</defs>{body}</svg>\n'
 
-def icon_svg(kind, size=512):
+def icon_svg(kind, size=512, rx=27):
     """App icon: rounded square, white mark."""
     inner = mark(kind, "#ffffff", MINT_DARK, accent="#cfe3fb" if kind == "faceted" else None)
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 120 120"><defs>{grad("gi", "#3b92f5", BLUE_DEEP, user=False)}</defs>'
-            f'<rect width="120" height="120" rx="27" fill="url(#gi)"/><g transform="translate(60 60) scale(.74) translate(-60 -60)">{inner}</g></svg>\n')
+            f'<rect width="120" height="120" rx="{rx}" fill="url(#gi)"/><g transform="translate(60 60) scale(.74) translate(-60 -60)">{inner}</g></svg>\n')
 
 # ------------------------------------------------------------------ custom monoline wordmark
 # x-height 40, ascender 0, baseline 60, descender to ~82. Stroke 9, round caps. Letters are built from circles, stems and arcs.
@@ -129,6 +129,7 @@ def main():
         (d / "mark-white.svg").write_text(mark_svg(k, "white"))
         (d / "mark-mono.svg").write_text(mark_svg(k, "mono"))
         (d / "icon.svg").write_text(icon_svg(k))
+        (d / "icon-square.svg").write_text(icon_svg(k, rx=0))
         (d / "lockup.svg").write_text(lockup_svg(k, "light"))
         (d / "lockup-white.svg").write_text(lockup_svg(k, "dark"))
     (OUT / "wordmark.svg").write_text(wordmark_svg("light"))
