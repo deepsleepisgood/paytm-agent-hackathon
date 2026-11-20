@@ -1467,3 +1467,25 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .a-card .facts div{font-size:15px}
 .a-next p{font-size:14.5px;line-height:1.5}
 .a-q{font-size:13px;line-height:1.4}
+
+/* ===== ONE type scale for every screen =====
+   display 28 · title 22 · heading 17–20 · body 15 · secondary 13 · caption 12 · micro 11 (never smaller) */
+:root{--t-display:28px;--t-title:22px;--t-heading:18px;--t-body:15px;--t-secondary:13px;--t-caption:12px;--t-micro:11px}
+/* too big -> step down */
+.big{font-size:var(--t-display)}
+.a-hero b{font-size:var(--t-display)}
+.side h2{font-size:24px}
+.greet-ai h2{font-size:24px}
+.kpi b{font-size:var(--t-title)}
+.cap.speech{font-size:21px}
+.az-h h2{font-size:var(--t-title)}
+.az-top h3{font-size:21px}
+/* too small -> step up */
+.xs{font-size:var(--t-caption)}
+.sec,.kpi span,.ios-cap,.az-eyebrow{font-size:var(--t-caption)}
+.tabs button,.wk em,.pg-body .wk em,.wf-l em,.how i,.node .n-s,.af-link em,.rl-n em,.kt th,.stp,.badge,.chip-i,.st,.ins-min .chip-i,.agent-dots span,.af-chips i,.af-recv,.sp-id span,.sp-tools span,.sp-hand em,.tr-st,.seg i,.loan-banner small,.ins-note,.mic-note,.ac-top em,.ac-stats span,.af-st,.hist-h,.acc-b,.tr-root em,.tr-k b,.pol b,.edi-h .st,.evt code{font-size:var(--t-micro)}
+.steps3 span{font-size:10.5px}
+.mn em,.mesh-band span,.tr-k em,.tr-side,.tr-lab{font-size:10.5px}
+.mn b{font-size:11.5px}.mn.par b{font-size:13px}
+/* readable line lengths and rhythm for body copy */
+.az-top p,.a-next p,.nudge span,.az-t em,.r-t em{line-height:1.5}
