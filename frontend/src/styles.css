@@ -1385,3 +1385,29 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .a-next p{margin:0;font-size:14.5px;line-height:1.5;color:#3d4f6b}
 .a-card>*{animation:rise .5s var(--ease) both}.a-card>*:nth-child(2){animation-delay:.05s}.a-card>*:nth-child(3){animation-delay:.1s}.a-card>*:nth-child(4){animation-delay:.15s}.a-card>*:nth-child(5){animation-delay:.2s}
 @media (prefers-reduced-motion:reduce){.a-badge,.a-card>*{animation:none}}
+
+/* ===== badge: ring + symbol draw themselves (replaces the bouncy pop) ===== */
+.a-badge{width:36px;height:36px;background:none!important;animation:none!important;position:relative;overflow:visible}
+.a-ico{display:block;overflow:visible}
+.a-ico .a-fill{fill:#e1f5ea;opacity:0;transform-origin:center;transform:scale(.86);animation:aFill .5s .25s var(--ease) forwards}
+.a-ico .a-ring{stroke:#1f9d6b;stroke-width:2;stroke-linecap:round}
+.a-ico .a-glyph path,.a-ico .a-glyph circle{stroke:#0e7a50;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.a-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:aDraw .6s var(--ease) forwards}
+.a-glyph .a-draw{animation-delay:.5s;animation-duration:.45s}
+@keyframes aDraw{to{stroke-dashoffset:0}}
+@keyframes aFill{to{opacity:1;transform:scale(1)}}
+.a-badge:after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid #1f9d6b;opacity:0;animation:aRipple 1s .85s ease-out 1}
+@keyframes aRipple{0%{opacity:.5;transform:scale(1)}100%{opacity:0;transform:scale(1.9)}}
+.a-badge.warn .a-fill{fill:#fff1d9}.a-badge.warn .a-ring{stroke:#e39a22}.a-badge.warn .a-glyph path,.a-badge.warn .a-glyph circle{stroke:#9a5d00}.a-badge.warn:after{border-color:#e39a22}
+.a-badge.bad .a-fill{fill:#fdeaea}.a-badge.bad .a-ring{stroke:#e04b4b}.a-badge.bad .a-glyph path{stroke:#c02f2f}.a-badge.bad:after{border-color:#e04b4b}
+.a-badge.info .a-fill{fill:#eceffe}.a-badge.info .a-ring{stroke:#5b6bd6}.a-badge.info .a-glyph path,.a-badge.info .a-glyph circle{stroke:#3a47a0}.a-badge.info:after{border-color:#5b6bd6}
+/* the card's own rise animation must not re-trigger the number/rows weirdly */
+.a-hero b{min-width:5.5ch;text-align:right}
+.a-card .facts>div{animation:rise .45s var(--ease) both}.a-card .facts>div:nth-child(1){animation-delay:.18s}.a-card .facts>div:nth-child(2){animation-delay:.24s}.a-card .facts>div:nth-child(3){animation-delay:.3s}.a-card .facts>div:nth-child(4){animation-delay:.36s}.a-card .facts>div:nth-child(5){animation-delay:.42s}
+/* what next: contextual shortcut + share */
+.a-acts{display:flex;gap:8px;margin:12px 0 2px;animation:rise .5s .35s var(--ease) both}
+.a-act{flex:0 0 auto;padding:11px 18px;border-radius:99px;font-size:14.5px;font-weight:700;background:#eef3fa;color:#2a4a7a;transition:transform .15s,background .2s}
+.a-act:active{transform:scale(.97)}
+.a-act.main{flex:1;display:flex;align-items:center;justify-content:space-between;background:#e6f0fc;color:#1b4f9c}
+.a-act.main span{font-size:20px;line-height:1}
+@media (prefers-reduced-motion:reduce){.a-draw,.a-ico .a-fill,.a-badge:after,.a-acts,.a-card .facts>div{animation:none!important;stroke-dashoffset:0;opacity:1;transform:none}.a-badge:after{display:none}}

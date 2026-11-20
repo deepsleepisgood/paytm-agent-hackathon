@@ -651,7 +651,7 @@ export default function App() {
     settlements: <Settlement d={d} />,
     loans: <Loans d={d} />,
     account: <Account d={d} />,
-    buddy: <Buddy m={m} L={ledger} chat={chat} busy={busy} mode={mode} onPreset={onPreset} onText={onText} onUpload={onUpload} onConfirm={onConfirm} onAudio={onAudio} run={run} reveal={reveal} onTheme={setDark} speak={speak} setSpeak={setSpeak} lang={lang} setLang={setLang} />,
+    buddy: <Buddy onGo={go} m={m} L={ledger} chat={chat} busy={busy} mode={mode} onPreset={onPreset} onText={onText} onUpload={onUpload} onConfirm={onConfirm} onAudio={onAudio} run={run} reveal={reveal} onTheme={setDark} speak={speak} setSpeak={setSpeak} lang={lang} setLang={setLang} />,
   }
   const body = (sub && subs[sub]) || tabs[tab]
 

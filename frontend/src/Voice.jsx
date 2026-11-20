@@ -38,15 +38,42 @@ function bestVoice(lang) {
 }
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices() }
 
+// Status badge: the ring draws itself, then the symbol is drawn inside it, with one soft ripple. Calm, not bouncy.
 function AnswerIcon({ kind }) {
-  const p = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2.4, strokeLinecap: 'round', strokeLinejoin: 'round' }
-  if (kind === 'bad') return <svg {...p}><path d="M12 3.2l7 2.8v5.4c0 4.4-2.9 7.6-7 9.4-4.1-1.8-7-5-7-9.4V6z" /><path d="M9.4 9.4l5.2 5.2M14.6 9.4l-5.2 5.2" /></svg>
-  if (kind === 'warn') return <svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>
-  if (kind === 'info') return <svg {...p}><circle cx="12" cy="8.5" r="3.4" /><path d="M5.5 19.5c.8-3.4 3.5-5 6.5-5s5.7 1.6 6.5 5" /></svg>
-  return <svg {...p}><path d="M5 12.5l4.4 4.4L19 7.2" /></svg>
+  const g = {
+    ok: <path className="a-draw" pathLength="1" d="M11.5 18.6l4.6 4.6 8.6-9.8" />,
+    warn: <><circle className="a-draw" pathLength="1" cx="18" cy="18" r="6.8" /><path className="a-draw" pathLength="1" d="M18 14.2V18l2.8 1.8" /></>,
+    bad: <><path className="a-draw" pathLength="1" d="M13.2 13.2l9.6 9.6" /><path className="a-draw" pathLength="1" d="M22.8 13.2l-9.6 9.6" /></>,
+    info: <><circle className="a-draw" pathLength="1" cx="18" cy="14.4" r="3.2" /><path className="a-draw" pathLength="1" d="M11.8 25c.8-3.3 3.2-4.9 6.2-4.9s5.4 1.6 6.2 4.9" /></>,
+  }[kind] || null
+  return (
+    <svg className="a-ico" viewBox="0 0 36 36" width="36" height="36" fill="none" aria-hidden="true">
+      <circle className="a-fill" cx="18" cy="18" r="17" />
+      <circle className="a-ring a-draw" pathLength="1" cx="18" cy="18" r="16" transform="rotate(-90 18 18)" />
+      <g className="a-glyph">{g}</g>
+    </svg>
+  )
 }
 
-export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mode, prompts, nudge, lang, setLang, onText, onAudio, onPreset, onConfirm, onMenu, onKhata, onAttach }) {
+// Counts a money value up from zero once, so the number feels earned.
+function CountUp({ value }) {
+  const m = String(value).match(/^(.*?)([\d,]+(?:\.\d+)?)(.*)$/)
+  const target = m ? parseFloat(m[2].replace(/,/g, '')) : 0
+  const dec = m ? (m[2].split('.')[1] || '').length : 0
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    if (!m) return undefined
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setN(target); return undefined }
+    let raf, t0
+    const step = (t) => { t0 = t0 ?? t; const p = Math.min(1, (t - t0) / 850); setN(target * (1 - Math.pow(1 - p, 3))); if (p < 1) raf = requestAnimationFrame(step) }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [value])
+  if (!m) return value
+  return <>{m[1]}{n.toLocaleString('en-IN', { minimumFractionDigits: dec, maximumFractionDigits: dec })}{m[3]}</>
+}
+
+export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mode, prompts, nudge, lang, setLang, onText, onAudio, onPreset, onConfirm, onMenu, onKhata, onGo, onAttach }) {
   const [phase, setPhase] = useState('idle') // idle | listening | speaking (thinking comes from `busy`)
   const [live, setLive] = useState('')
   const [spoken, setSpoken] = useState(0)
@@ -223,6 +250,13 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
   const pending = reply && reply.confirm && !reply.done
   latest.current = { pending, reply, chat, mode, onText, onAudio, onConfirm, lang }
 
+  const intentNow = run?.sc?.intent || ''
+  const nextAct = /SETTLEMENT|HOLD|CHARGEBACK/.test(intentNow) ? { l: 'View settlements', to: 'settlements' } : /MANDATE|EDI|LOAN/.test(intentNow) ? { l: 'See loan status', to: 'loans' } : null
+  const shareAnswer = async () => {
+    if (!info) return
+    const text = `${info.headline.replace(/[.:]\s*$/, '')}\n${info.facts.map((f) => `${f.k}: ${f.v}`).join('\n')}\n${info.detail || ''}\n- Paytm for Business`.replace(/\n{2,}/g, '\n')
+    try { if (navigator.share) await navigator.share({ text }); else window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener') } catch { /* user closed the share sheet */ }
+  }
   const cls = `voice ${state} ${speak ? '' : 'muted'} ${reply ? 'has-reply' : ''}`
   return (
     <div className={cls}>
@@ -264,13 +298,17 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
               <h3 className="a-head">{info.headline.replace(/[.:]\s*$/, '')}</h3>
               {info.facts.length === 1 && (
                 <div className={`a-hero ${/save|releas|credit|receiv|back|refund/i.test(info.facts[0].k) ? 'pos' : ''}`}>
-                  <span>{info.facts[0].k}</span><b>{info.facts[0].v}</b>
+                  <span>{info.facts[0].k}</span><b><CountUp value={info.facts[0].v} /></b>
                 </div>
               )}
               {info.facts.length > 1 && (
                 <div className="facts">{info.facts.map((f) => <div key={f.k}><span>{f.k}</span><b>{f.v}</b></div>)}</div>
               )}
               {info.detail && <div className="a-next"><i aria-hidden="true">→</i><p>{info.detail}</p></div>}
+            </div>
+            <div className="a-acts">
+              {nextAct && onGo && <button className="a-act main" onClick={() => onGo(nextAct.to)}>{nextAct.l}<span aria-hidden="true">›</span></button>}
+              <button className="a-act" onClick={shareAnswer}>Share</button>
             </div>
           </div>
         )}

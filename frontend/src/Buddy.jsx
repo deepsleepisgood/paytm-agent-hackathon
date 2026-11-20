@@ -101,7 +101,7 @@ function Insights({ m, always }) {
   )
 }
 
-export default function Buddy({ m, L, chat, busy, mode, run, reveal, onPreset, onText, onAudio, onUpload, onConfirm, speak, setSpeak, onTheme, lang, setLang }) {
+export default function Buddy({ onGo, m, L, chat, busy, mode, run, reveal, onPreset, onText, onAudio, onUpload, onConfirm, speak, setSpeak, onTheme, lang, setLang }) {
   const [view, setView] = useState('voice') // 'voice' | 'menu' | 'khata'
   const [attach, setAttach] = useState(false)
   const podRef = useRef(null)
@@ -178,7 +178,7 @@ export default function Buddy({ m, L, chat, busy, mode, run, reveal, onPreset, o
 
   return (
     <div className="screen buddy voice-screen">
-      <Voice m={m} chat={chat} busy={busy} run={run} reveal={reveal} speak={speak} setSpeak={setSpeak} mode={mode} prompts={prompts} nudge={nudgeP} lang={lang} setLang={setLang}
+      <Voice onGo={onGo} m={m} chat={chat} busy={busy} run={run} reveal={reveal} speak={speak} setSpeak={setSpeak} mode={mode} prompts={prompts} nudge={nudgeP} lang={lang} setLang={setLang}
         onText={onText} onAudio={onAudio} onPreset={onPreset} onConfirm={onConfirm}
         onMenu={() => setView('menu')} onKhata={() => setView('khata')} onAttach={(k) => (k === 'pod' ? podRef.current.click() : k === 'shot' ? shotRef.current.click() : setAttach(true))} />
       {attach && (
