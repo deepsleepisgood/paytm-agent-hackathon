@@ -674,8 +674,8 @@ export default function App() {
   return (
     <div className={`cc ${busy ? 'busy' : ''}`}>
       <header className="cc-top">
-        <BuddyLockup size={38} on="light" />
-        <div className="cc-title"><b>Your shop's back-office, handled</b><span className="muted xs">First proven on Paytm for Business · Merchant Buddy ⇄ Paytm AI agents</span></div>
+        <BuddyLockup size={28} on="light" sparkle={false} />
+        <div className="cc-title"><span className="cc-by">First proven on Paytm for Business</span></div>
         <div className="cc-r">
           {mode === 'live' && svc.sarvam && svc.sarvam !== 'live' && (
             <span className="badge warn" title="Sarvam runs without SARVAM_API_KEY: speech recognition and Sarvam voice are off. Add the key to .env and restart.">
