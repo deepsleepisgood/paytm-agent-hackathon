@@ -300,8 +300,8 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
               {info.context && <p className="a-ctx">{info.context}</p>}
               <h3 className="a-head">{info.headline.replace(/[.:]\s*$/, '')}</h3>
               {info.facts.length === 1 && (
-                <div className={`a-hero ${/save|releas|credit|receiv|back|refund/i.test(info.facts[0].k) ? 'pos' : ''}`}>
-                  <span>{info.facts[0].k}</span><b><CountUp value={info.facts[0].v} /></b>
+                <div className={`a-hero ${/save|releas|credit|receiv|back|refund/i.test(info.facts[0].k) ? 'pos' : ''} ${/₹/.test(info.facts[0].v) ? '' : 'id'}`}>
+                  <span>{info.facts[0].k}</span><b>{/₹/.test(info.facts[0].v) ? <CountUp value={info.facts[0].v} /> : info.facts[0].v}</b>
                 </div>
               )}
               {info.facts.length > 1 && (

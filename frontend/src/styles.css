@@ -1428,3 +1428,7 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .a-link{display:flex;align-items:center;justify-content:space-between;width:calc(100% + 36px);margin:16px -18px -16px;padding:14px 18px;border-top:1px solid #edf2f9;font-size:15px;font-weight:600;color:#1b4f9c;text-align:left;background:transparent}
 .a-link i{font-style:normal;font-size:22px;line-height:1;color:#9fb0c9;transition:transform .2s}
 .a-link:hover i{transform:translateX(3px)}.a-link:active{background:#f6f9fd}
+
+/* ids (UTR, order numbers): shown exactly as given, smaller, never reformatted or clipped */
+.a-hero.id{flex-wrap:wrap;gap:6px 12px}
+.a-hero.id b{font-size:22px;letter-spacing:.02em;min-width:0;max-width:100%;overflow-wrap:anywhere;text-align:right;margin-left:auto;font-variant-numeric:tabular-nums}
