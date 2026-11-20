@@ -239,7 +239,7 @@ function Avatar({ n, size = 44 }) {
   )
 }
 
-function AgentFlow({ run, reveal, done, escalated, totalMs }) {
+function AgentFlow({ run, reveal, done, escalated, totalMs, compact = false }) {
   const P = plan(run, reveal)
   const FLOW = P.seq, states = P.states
   const steps = run.steps
@@ -387,7 +387,7 @@ function AgentFlow({ run, reveal, done, escalated, totalMs }) {
       )}
       {spot < 0 && !done && lastDone >= 0 && <div className="sp wait"><span>Passing the baton…</span></div>}
 
-      {doneN > 0 && (
+      {!compact && doneN > 0 && (
         <div className="hist">
           <div className="hist-h">Completed work</div>
           {FLOW.map((n, k) => ({ n, k })).filter(({ k }) => states[k] === 'done').reverse().map(({ n }) => {
@@ -425,7 +425,22 @@ function flowInfo(run, reveal) {
   return { FLOW: P.seq, P, states: P.states, doneN: P.states.filter((s) => s === 'done').length, cur: P.states.findIndex((s) => s === 'work') }
 }
 
-export default function Center({ run, reveal, busy, onTry, demoActive }) {
+// The big stage beside the phone: only the agent mesh, filling the whole area (idle until a question is asked).
+export function AgentStage({ run, reveal }) {
+  const r = run || { steps: [], sc: {} }
+  const steps = r.steps || []
+  const done = !!run && reveal >= steps.length
+  const ev = steps.find((s) => s.key === 'eval')
+  const escalated = run?.live ? !!run.escalated : !!(ev && ev.selected === 'C' && steps.findIndex((s) => s.key === 'eval') < reveal)
+  const totalMs = run?.live ? run.elapsed || 0 : steps.reduce((a, s) => a + (s.ms || 0), 0)
+  return (
+    <section className="col stage-agents">
+      <AgentFlow run={r} reveal={reveal} done={done} escalated={escalated} totalMs={totalMs} compact />
+    </section>
+  )
+}
+
+export default function Center({ run, reveal, busy, onTry, demoActive, hideAgents = false }) {
   const [tech, setTech] = useState(false)
   const [openSet, setOpenSet] = useState({})
   const pinned = useRef(false)
@@ -460,7 +475,7 @@ export default function Center({ run, reveal, busy, onTry, demoActive }) {
     { k: 'result', show: shown('reply'), title: 'Result', sub: `${(totalMs / 1000).toFixed(1)}s · the ledger already changed`, badge: resBadge, tone: get('reply')?.tone === 'bad' ? 'bad' : awaiting || escalated ? 'esc' : 'good' },
     { k: 'log', show: !!(done && run.live && run.events?.length), title: 'Compliance log', sub: 'Real agent-to-agent and DPDP events', badge: run?.events?.length ? String(run.events.length) : '' },
     { k: 'tech', show: !!(run && shown('dispatch') && disp), title: 'Technical details', sub: 'A2A request and response (JSON)', badge: '' },
-  ].filter((s) => s.show) : []
+  ].filter((s) => s.show && !(hideAgents && s.k === 'agents')) : []
   if (done) sections.sort((a, b) => (a.k === 'result' ? -1 : b.k === 'result' ? 1 : 0))
 
   const body = {
