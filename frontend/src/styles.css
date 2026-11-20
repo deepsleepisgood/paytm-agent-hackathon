@@ -1614,3 +1614,10 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 
 /* phone Home: the Buddy lockup replaces the pill badge */
 .ai-badge.lockup{background:none!important;border:0!important;box-shadow:none!important;padding:0 2px!important;height:auto;display:inline-flex;align-items:center}
+
+/* top bar: the supplied Buddy logo artwork, on the same near-black as the artwork so it blends in */
+.cc-top{background:#101316!important;border-bottom:1px solid #1c2127!important}
+.cc-top .cc-logo{display:block;height:40px;width:auto;flex:none}
+.cc-top .cc-title{border-left:1px solid #2a323a!important}
+.cc-top .cc-by{color:#8b97a8!important}
+.cc-top .cc-logo{mix-blend-mode:lighten}

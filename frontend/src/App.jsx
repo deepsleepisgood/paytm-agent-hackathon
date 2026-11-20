@@ -674,7 +674,7 @@ export default function App() {
   return (
     <div className={`cc ${busy ? 'busy' : ''}`}>
       <header className="cc-top">
-        <BuddyLockup size={28} on="light" sparkle={false} />
+        <img className="cc-logo" src="/brand/buddy-logo.png" alt="Buddy" height="40" />
         <div className="cc-title"><span className="cc-by">First proven on Paytm for Business</span></div>
         <div className="cc-r">
           {mode === 'live' && svc.sarvam && svc.sarvam !== 'live' && (
