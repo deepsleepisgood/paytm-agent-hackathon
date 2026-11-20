@@ -89,19 +89,20 @@ export function BuddyIcon({ size = 48, state = 'static', rx = 27, clean = false,
   return (
     <svg className={`bd bd-${state} ${className}`} width={size} height={size} viewBox="0 0 120 120" role="img" aria-label="Buddy" style={{ display: 'block', overflow: 'visible' }}>
       <defs>
-        <linearGradient id={`g${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#5a95e4" /><stop offset=".45" stopColor="#25469a" /><stop offset="1" stopColor="#101f58" /></linearGradient>
+        <linearGradient id={`g${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#52a2f2" /><stop offset=".5" stopColor="#2556b0" /><stop offset="1" stopColor="#132d6c" /></linearGradient>
         <linearGradient id={`r${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#fff" stopOpacity=".55" /><stop offset=".5" stopColor="#fff" stopOpacity=".08" /><stop offset="1" stopColor="#fff" stopOpacity=".2" /></linearGradient>
         <linearGradient id={`h${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" stopOpacity=".22" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></linearGradient>
         <linearGradient id={`w${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#d7e6fb" /></linearGradient>
+        <linearGradient id={`k${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" /><stop offset=".5" stopColor="#fff" /><stop offset=".62" stopColor="#dcecff" /><stop offset="1" stopColor="#b6d8fb" /></linearGradient>
         <linearGradient id={`b${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#cfe8ff" /><stop offset="1" stopColor="#5fabf6" /></linearGradient>
-        <radialGradient id={`d${id}`} cx=".35" cy=".3" r=".8"><stop offset="0" stopColor="#b8ffc9" /><stop offset=".55" stopColor="#3de06f" /><stop offset="1" stopColor="#1fb454" /></radialGradient>
+        <radialGradient id={`d${id}`} cx=".35" cy=".3" r=".8"><stop offset="0" stopColor="#9dffb8" /><stop offset=".55" stopColor="#2ee86a" /><stop offset="1" stopColor="#17b552" /></radialGradient>
         <clipPath id={`c${id}`}><rect width="120" height="120" rx={rx} /></clipPath>
       </defs>
       <rect width="120" height="120" rx={rx} fill={`url(#g${id})`} />
-      {!clean && <g clipPath={`url(#c${id})`}><rect width="120" height="48" fill={`url(#h${id})`} /><path d="M64 0H120V70Z" fill="#fff" fillOpacity=".12" /></g>}
+      {!clean && <g clipPath={`url(#c${id})`}><rect width="120" height="48" fill={`url(#h${id})`} /><path d="M58 0H120V76Z" fill="#fff" fillOpacity=".15" /></g>}
       {!clean && <rect x=".7" y=".7" width="118.6" height="118.6" rx={rx - 0.7} fill="none" stroke={`url(#r${id})`} strokeWidth="1.4" />}
-      <g transform={clean ? 'translate(60 60) scale(.8) translate(-61 -60)' : 'translate(60 60) scale(.88) translate(-65 -60)'}>
-        <path d={B_STEM} fill={`url(#w${id})`} /><path d={B_UP} fill={`url(#w${id})`} /><path d={B_LO} fill={`url(#b${id})`} />
+      <g transform={clean ? 'translate(60 60) scale(.86) translate(-62 -60)' : 'translate(60 60) scale(.96) translate(-65 -60)'}>
+        <path d={B_STEM} fill={`url(#k${id})`} /><path d={B_UP} fill={`url(#w${id})`} /><path d={B_LO} fill={`url(#b${id})`} />
         <g className="bd-dotg">
           <circle className="bd-rip" cx="99" cy="59" r="7" />
           <circle className="bd-dot" cx="99" cy="59" r="7" fill={`url(#d${id})`} />

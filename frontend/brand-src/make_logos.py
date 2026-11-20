@@ -42,26 +42,27 @@ def icon_inner(p="i"):
     """The B as it appears on the app icon: white stem and upper bowl, light-blue lower bowl, glowing green dot."""
     return f'''<defs>
 <linearGradient id="{p}w" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d7e6fb"/></linearGradient>
+<linearGradient id="{p}k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#ffffff"/><stop offset=".62" stop-color="#dcecff"/><stop offset="1" stop-color="#b6d8fb"/></linearGradient>
 <linearGradient id="{p}b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#cfe8ff"/><stop offset="1" stop-color="#5fabf6"/></linearGradient>
 <linearGradient id="{p}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
-<radialGradient id="{p}d" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#b8ffc9"/><stop offset=".55" stop-color="#3de06f"/><stop offset="1" stop-color="#1fb454"/></radialGradient>
+<radialGradient id="{p}d" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#9dffb8"/><stop offset=".55" stop-color="#2ee86a"/><stop offset="1" stop-color="#17b552"/></radialGradient>
 <filter id="{p}g" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3"/></filter>
 <clipPath id="{p}cl"><path d="{B_LO}"/></clipPath>
 </defs>
-<path d="{B_STEM}" fill="url(#{p}w)"/><path d="{B_UP}" fill="url(#{p}w)"/><path d="{B_LO}" fill="url(#{p}b)"/>
+<path d="{B_STEM}" fill="url(#{p}k)"/><path d="{B_UP}" fill="url(#{p}w)"/><path d="{B_LO}" fill="url(#{p}b)"/>
 <rect x="44" y="62" width="48" height="14" fill="url(#{p}s)" clip-path="url(#{p}cl)" opacity=".7"/>
 <circle cx="99" cy="59" r="11" fill="#3de06f" opacity=".55" filter="url(#{p}g)"/><circle cx="99" cy="59" r="7" fill="url(#{p}d)"/><circle cx="96.8" cy="56.6" r="2" fill="#fff" fill-opacity=".65"/>'''
 
 
 def icon_svg(rx=27):
-    body = (f'<defs><linearGradient id="ig" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a95e4"/><stop offset=".45" stop-color="#25469a"/><stop offset="1" stop-color="#101f58"/></linearGradient>'
+    body = (f'<defs><linearGradient id="ig" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#52a2f2"/><stop offset=".5" stop-color="#2556b0"/><stop offset="1" stop-color="#132d6c"/></linearGradient>'
             f'<linearGradient id="ir" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity=".2"/></linearGradient>'
             f'<linearGradient id="ih" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
             f'<clipPath id="ic"><rect width="120" height="120" rx="{rx}"/></clipPath></defs>'
             f'<rect width="120" height="120" rx="{rx}" fill="url(#ig)"/>'
-            f'<g clip-path="url(#ic)"><rect width="120" height="48" fill="url(#ih)"/><path d="M64 0H120V70Z" fill="#fff" fill-opacity=".12"/></g>'
+            f'<g clip-path="url(#ic)"><rect width="120" height="48" fill="url(#ih)"/><path d="M58 0H120V76Z" fill="#fff" fill-opacity=".15"/></g>'
             f'<rect x=".7" y=".7" width="118.6" height="118.6" rx="{max(rx - .7, 0)}" fill="none" stroke="url(#ir)" stroke-width="1.4"/>'
-            f'<g transform="translate(60 60) scale(.88) translate(-65 -60)">{icon_inner("i")}</g>')
+            f'<g transform="translate(60 60) scale(.96) translate(-65 -60)">{icon_inner("i")}</g>')
     return svg(512, 512, "0 0 120 120", body)
 
 
