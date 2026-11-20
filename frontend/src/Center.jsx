@@ -468,17 +468,18 @@ function buildSteps(sc, m) {
 }
 
 export function Replays({ m }) {
-  const list = SCENARIOS.filter((s) => !s.hidden && s.id !== 'settle' && s.chip && (!s.available || s.available(m)))
+  const list = ['utr', 'fake', 'dup', 'edi'].map((k) => SCENARIOS.find((s) => s.id === k)).filter((s) => s && (!s.available || s.available(m)))
   const [id, setId] = useState(list[0]?.id)
   const [n, setN] = useState(0)       // steps shown so far (0 = not started)
   const [run, setRun] = useState(false)
+  const [chain, setChain] = useState(false) // Play runs all four problems, one after another
   const sc = list.find((s) => s.id === id) || list[0]
   const T = React.useMemo(() => (sc ? buildSteps(sc, m) : null), [sc, m])
-  useEffect(() => { setN(0); setRun(false) }, [id])
+  useEffect(() => { setN(0); setRun(chain) }, [id])
   useEffect(() => {
     if (!run || !T) return
     if (n >= T.st.length) { setRun(false); return }
-    const t = setTimeout(() => setN((k) => k + 1), n === 0 ? 700 : 1500)
+    const t = setTimeout(() => setN((k) => k + 1), n === 0 ? 500 : 1000)
     return () => clearTimeout(t)
   }, [run, n, T])
   if (!sc || !T) return null
@@ -490,15 +491,23 @@ export function Replays({ m }) {
   }
   const used = (nid) => T.st.some((s) => s.id === nid)
   const finished = n >= T.st.length
-  const start = () => { setN(0); setRun(true) }
+  useEffect(() => {
+    if (!chain || !T || n < T.st.length) return
+    const i = list.findIndex((s) => s.id === id)
+    if (i + 1 >= list.length) { setChain(false); return }
+    const t = setTimeout(() => setId(list[i + 1].id), 1800)
+    return () => clearTimeout(t)
+  }, [chain, n, id])
+  const start = () => { setChain(true); setN(0); setRun(true); if (id !== list[0].id) setId(list[0].id) }
+  const stop = () => { setChain(false); setRun(false); setN(0) }
   return (
     <section className="rp">
       <div className="rp-head">
-        <div><b>More problems Buddy solves</b><span>Pick a problem, press play, and watch the agents work it out</span></div>
-        <button className="rp-play" onClick={() => (run ? (setRun(false), setN(0)) : start())}>{run ? '■ Stop' : finished ? '↻ Play again' : '▶ Play'}</button>
+        <div><b>More problems Buddy solves</b><span>Press play and watch four common problems get solved, one after another</span></div>
+        <button className="rp-play" onClick={() => (run || chain ? stop() : start())}>{run || chain ? '■ Stop' : finished ? '↻ Play again' : '▶ Play all 4'}</button>
       </div>
       <div className="rp-chips">
-        {list.map((s) => <button key={s.id} className={`rp-chip ${s.id === sc.id ? 'on' : ''}`} onClick={() => setId(s.id)}>{REPLAY_TITLE[s.id] || s.chip}</button>)}
+        {list.map((s) => <button key={s.id} className={`rp-chip ${s.id === sc.id ? 'on' : ''}`} onClick={() => { setChain(false); setId(s.id) }}>{REPLAY_TITLE[s.id] || s.chip}</button>)}
       </div>
       <div className="rm-body">
         <div className="rm-q">
