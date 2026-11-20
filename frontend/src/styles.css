@@ -1570,9 +1570,6 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 
 /* voice screen: the B replaces the orb */
 .orb-wrap .bd-stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
-.orb-wrap .halo{opacity:.9}
-.orb-wrap .ring,.orb-wrap .sweep,.orb-wrap .pt,.orb-wrap .orb{display:none}
-.orb-wrap .bd{filter:drop-shadow(0 10px 26px rgba(58,95,208,.35))}
 .orb-wrap:active .bd-stage{transform:scale(.97)}.bd-stage{transition:transform .2s var(--ease)}
 .reflect i{opacity:.55}
 
