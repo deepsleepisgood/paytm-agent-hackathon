@@ -1,174 +1,132 @@
 #!/usr/bin/env python3
-"""Brand kit generator: four B-mark concepts + a custom monoline wordmark, no fonts needed.
-
-    python3 frontend/brand-src/make_logos.py            # name = buddy
-    python3 frontend/brand-src/make_logos.py buddhy     # any word made of b u d h y
-
-Writes SVGs and a brand sheet to frontend/public/brand/ (served at /brand/).
-"""
-import os
-import sys
+"""Buddy brand files: glass B mark, app icon, favicon, spaced-caps BUDDY wordmark and lockups.
+Same geometry as frontend/src/brand.jsx. Run:  python3 frontend/brand-src/make_logos.py
+Writes to frontend/public/brand/ (served at /brand/)."""
 from pathlib import Path
 
-NAME = (sys.argv[1] if len(sys.argv) > 1 else "buddy").lower()
 OUT = Path(__file__).resolve().parent.parent / "public" / "brand"
+B_STEM = "M36 18H44V102H36A8 8 0 0 1 28 94V26A8 8 0 0 1 36 18Z"
+B_UP = "M44 18H66A19 19 0 0 1 66 56H44Z"
+B_LO = "M44 62H69A20 20 0 0 1 69 102H44Z"
+CAP = 56
 
-BLUE_HI, BLUE_LO, BLUE, BLUE_DEEP = "#4aa0f8", "#1456c4", "#1b6fe0", "#0f4fb8"
-INK, MINT, MINT_DARK = "#0a2a63", "#1f9d6b", "#34d399"
 
-# ------------------------------------------------------------------ marks (120 x 120)
-def grad(id_="g", a=BLUE_HI, b=BLUE_LO, user=True):
-    box = 'gradientUnits="userSpaceOnUse" x1="24" y1="12" x2="104" y2="110"' if user else 'x1="0" y1="0" x2="1" y2="1"'
-    return f'<linearGradient id="{id_}" {box}><stop offset="0" stop-color="{a}"/><stop offset="1" stop-color="{b}"/></linearGradient>'
+def mark_inner(white=False, p="m"):
+    up = ('<stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d9e8ff"/>' if white
+          else '<stop offset="0" stop-color="#3a5fd0"/><stop offset="1" stop-color="#12296f"/>')
+    return f'''<defs>
+<linearGradient id="{p}u" x1=".1" y1="0" x2=".9" y2="1">{up}</linearGradient>
+<linearGradient id="{p}l" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d4ebff"/><stop offset=".55" stop-color="#7cbcf8"/><stop offset="1" stop-color="#4a95ee"/></linearGradient>
+<linearGradient id="{p}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<linearGradient id="{p}h" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<radialGradient id="{p}d" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#c6ffe0"/><stop offset=".5" stop-color="#34d399"/><stop offset="1" stop-color="#12935f"/></radialGradient>
+<clipPath id="{p}cu"><path d="{B_UP}"/></clipPath><clipPath id="{p}cl"><path d="{B_LO}"/></clipPath><clipPath id="{p}cs"><path d="{B_STEM}"/></clipPath>
+</defs>
+<path d="{B_STEM}" fill="url(#{p}l)"/><path d="{B_UP}" fill="url(#{p}u)"/><path d="{B_LO}" fill="url(#{p}l)"/>
+<rect x="44" y="18" width="48" height="15" fill="url(#{p}s)" clip-path="url(#{p}cu)" opacity="{'.25' if white else '.7'}"/>
+<rect x="44" y="62" width="48" height="13" fill="url(#{p}s)" clip-path="url(#{p}cl)" opacity=".8"/>
+<rect x="28" y="18" width="7" height="84" fill="url(#{p}h)" clip-path="url(#{p}cs)"/>
+<g fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1"><path d="{B_UP}" clip-path="url(#{p}cu)"/><path d="{B_LO}" clip-path="url(#{p}cl)"/></g>
+<circle cx="99" cy="59" r="7" fill="url(#{p}d)"/><circle cx="96.8" cy="56.6" r="2" fill="#fff" fill-opacity=".7"/>'''
 
-B_FACET = "M36 18H66A19 19 0 0 1 66 56H44V62H69A20 20 0 0 1 69 102H36A8 8 0 0 1 28 94V26A8 8 0 0 1 36 18Z"
-B_CHAT = "M36 16H66A20 20 0 0 1 66 56H44V62H70A19 19 0 0 1 82 95.5L98 111L64 100H36A8 8 0 0 1 28 92V24A8 8 0 0 1 36 16Z"
 
-def mark(kind, fill, dot, accent=None):
-    """Return SVG elements for a mark. fill = paint for the body, accent = second tone (faceted/ring)."""
-    a = accent or fill
-    if kind == "ribbon":
-        return (f'<path d="M40 20V102M40 20H66A20 20 0 0 1 66 60H40M40 60H70A21 21 0 0 1 70 102H40" fill="none" stroke="{fill}" '
-                f'stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/><circle cx="90" cy="60" r="6" fill="{dot}"/>')
-    if kind == "faceted":
-        return (f'<path d="M36 18H66A19 19 0 0 1 66 56H44V62H69A20 20 0 0 1 69 102H36A8 8 0 0 1 28 94V26A8 8 0 0 1 36 18Z" fill="{fill}"/><circle cx="99" cy="59" r="6.5" fill="{dot}"/>')
-    if kind == "chat":
-        return (f'<path d="M36 16H66A20 20 0 0 1 66 56H44V62H70A19 19 0 0 1 82 95.5L98 111L64 100H36A8 8 0 0 1 28 92V24A8 8 0 0 1 36 16Z" fill="{fill}"/><circle cx="98" cy="36" r="6.5" fill="{dot}"/>')
-    if kind == "ring":
-        return (f'<rect x="26" y="14" width="14" height="92" rx="7" fill="{fill}"/><circle cx="58" cy="36" r="17" fill="none" stroke="{fill}" stroke-width="13"/>'
-                f'<circle cx="61" cy="81" r="20" fill="none" stroke="{fill}" stroke-width="13"/><circle cx="103" cy="58" r="6.5" fill="{dot}"/>')
-    raise ValueError(kind)
+def svg(w, h, vb, body):
+    return f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="{vb}">{body}</svg>\n'
 
-CONCEPTS = {
-    "ribbon":  ("One-line B", "A single ribbon that never lifts: one flow from start to finish. Shares its stroke with the wordmark."),
-    "faceted": ("Faceted B", "A solid B with a soft light across it. The most legible and most premium at small sizes."),
+
+def mark_svg(white=False):
+    return svg(240, 240, "0 0 120 120", mark_inner(white))
+
+
+def icon_svg(rx=27):
+    body = (f'<defs><linearGradient id="ig" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a8df0"/><stop offset="1" stop-color="#12296f"/></linearGradient>'
+            f'<linearGradient id="ih" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>'
+            f'<rect width="120" height="120" rx="{rx}" fill="url(#ig)"/><rect width="120" height="56" rx="{rx}" fill="url(#ih)"/>'
+            f'<g transform="translate(60 60) scale(.74) translate(-60 -60)">{mark_inner(True, "i")}</g>')
+    return svg(512, 512, "0 0 120 120", body)
+
+
+LETTERS = {
+    "B": (38, lambda x: f"M{x} 0V{CAP}M{x} 0H{x+20}A14 14 0 0 1 {x+20} 28H{x}M{x} 28H{x+24}A14 14 0 0 1 {x+24} {CAP}H{x}"),
+    "U": (36, lambda x: f"M{x} 0V36A18 18 0 0 0 {x+36} 36V0"),
+    "D": (44, lambda x: f"M{x} 0H{x+16}A28 28 0 0 1 {x+16} {CAP}H{x}V0"),
+    "Y": (36, lambda x: f"M{x} 0L{x+18} 30L{x+36} 0M{x+18} 30V{CAP}"),
 }
 
-def mark_svg(kind, variant="color", size=120):
-    body, defs = "", ""
-    if variant == "color":
-        defs = grad("g")
-        body = mark(kind, "url(#g)", MINT, accent="#4aa0f8" if kind == "faceted" else None)
-        if kind == "faceted":  # light facet across the solid B
-            body += f'<clipPath id="cb"><path d="{B_FACET}"/></clipPath><path clip-path="url(#cb)" d="M10 8H100L10 84Z" fill="#fff" fill-opacity=".13"/>'
-    elif variant == "white":
-        body = mark(kind, "#ffffff", MINT_DARK, accent="#cfe3fb" if kind == "faceted" else None)
-    elif variant == "mono":
-        body = mark(kind, INK, INK)
-    elif variant == "mono-white":
-        body = mark(kind, "#ffffff", "#ffffff")
-    return f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 120 120"><defs>{defs}</defs>{body}</svg>\n'
 
-def icon_svg(kind, size=512, rx=27):
-    """App icon: rounded square, white mark."""
-    inner = mark(kind, "#ffffff", MINT_DARK, accent="#cfe3fb" if kind == "faceted" else None)
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 120 120"><defs>{grad("gi", "#3b92f5", BLUE_DEEP, user=False)}</defs>'
-            f'<rect width="120" height="120" rx="{rx}" fill="url(#gi)"/><g transform="translate(60 60) scale(.74) translate(-60 -60)">{inner}</g></svg>\n')
+def word_parts(on="dark", sparkle=True, text="BUDDY"):
+    x, d = 6, ""
+    for ch in text:
+        w, f = LETTERS[ch]
+        d += f(x)
+        x += w + 24
+    end = x - 24 + 6
+    a, b = ("#2f6fe8", "#d6e8ff") if on == "dark" else ("#1740a8", "#3b82e8")
+    star = ""
+    if sparkle:
+        star = (f'<path transform="translate({end + 24} 28)" d="M0 -15C2 -5 5 -2 15 0C5 2 2 5 0 15C-2 5 -5 2 -15 0C-5 -2 -2 -5 0 -15Z" '
+                f'fill="{"#8592a6" if on == "dark" else "#a3b0c4"}"/>')
+    body = (f'<defs><linearGradient id="wg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="{end}" y2="0"><stop offset="0" stop-color="{a}"/><stop offset="1" stop-color="{b}"/></linearGradient></defs>'
+            f'<path d="{d}" fill="none" stroke="url(#wg)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>{star}')
+    return body, end + (46 if sparkle else 6)
 
-# ------------------------------------------------------------------ custom monoline wordmark
-# x-height 40, ascender 0, baseline 60, descender to ~82. Stroke 9, round caps. Letters are built from circles, stems and arcs.
-LETTER_W = {"b": 40, "u": 38, "d": 40, "h": 38, "y": 38}
 
-def letter(ch, x):
-    if ch == "b":
-        return f'M{x} 0V60', f'<circle cx="{x + 20}" cy="40" r="20"/>'
-    if ch == "d":
-        return f'M{x + 40} 0V60', f'<circle cx="{x + 20}" cy="40" r="20"/>'
-    if ch == "u":
-        return f'M{x} 20V40A19 19 0 0 0 {x + 38} 40M{x + 38} 20V60', ''
-    if ch == "h":
-        return f'M{x} 0V60M{x} 40A19 19 0 0 1 {x + 38} 40V60', ''
-    if ch == "y":
-        return f'M{x} 20V40A19 19 0 0 0 {x + 38} 40M{x + 38} 20V66Q{x + 38} 82 {x + 16} 82', ''
-    raise ValueError(f"letter {ch!r} not drawn yet")
+def wordmark_svg(on="dark"):
+    body, w = word_parts(on)
+    bg = f'<rect x="-6" y="-6" width="{w}" height="68" fill="#0f1f4d"/>' if on == "dark" else ""
+    return svg(round(w * 2.4), 163, f"-6 -6 {w} 68", bg + body)
 
-def wordmark(color, gap=11):
-    paths, extra, x = [], [], 4.5
-    for ch in NAME:
-        d, e = letter(ch, x)
-        paths.append(d); extra.append(e)
-        x += LETTER_W[ch] + gap
-    width = x - gap + 4.5
-    g = (f'<g fill="none" stroke="{color}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">'
-         f'<path d="{"".join(paths)}"/>{"".join(extra)}</g>')
-    return g, width
 
-def lockup_svg(kind, on="light"):
-    word_color = "#ffffff" if on == "dark" else INK
-    body = mark(kind, "#ffffff", MINT_DARK, accent="#cfe3fb" if kind == "faceted" else None) if on == "dark" else mark(kind, "url(#g)", MINT, accent="#4aa0f8" if kind == "faceted" else None)
-    if on != "dark" and kind == "faceted":
-        body += f'<clipPath id="cb"><path d="{B_FACET}"/></clipPath><path clip-path="url(#cb)" d="M10 8H100L10 84Z" fill="#fff" fill-opacity=".13"/>'
-    w, ww = wordmark(word_color)
-    s = 1.22
-    top = 12                                  # shared top edge of the B and the tallest letters
-    y0 = top + 4.5 * s                        # wordmark origin (ascender centreline)
-    base = y0 + 60 * s                        # baseline
-    bottom = base + 4.5 * s                   # lowest edge of the stroke on the baseline
-    k = (bottom - top) / 96                   # mark scale so the B spans ascender top to baseline
-    tx, ty = -21 * k, top - 13 * k            # B visible box starts at x=21, y=13 in the 120 box
-    mark_w = (96 - 21) * k
-    x0 = mark_w + 30
-    total = x0 + ww * s + 10
-    H = base + 28 * s + 12
-    bg = f'<rect width="{total:.0f}" height="{H:.0f}" fill="{INK}"/>' if on == "dark" else ""
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{total:.0f}" height="{H:.0f}" viewBox="0 0 {total:.0f} {H:.0f}"><defs>{grad("g")}</defs>{bg}'
-            f'<g transform="translate({tx:.1f} {ty:.1f}) scale({k:.4f})">{body}</g><g transform="translate({x0:.1f} {y0:.1f}) scale({s})">{w}</g></svg>\n')
+def lockup_svg(on="light"):
+    body, w = word_parts("dark" if on == "dark" else "light")
+    mark = mark_inner(on == "dark", "k")
+    ws = 46 / 68  # wordmark is 46 tall next to a 100 tall mark
+    total = 100 + 30 + w * ws + 8
+    bg = f'<rect width="{total:.0f}" height="100" fill="#0f1f4d"/>' if on == "dark" else ""
+    inner = (f'{bg}<g transform="scale({100/120:.4f})">{mark}</g>'
+             f'<g transform="translate(130 {(100 - 68 * ws) / 2 + 6 * ws:.1f}) scale({ws:.4f})">{body}</g>')
+    return svg(round(total), 100, f"0 0 {total:.0f} 100", inner)
 
-def wordmark_svg(on="light"):
-    w, ww = wordmark("#ffffff" if on == "dark" else INK)
-    bg = f'<rect width="{ww + 20:.0f}" height="112" fill="{INK}"/>' if on == "dark" else ""
-    return f'<svg xmlns="http://www.w3.org/2000/svg" width="{ww + 20:.0f}" height="112" viewBox="-10 -14 {ww + 20:.0f} 112">{bg}{w}</svg>\n'
 
-# ------------------------------------------------------------------ write files + brand sheet
+SHEET = """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Buddy brand</title>
+<style>body{margin:0;background:#0b1433;color:#e8efff;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Inter,sans-serif}main{max-width:980px;margin:0 auto;padding:36px 20px 80px}
+h1{font-size:28px;margin:0 0 4px}p{color:#9fb6e8;margin:0 0 24px}.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.t{background:#121f4a;border:1px solid #243767;border-radius:18px;min-height:210px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px}
+.t.l{background:#fff;border-color:#e3ebf6}.t span{font-size:12px;color:#9fb6e8}.t.l span{color:#5a6a85}.w{grid-column:1/-1}</style></head><body><main>
+<h1>Buddy</h1><p>Glass B, green hand-over dot, spaced-caps wordmark.</p><div class="g">
+<div class="t"><img src="mark.svg" width="130"><span>Mark</span></div>
+<div class="t"><img src="mark-white.svg" width="130"><span>Mark on dark</span></div>
+<div class="t"><img src="icon.svg" width="130" style="border-radius:30px"><span>App icon</span></div>
+<div class="t l"><img src="mark.svg" width="130"><span>Mark on light</span></div>
+<div class="t w"><img src="lockup-dark.svg" height="80"><span>Lockup on dark</span></div>
+<div class="t l w"><img src="lockup.svg" height="80"><span>Lockup on light</span></div>
+<div class="t"><img src="wordmark-dark.svg" height="46"><span>Wordmark</span></div>
+<div class="t"><div style="display:flex;gap:14px;align-items:flex-end"><img src="favicon.svg" width="32"><img src="favicon.svg" width="24"><img src="favicon.svg" width="16"></div><span>Favicon sizes</span></div>
+</div></main></body></html>"""
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    for k in CONCEPTS:
-        d = OUT / k
-        d.mkdir(exist_ok=True)
-        (d / "mark.svg").write_text(mark_svg(k, "color"))
-        (d / "mark-white.svg").write_text(mark_svg(k, "white"))
-        (d / "mark-mono.svg").write_text(mark_svg(k, "mono"))
-        (d / "icon.svg").write_text(icon_svg(k))
-        (d / "icon-square.svg").write_text(icon_svg(k, rx=0))
-        (d / "lockup.svg").write_text(lockup_svg(k, "light"))
-        (d / "lockup-white.svg").write_text(lockup_svg(k, "dark"))
-    (OUT / "wordmark.svg").write_text(wordmark_svg("light"))
-    (OUT / "wordmark-white.svg").write_text(wordmark_svg("dark"))
+    for old in ("ribbon", "faceted"):  # earlier directions, replaced by the glass B
+        d = OUT / old
+        if d.is_dir():
+            for f in d.iterdir():
+                f.unlink()
+            d.rmdir()
+    for f in ("wordmark.svg", "wordmark-white.svg"):
+        (OUT / f).unlink(missing_ok=True)
+    (OUT / "mark.svg").write_text(mark_svg(False))
+    (OUT / "mark-white.svg").write_text(mark_svg(True))
+    (OUT / "icon.svg").write_text(icon_svg())
+    (OUT / "icon-square.svg").write_text(icon_svg(rx=0))
+    (OUT / "favicon.svg").write_text(icon_svg(rx=26))
+    (OUT / "wordmark-dark.svg").write_text(wordmark_svg("dark"))
+    (OUT / "wordmark-light.svg").write_text(wordmark_svg("light"))
+    (OUT / "lockup.svg").write_text(lockup_svg("light"))
+    (OUT / "lockup-dark.svg").write_text(lockup_svg("dark"))
+    (OUT / "index.html").write_text(SHEET)
+    print("wrote", OUT)
 
-    cards = []
-    for k, (title, why) in CONCEPTS.items():
-        cards.append(f'''<section class="c"><h2>{title}</h2><p class="why">{why}</p>
-<div class="row"><div class="tile"><img src="{k}/mark.svg" width="150"><span>Mark</span></div>
-<div class="tile"><img src="{k}/icon.svg" width="120" style="border-radius:27px"><span>App icon</span></div>
-<div class="tile navy"><img src="{k}/mark-white.svg" width="150"><span>On dark</span></div>
-<div class="tile"><img src="{k}/mark-mono.svg" width="150"><span>One colour</span></div></div>
-<div class="row"><div class="tile wide"><img src="{k}/lockup.svg" height="96"><span>Lockup</span></div>
-<div class="tile wide navy"><img src="{k}/lockup-white.svg" height="96"><span>Lockup on dark</span></div></div>
-<div class="row small"><span>Small sizes</span><img src="{k}/mark.svg" width="48"><img src="{k}/mark.svg" width="32"><img src="{k}/mark.svg" width="24"><img src="{k}/mark.svg" width="16">
-<img src="{k}/icon.svg" width="44" style="border-radius:10px"><img src="{k}/icon.svg" width="32" style="border-radius:7px"></div></section>''')
-    html = f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{NAME.title()} brand kit</title>
-<style>body{{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Inter,sans-serif;margin:0;background:#f4f7fc;color:{INK}}}
-main{{max-width:1040px;margin:0 auto;padding:36px 20px 80px}}h1{{font-size:30px;letter-spacing:-.02em;margin:0 0 4px}}.lead{{color:#5a6a85;margin:0 0 28px}}
-.c{{background:#fff;border:1px solid #e3ebf6;border-radius:20px;padding:24px;margin:0 0 22px}}h2{{margin:0;font-size:20px}}.why{{color:#5a6a85;margin:4px 0 18px;font-size:14.5px}}
-.row{{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}}.tile{{flex:1 1 170px;min-height:190px;border-radius:16px;background:#f4f7fc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px}}
-.tile.navy{{background:{INK}}}.tile.navy span{{color:#9fc0f0}}.tile.wide{{flex:1 1 380px;min-height:150px}}.tile span{{font-size:12px;color:#7a8aa3}}
-.small{{align-items:flex-end;gap:22px;padding-top:6px}}.small span{{font-size:12px;color:#7a8aa3;align-self:center}}
-.pal{{display:flex;gap:10px;flex-wrap:wrap}}.sw{{width:130px;border-radius:14px;overflow:hidden;border:1px solid #e3ebf6;background:#fff}}.sw i{{display:block;height:60px}}.sw b,.sw em{{display:block;padding:0 10px;font-style:normal}}.sw b{{padding-top:8px;font-size:13px}}.sw em{{padding-bottom:8px;font-size:12px;color:#7a8aa3}}
-.word{{display:flex;gap:14px;flex-wrap:wrap}}.word .tile{{flex:1 1 300px}}</style></head><body><main>
-<h1>{NAME.title()} brand kit</h1><p class="lead">Two directions for the B, all with the same custom monoline wordmark. Mint dot = the hand-over: work moving from one agent to the next.</p>
-{"".join(cards)}
-<section class="c"><h2>Wordmark</h2><p class="why">Drawn from circles, stems and arcs, so it needs no font and stays sharp at any size.</p>
-<div class="word"><div class="tile"><img src="wordmark.svg" height="70"></div><div class="tile navy"><img src="wordmark-white.svg" height="70"></div></div></section>
-<section class="c"><h2>Colour</h2><div class="pal">
-<div class="sw"><i style="background:linear-gradient(135deg,{BLUE_HI},{BLUE_LO})"></i><b>Buddy blue</b><em>{BLUE_HI} to {BLUE_LO}</em></div>
-<div class="sw"><i style="background:{BLUE_DEEP}"></i><b>Deep blue</b><em>{BLUE_DEEP}</em></div>
-<div class="sw"><i style="background:{INK}"></i><b>Ink</b><em>{INK}</em></div>
-<div class="sw"><i style="background:{MINT}"></i><b>Hand-over mint</b><em>{MINT}</em></div>
-<div class="sw"><i style="background:{MINT_DARK}"></i><b>Mint on dark</b><em>{MINT_DARK}</em></div></div>
-<p class="why" style="margin-top:16px">Clear space: keep at least the width of the stem on every side. Minimum size: 16 px for the mark, 24 px tall for the lockup. Never stretch, recolour the dot or add shadows.</p></section>
-</main></body></html>'''
-    (OUT / "index.html").write_text(html)
-    print("wrote", OUT, "for name:", NAME)
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { summarize } from './facts.js'
 import { MerchantLogo } from './icons.jsx'
+import { BuddyMark } from './brand.jsx'
 import { t, LANGS, ENGLISH_ONLY } from './i18n.js'
 import { ttsSarvam } from './api.js'
 
@@ -278,10 +279,7 @@ export default function Voice({ m, chat, busy, run, reveal, speak, setSpeak, mod
           <span className="ring r1" /><span className="ring r2" /><span className="ring r3" />
           <span className="sweep" />
           {Array.from({ length: 10 }).map((_, i) => <span key={i} className="pt" style={{ '--i': i }} />)}
-          <div className="orb">
-            <div className="shine" />
-            <div className="vbars">{BAR_K.map((k, i) => <i key={i} style={{ '--k': k, '--d': `${(i % 4) * 0.12}s` }} />)}</div>
-          </div>
+          <div className="bd-stage"><BuddyMark size={118} glow state={state === 'thinking' ? 'working' : state === 'listening' || state === 'speaking' ? 'listening' : reply ? 'done' : 'idle'} /></div>
         </div>
         <div className="reflect"><i /></div>
         <div className="state-lbl">{state === 'listening' ? T('listen') : state === 'thinking' ? T('think') : state === 'speaking' ? T('speak') : reply ? T('more') : T('idle')}</div>

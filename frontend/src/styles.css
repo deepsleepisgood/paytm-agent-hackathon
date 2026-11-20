@@ -1339,7 +1339,6 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .mn.work{border-color:#2d7be0;animation:trGlow 1.6s ease-in-out infinite;transform:translate(-50%,-50%) scale(1.06)}
 .mn.work em{color:#1b4f9c;font-weight:700}
 @media (prefers-reduced-motion:reduce){.mn.work,.mesh-e .e.go{animation:none}}
-=======
 /* the answer area scrolls under the orb label: fade its edges instead of letting text collide with it */
 .v-cap{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%)}
 .sign.pinned{position:relative;z-index:3;margin-top:4px;padding:0 22px 6px;flex:none}
@@ -1548,3 +1547,37 @@ button:focus-visible,input:focus-visible{outline:2px solid rgba(42,107,184,.55);
 .voice.intro-on .nudge span{font-size:14px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .voice.intro-on .nudge .n-act{margin-top:12px;gap:14px}
 .voice.intro-on .vp-row{padding-bottom:6px}.voice.intro-on .vp{padding:10px 13px;width:140px}.voice.intro-on .vp b{font-size:15.5px}
+
+/* ===== Buddy mark: calm motion, only where something is happening ===== */
+.bd .bd-dot{transform-box:fill-box;transform-origin:center;filter:drop-shadow(0 0 3px rgba(52,211,153,.65))}
+.bd .bd-rip{fill:none;stroke:#34d399;stroke-width:1.6;opacity:0;transform-box:fill-box;transform-origin:center}
+.bd .bd-chk{stroke-dasharray:24;stroke-dashoffset:24;opacity:0}
+.bd.bd-glow{filter:drop-shadow(0 6px 18px rgba(74,149,238,.45))}
+.bd-idle .bd-dot{animation:bdIdle 3.6s ease-in-out infinite}
+.bd-listening .bd-dot{transform:scale(calc(1 + var(--lvl,.3) * .9));transition:transform .09s linear}
+.bd-listening .bd-rip{animation:bdRip 1.8s ease-out infinite}
+.bd-working .bd-dot{animation:bdWork 2.4s ease-in-out infinite}
+.bd-done .bd-dot{animation:bdDone .6s var(--ease) forwards}
+.bd-done .bd-chk{animation:bdChk .5s .25s var(--ease) forwards}
+.bd-need .bd-dot{fill:#f0a63a;animation:bdNeed 2.2s ease-in-out infinite}
+@keyframes bdIdle{0%,100%{opacity:.78;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
+@keyframes bdRip{0%{opacity:.55;transform:scale(1)}100%{opacity:0;transform:scale(3.4)}}
+@keyframes bdWork{0%,100%{transform:translateY(-22px)}50%{transform:translateY(22px)}}
+@keyframes bdDone{to{transform:scale(1.9)}}
+@keyframes bdChk{to{stroke-dashoffset:0;opacity:1}}
+@keyframes bdNeed{0%,100%{transform:scale(1)}30%{transform:scale(1.5)}60%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.bd *{animation:none!important}.bd-done .bd-chk{stroke-dashoffset:0;opacity:1}.bd-done .bd-dot{transform:scale(1.9)}}
+
+/* voice screen: the B replaces the orb */
+.orb-wrap .bd-stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.orb-wrap .halo{opacity:.9}
+.orb-wrap .ring,.orb-wrap .sweep,.orb-wrap .pt,.orb-wrap .orb{display:none}
+.orb-wrap .bd{filter:drop-shadow(0 10px 26px rgba(58,95,208,.35))}
+.orb-wrap:active .bd-stage{transform:scale(.97)}.bd-stage{transition:transform .2s var(--ease)}
+.reflect i{opacity:.55}
+
+/* page header brand */
+.cc-top .bd-lockup{flex:none}
+.cc-title .by{display:block;font-size:12px;color:#7a8aa3}
+/* mesh: Buddy node uses the mark */
+.ag-av .bd-wrap{display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 35% 30%,#1c3a8f,#0c1b4d);box-shadow:0 0 0 2px rgba(122,170,255,.45),0 0 14px rgba(90,150,255,.4)}

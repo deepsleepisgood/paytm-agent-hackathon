@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { I, PaytmLogo, AIMark, MerchantLogo } from './icons.jsx'
+import { BuddyMark, BuddyLockup } from './brand.jsx'
 import { inr } from './data.js'
 import { MERCHANTS, DEFAULT_MERCHANT } from './merchants.js'
 import { SCENARIOS, runScenario, routeText, initLedger, applyEffects, liveOk, sayText, CONFIRM_LABEL } from './engine.js'
@@ -148,7 +149,7 @@ function Home({ d, go, m, L, lang, onAlert, onUpload }) {
       <div className="topbar">
         <PaytmLogo size={22} />
         <div className="tb-r">
-          <button className="ai-badge" onClick={() => go('buddy')} aria-label="AI Teammate"><AIMark size={18} /><b>AI</b></button>
+          <button className="ai-badge" onClick={() => go('buddy')} aria-label="Buddy"><BuddyMark size={20} /><b>Buddy</b></button>
           <button className="dotwrap bell" aria-label="Notifications" onClick={() => { setNotifOpen((o) => !o); setSeen(sorted.length) }}><I.Bell size={22} />{unread && <em />}</button>
         </div>
       </div>
@@ -296,7 +297,7 @@ function Settlement({ d, back }) {
         <div className="row between line total"><b>Net bank credit</b><b className="green">{inr(s.net)}</b></div>
       </div>
       <div className="card info">
-        <AIMark size={24} />
+        <BuddyMark size={26} />
         <span>Total deductions {inr(s.variance)}. Fees and GST can be claimed as ITC; chargeback hold releases after proof of delivery.</span>
       </div>
     </div>
@@ -673,8 +674,8 @@ export default function App() {
   return (
     <div className={`cc ${busy ? 'busy' : ''}`}>
       <header className="cc-top">
-        <PaytmLogo size={20} />
-        <div className="cc-title"><b>AI Teammate for Paytm merchants</b><span className="muted xs">Merchant AI Buddy ⇄ Paytm AI agents · solves problems end to end</span></div>
+        <BuddyLockup size={38} on="light" />
+        <div className="cc-title"><b>Your shop's back-office, handled</b><span className="muted xs">First proven on Paytm for Business · Merchant Buddy ⇄ Paytm AI agents</span></div>
         <div className="cc-r">
           {mode === 'live' && svc.sarvam && svc.sarvam !== 'live' && (
             <span className="badge warn" title="Sarvam runs without SARVAM_API_KEY: speech recognition and Sarvam voice are off. Add the key to .env and restart.">
@@ -706,7 +707,7 @@ export default function App() {
             <nav className="tabs">
               {TABS.map((t) => (
                 <button key={t.id} aria-label={t.label} className={`${tab === t.id && !sub ? 'on' : ''} ${t.center ? 'ctr' : ''}`} onClick={() => go(t.id)}>
-                  {t.center ? <span className="qr-fab"><AIMark size={46} /></span> : <t.icon size={24} />}
+                  {t.center ? <span className="qr-fab"><BuddyMark size={44} state={busy ? 'working' : 'static'} /></span> : <t.icon size={24} />}
                   {t.center ? <span className="ghostlbl">.</span> : <span>{t.label}</span>}
                 </button>
               ))}
